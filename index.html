@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Utilitarian Media Player</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --surface-color: #1e1e1e;
+            --text-primary: #e0e0e0;
+            --text-secondary: #a0a0a0;
+            --accent-color: #ffffff;
+            --progress-bg: #333333;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Main Viewport */
+        #player-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            background: #000;
+            overflow: hidden;
+        }
+
+        video {
+            max-width: 100%;
+            max-height: 100%;
+            outline: none;
+        }
+
+        /* Placeholder / Drop Zone */
+        #placeholder {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            color: var(--text-secondary);
+            text-align: center;
+            pointer-events: none; /* Let clicks pass through to container */
+        }
+
+        #placeholder h1 {
+            font-weight: 300;
+            font-size: 1.5rem;
+            letter-spacing: 1px;
+        }
+
+        #placeholder p {
+            font-size: 0.875rem;
+            opacity: 0.7;
+        }
+
+        .shortcut-hint {
+            margin-top: 2rem;
+            font-family: monospace;
+            font-size: 0.75rem;
+            opacity: 0.5;
+            display: grid;
+            grid-template-columns: auto auto;
+            gap: 0.5rem 1.5rem;
+            text-align: left;
+        }
+
+        /* Controls Bar */
+        #controls {
+            height: 60px;
+            background-color: var(--surface-color);
+            display: flex;
+            align-items: center;
+            padding: 0 1.5rem;
+            gap: 1rem;
+            transition: transform 0.2s ease;
+            z-index: 10;
+        }
+
+        /* Buttons */
+        button {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+
+        button:hover {
+            opacity: 1;
+            background-color: rgba(255,255,255,0.1);
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            cursor: pointer;
+            height: 100%;
+        }
+
+        #progress-bar-wrapper {
+            flex: 1;
+            height: 4px;
+            background-color: var(--progress-bg);
+            border-radius: 2px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #progress-fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 0%;
+            background-color: var(--accent-color);
+            transition: width 0.1s linear; /* Smooth fill */
+        }
+
+        /* Volume */
+        .volume-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            width: 100px;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 4px;
+            background: var(--progress-bg);
+            border-radius: 2px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        /* Text Displays */
+        .time-display {
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            min-width: 100px;
+            text-align: center;
+        }
+
+        .filename {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            background: rgba(0,0,0,0.6);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            color: var(--text-primary);
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        body.has-media:hover .filename {
+            opacity: 1;
+        }
+
+        /* Hidden File Input */
+        #file-input {
+            display: none;
+        }
+
+        /* SVG Icons */
+        svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+
+        /* Drag Overlay */
+        #drag-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.1);
+            border: 2px dashed var(--text-secondary);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+            font-size: 1.5rem;
+            color: var(--text-primary);
+        }
+        
+        body.dragging #drag-overlay {
+            display: flex;
+        }
+
+        /* Audio Visualizer (Simple) */
+        #audio-indicator {
+            display: none;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 2px solid var(--text-secondary);
+            align-items: center;
+            justify-content: center;
+            opacity: 0.5;
+        }
+        
+        video.is-audio + #audio-indicator {
+            display: flex;
+        }
+
+    </style>
+</head>
+<body>
+
+    <input type="file" id="file-input" accept="video/*,audio/*">
+
+    <div id="player-container">
+        <video id="media-element"></video>
+        <div id="audio-indicator">
+            <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+        </div>
+        
+        <div id="placeholder">
+            <h1>NO MEDIA</h1>
+            <p>Drag & Drop or Double Click to Open</p>
+            <div class="shortcut-hint">
+                <span>Space</span> <span>Play / Pause</span>
+                <span>← / →</span> <span>Seek -/+ 5s</span>
+                <span>↑ / ↓</span> <span>Volume</span>
+                <span>F</span> <span>Fullscreen</span>
+            </div>
+        </div>
+        
+        <div id="filename-display" class="filename"></div>
+        <div id="drag-overlay">Drop File Here</div>
+    </div>
+
+    <div id="controls">
+        <button id="play-pause-btn" title="Play/Pause (Space)">
+            <!-- Play Icon -->
+            <svg id="icon-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            <!-- Pause Icon (Hidden) -->
+            <svg id="icon-pause" viewBox="0 0 24 24" style="display:none"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+        </button>
+
+        <button id="stop-btn" title="Stop">
+            <svg viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg>
+        </button>
+
+        <div class="time-display">
+            <span id="current-time">00:00</span> / <span id="duration">00:00</span>
+        </div>
+
+        <div class="progress-container" id="seek-container">
+            <div id="progress-bar-wrapper">
+                <div id="progress-fill"></div>
+            </div>
+        </div>
+
+        <div class="volume-container">
+            <button id="mute-btn" title="Mute">
+                <svg id="icon-vol-high" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                <svg id="icon-vol-mute" viewBox="0 0 24 24" style="display:none"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73 4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>
+            </button>
+            <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="1">
+        </div>
+
+        <button id="fullscreen-btn" title="Fullscreen (F)">
+            <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+        </button>
+    </div>
+
+    <script>
+        const video = document.getElementById('media-element');
+        const playBtn = document.getElementById('play-pause-btn');
+        const stopBtn = document.getElementById('stop-btn');
+        const iconPlay = document.getElementById('icon-play');
+        const iconPause = document.getElementById('icon-pause');
+        const progressFill = document.getElementById('progress-fill');
+        const seekContainer = document.getElementById('seek-container');
+        const progressWrapper = document.getElementById('progress-bar-wrapper');
+        const currentTimeEl = document.getElementById('current-time');
+        const durationEl = document.getElementById('duration');
+        const volumeSlider = document.getElementById('volume-slider');
+        const muteBtn = document.getElementById('mute-btn');
+        const iconVolHigh = document.getElementById('icon-vol-high');
+        const iconVolMute = document.getElementById('icon-vol-mute');
+        const fullscreenBtn = document.getElementById('fullscreen-btn');
+        const fileInput = document.getElementById('file-input');
+        const placeholder = document.getElementById('placeholder');
+        const playerContainer = document.getElementById('player-container');
+        const filenameDisplay = document.getElementById('filename-display');
+        const dragOverlay = document.getElementById('drag-overlay');
+
+        let lastVolume = 1;
+        
+        // --- Core Media Functions ---
+
+        function loadFile(file) {
+            const objectUrl = URL.createObjectURL(file);
+            video.src = objectUrl;
+            video.load();
+            
+            // Basic check for audio type to show icon
+            if(file.type.startsWith('audio/')) {
+                video.classList.add('is-audio');
+            } else {
+                video.classList.remove('is-audio');
+            }
+
+            filenameDisplay.textContent = file.name;
+            placeholder.style.display = 'none';
+            document.body.classList.add('has-media');
+            video.play().catch(() => {}); // Auto play if allowed
+        }
+
+        function togglePlay() {
+            if (video.paused || video.ended) {
+                video.play();
+            } else {
+                video.pause();
+            }
+        }
+
+        function stopMedia() {
+            video.pause();
+            video.currentTime = 0;
+        }
+
+        function formatTime(seconds) {
+            if (!seconds || isNaN(seconds)) return "00:00";
+            const m = Math.floor(seconds / 60);
+            const s = Math.floor(seconds % 60);
+            return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+
+        function updatePlayIcon() {
+            if (video.paused) {
+                iconPlay.style.display = 'block';
+                iconPause.style.display = 'none';
+            } else {
+                iconPlay.style.display = 'none';
+                iconPause.style.display = 'block';
+            }
+        }
+
+        function updateVolumeIcon() {
+            if (video.muted || video.volume === 0) {
+                iconVolHigh.style.display = 'none';
+                iconVolMute.style.display = 'block';
+            } else {
+                iconVolHigh.style.display = 'block';
+                iconVolMute.style.display = 'none';
+            }
+        }
+
+        // --- Event Listeners ---
+
+        // Play/Pause
+        playBtn.addEventListener('click', togglePlay);
+        video.addEventListener('play', updatePlayIcon);
+        video.addEventListener('pause', updatePlayIcon);
+        video.addEventListener('click', togglePlay);
+
+        // Stop
+        stopBtn.addEventListener('click', stopMedia);
+
+        // Time Update & Progress
+        video.addEventListener('timeupdate', () => {
+            if (video.duration) {
+                const percent = (video.currentTime / video.duration) * 100;
+                progressFill.style.width = `${percent}%`;
+                currentTimeEl.textContent = formatTime(video.currentTime);
+            }
+        });
+
+        video.addEventListener('loadedmetadata', () => {
+            durationEl.textContent = formatTime(video.duration);
+        });
+
+        video.addEventListener('ended', () => {
+            updatePlayIcon();
+        });
+
+        // Seek
+        seekContainer.addEventListener('click', (e) => {
+            if (!video.duration) return;
+            const rect = progressWrapper.getBoundingClientRect();
+            const pos = (e.clientX - rect.left) / rect.width;
+            video.currentTime = pos * video.duration;
+        });
+
+        // Volume
+        volumeSlider.addEventListener('input', (e) => {
+            video.volume = e.target.value;
+            video.muted = false;
+            updateVolumeIcon();
+        });
+
+        muteBtn.addEventListener('click', () => {
+            if (video.muted) {
+                video.muted = false;
+                video.volume = lastVolume || 0.5;
+                volumeSlider.value = video.volume;
+            } else {
+                lastVolume = video.volume;
+                video.muted = true;
+                volumeSlider.value = 0;
+            }
+            updateVolumeIcon();
+        });
+
+        // Fullscreen
+        fullscreenBtn.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                playerContainer.requestFullscreen().catch(err => console.log(err));
+            } else {
+                document.exitFullscreen();
+            }
+        });
+
+        // --- File Input Handlers ---
+
+        // Click on container (if empty) triggers file input
+        playerContainer.addEventListener('dblclick', (e) => {
+            if(e.target === video && video.currentSrc) {
+                // toggleFullscreen? No, utilitarian double click usually is fullscreen
+                 if (!document.fullscreenElement) {
+                    playerContainer.requestFullscreen().catch(err => {});
+                } else {
+                    document.exitFullscreen();
+                }
+            } else {
+                fileInput.click();
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                loadFile(e.target.files[0]);
+            }
+        });
+
+        // Drag and Drop
+        document.body.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            document.body.classList.add('dragging');
+        });
+
+        document.body.addEventListener('dragleave', (e) => {
+            // Prevent flicker by checking if we left the window
+            if(e.clientX === 0 || e.clientY === 0) {
+                document.body.classList.remove('dragging');
+            }
+        });
+        
+        // Remove dragging class on drop on overlay
+        dragOverlay.addEventListener('dragleave', () => {
+            document.body.classList.remove('dragging');
+        });
+
+        document.body.addEventListener('drop', (e) => {
+            e.preventDefault();
+            document.body.classList.remove('dragging');
+            if (e.dataTransfer.files.length > 0) {
+                loadFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        // --- Keyboard Shortcuts ---
+
+        document.addEventListener('keydown', (e) => {
+            // Ignore if active element is an input (rare here, but good practice)
+            if (document.activeElement.tagName === 'INPUT') return;
+
+            switch(e.code) {
+                case 'Space':
+                case 'KeyK':
+                    e.preventDefault();
+                    togglePlay();
+                    break;
+                case 'ArrowLeft':
+                    video.currentTime = Math.max(0, video.currentTime - 5);
+                    break;
+                case 'ArrowRight':
+                    video.currentTime = Math.min(video.duration, video.currentTime + 5);
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    video.volume = Math.min(1, video.volume + 0.1);
+                    volumeSlider.value = video.volume;
+                    video.muted = false;
+                    updateVolumeIcon();
+                    break;
+                case 'ArrowDown':
+                    e.preventDefault();
+                    video.volume = Math.max(0, video.volume - 0.1);
+                    volumeSlider.value = video.volume;
+                    updateVolumeIcon();
+                    break;
+                case 'KeyF':
+                    fullscreenBtn.click();
+                    break;
+                case 'KeyM':
+                    muteBtn.click();
+                    break;
+                case 'KeyO':
+                    fileInput.click();
+                    break;
+            }
+        });
+
+    </script>
+</body>
+</html>
