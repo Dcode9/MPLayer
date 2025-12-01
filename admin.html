@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Admin Panel</title>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <style>
+        body { font-family: sans-serif; background: #111; color: #eee; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+        .container { background: #222; padding: 2rem; border-radius: 8px; width: 400px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+        h1 { margin-top: 0; color: #1db954; }
+        label { display: block; margin-bottom: 0.5rem; font-size: 0.9rem; color: #aaa; }
+        input { width: 100%; padding: 0.5rem; margin-bottom: 1rem; background: #333; border: 1px solid #444; color: white; border-radius: 4px; }
+        button { width: 100%; padding: 0.75rem; background: #1db954; color: black; border: none; font-weight: bold; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #1ed760; }
+        .status { margin-top: 1rem; text-align: center; font-size: 0.9rem; min-height: 1.2em; }
+        .success { color: #1db954; }
+        .error { color: #e91e63; }
+        hr { border: 0; border-top: 1px solid #333; margin: 1.5rem 0; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Add New Song</h1>
+    
+    <label>Song Title</label>
+    <input type="text" id="name" placeholder="e.g. Blinding Lights">
+    
+    <label>Artist</label>
+    <input type="text" id="artist" placeholder="e.g. The Weeknd">
+    
+    <label>Audio URL (Link)</label>
+    <input type="text" id="url" placeholder="https://...">
+    
+    <label>Album Art URL (Optional)</label>
+    <input type="text" id="img" placeholder="https://...">
+    
+    <button onclick="addSong()">Add to Library</button>
+    
+    <div id="status" class="status"></div>
+</div>
+
+<script>
+    let auth, db;
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app';
+
+    try {
+        if (typeof __firebase_config !== 'undefined') {
+            const config = JSON.parse(__firebase_config);
+            firebase.initializeApp(config);
+            auth = firebase.auth();
+            db = firebase.firestore();
+            
+            // Auto Login for Admin to write
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                 auth.signInWithCustomToken(__initial_auth_token);
+            } else {
+                 auth.signInAnonymously();
+            }
+        }
+    } catch (e) { console.error(e); }
+
+    async function addSong() {
+        const name = document.getElementById('name').value.trim();
+        const artist = document.getElementById('artist').value.trim();
+        const url = document.getElementById('url').value.trim();
+        const img = document.getElementById('img').value.trim();
+        const status = document.getElementById('status');
+
+        if (!name || !artist || !url) {
+            status.textContent = "Please fill in Name, Artist, and Audio URL.";
+            status.className = "status error";
+            return;
+        }
+
+        try {
+            status.textContent = "Adding...";
+            status.className = "status";
+
+            // Add to public songs collection
+            // Path: artifacts/{appId}/public/data/songs/{autoId}
+            await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('songs').add({
+                name,
+                artist,
+                url,
+                img,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            status.textContent = "Success! Song added to database.";
+            status.className = "status success";
+            
+            // Clear inputs
+            document.getElementById('name').value = '';
+            document.getElementById('artist').value = '';
+            document.getElementById('url').value = '';
+            document.getElementById('img').value = '';
+            
+        } catch (e) {
+            console.error(e);
+            status.textContent = "Error adding song: " + e.message;
+            status.className = "status error";
+        }
+    }
+</script>
+
+</body>
+</html>
