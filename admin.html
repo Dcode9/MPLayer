@@ -13,12 +13,16 @@
         label { display: block; margin-bottom: 0.5rem; font-size: 0.9rem; color: #aaa; }
         input { width: 100%; padding: 0.5rem; margin-bottom: 1rem; background: #333; border: 1px solid #444; color: white; border-radius: 4px; box-sizing: border-box; }
         
-        button { width: 100%; padding: 0.75rem; border: none; font-weight: bold; border-radius: 4px; cursor: pointer; margin-bottom: 10px; }
+        /* Button Group */
+        .btn-group { display: flex; gap: 10px; margin-bottom: 20px; }
+        button { flex: 1; padding: 0.75rem; border: none; font-weight: bold; border-radius: 4px; cursor: pointer; }
+        
         .add-btn { background: #3ecf8e; color: black; }
         .add-btn:hover { background: #34b27b; }
-        .restore-btn { background: #2196F3; color: white; }
-        .restore-btn:hover { background: #1976D2; }
         
+        .cancel-btn { background: #555; color: white; display: none; } /* Hidden by default */
+        .cancel-btn:hover { background: #666; }
+
         .status { margin-top: 1rem; text-align: center; font-size: 0.9rem; padding: 10px; border-radius: 4px; display: none; }
         .status.show { display: block; }
         .status.success { background: rgba(62, 207, 142, 0.2); color: #3ecf8e; }
@@ -30,11 +34,17 @@
 
         .song-list { margin-top: 2rem; border-top: 1px solid #333; padding-top: 1rem; }
         .song-item { display: flex; justify-content: space-between; align-items: center; background: #1a1a1a; padding: 10px; margin-bottom: 8px; border-radius: 4px; border: 1px solid #333; }
-        .song-info { font-size: 0.9rem; }
+        .song-info { font-size: 0.9rem; flex: 1; overflow: hidden; padding-right: 10px; }
         .song-title { color: white; font-weight: bold; }
         .song-artist { color: #aaa; font-size: 0.8rem; }
-        .delete-btn { background: #e91e63; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; width: auto; margin: 0; }
+        .song-url { font-size: 0.7rem; color: #555; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        .action-btns { display: flex; gap: 5px; }
+        .sm-btn { padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; width: auto; }
+        .delete-btn { background: #e91e63; color: white; }
         .delete-btn:hover { background: #c2185b; }
+        .edit-btn { background: #2196F3; color: white; }
+        .edit-btn:hover { background: #1976D2; }
     </style>
 </head>
 <body>
@@ -60,39 +70,38 @@
         <label>Album Art URL (Optional)</label>
         <input type="text" id="img" placeholder="https://...">
         
-        <button class="add-btn" onclick="addSong()">Add Song</button>
-        <button class="restore-btn" onclick="restoreDefaults()">Restore Default Songs (Bulk Add)</button>
+        <div class="btn-group">
+            <button id="submit-btn" class="add-btn" onclick="handleSubmit()">Add Song</button>
+            <button id="cancel-btn" class="cancel-btn" onclick="resetForm()">Cancel Edit</button>
+        </div>
         
         <div id="status" class="status"></div>
     </div>
 
     <div class="song-list">
-        <h3 style="color:#aaa; font-size:1rem;">Current Songs in DB</h3>
+        <h3 style="color:#aaa; font-size:1rem;">Current Songs</h3>
         <div id="library-list">Loading...</div>
     </div>
 </div>
 
 <script>
     // --- CONFIGURATION ---
-    const SUPABASE_URL = "https://nfjxvgvobkjmioniviex.supabase.co"; 
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5manh2Z3ZvYmtqbWlvbml2aWV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ1NzkyMjYsImV4cCI6MjA4MDE1NTIyNn0.mcMQ2WmMLKFvWe02PLY62eOIjeDIU8rQEkYoKc_Th1A";
-
-    // Default Songs Data
-    const DEFAULT_SONGS = [
-        { name: "APT.", artist: "Rosé & Bruno Mars", img: "https://placehold.co/300/ff69b4/fff?text=APT", url: "https://raw.githubusercontent.com/Dcode9/MPLayer/58e6474295f9ea49d0ea3f3f911cc157988b39b0/APT..m4a" },
-        { name: "Aaj Ki Raat", artist: "Stree 2", img: "https://placehold.co/300/222/fff?text=Stree+2", url: "https://raw.githubusercontent.com/Dcode9/MPLayer/58e6474295f9ea49d0ea3f3f911cc157988b39b0/Aaj%20Ki%20Raat%20.m4a" },
-        { name: "Bhool Bhulaiyaa 2", artist: "Pritam", img: "https://placehold.co/300/800000/fff?text=BB2", url: "https://raw.githubusercontent.com/Dcode9/MPLayer/58e6474295f9ea49d0ea3f3f911cc157988b39b0/Bhool%20Bhulaiyaa%202%20(Title%20Track)%20Kartik%20A%2C%20Kiara%20A%2C%20Tabu%20%20Pritam%2C%20Tanishk%2C%20Neeraj%2C%20Anees%20B%2C%20Bhushan%20K.mp3" },
-        { name: "Ek Zindagi", artist: "Soundtrack", img: "https://placehold.co/300/1e90ff/fff?text=Ek+Zindagi", url: "https://raw.githubusercontent.com/Dcode9/MPLayer/bf9d03e2173b29268840658dd69308e472b53b9a/Ek%20Zindagi.m4a" },
-        { name: "BB3 Title Track", artist: "Pritam", img: "https://placehold.co/300/8b0000/fff?text=BB3", url: "https://raw.githubusercontent.com/Dcode9/MPLayer/bf9d03e2173b29268840658dd69308e472b53b9a/BB3%20Title%20Track.m4a" },
-        { name: "Ami Je Tomar 3.0", artist: "Shreya Ghoshal", img: "https://placehold.co/300/4b0082/fff?text=Ami+Je+Tomar", url: "https://raw.githubusercontent.com/Dcode9/MPLayer/bf9d03e2173b29268840658dd69308e472b53b9a/Ami%20Je%20Tomar%203.0.m4a" },
-        { name: "Akhiyaan Gulaab", artist: "Mitraz", img: "https://placehold.co/300/ff1493/fff?text=Gulaab", url: "https://raw.githubusercontent.com/Dcode9/MPLayer/bf9d03e2173b29268840658dd69308e472b53b9a/Akhiyaan%20Gulaab.m4a" },
-        { name: "Ajab Si", artist: "KK", img: "https://placehold.co/300/000/fff?text=Om+Shanti+Om", url: "https://raw.githubusercontent.com/Dcode9/MPLayer/bf9d03e2173b29268840658dd69308e472b53b9a/Ajab%20Si.m4a" },
-        { name: "Abhi Toh Party", artist: "Badshah", img: "https://placehold.co/300/ff4500/fff?text=Party", url: "https://raw.githubusercontent.com/Dcode9/MPLayer/bf9d03e2173b29268840658dd69308e472b53b9a/Abhi%20Toh%20Party%20Shuru%20Hui%20Hai.m4a" }
-    ];
+    const SUPABASE_URL = "YOUR_SUPABASE_URL_HERE"; 
+    const SUPABASE_KEY = "YOUR_SUPABASE_ANON_KEY_HERE";
 
     let supabase;
+    let editingId = null; // Track if we are editing a song
+
     const statusEl = document.getElementById('status');
     const listEl = document.getElementById('library-list');
+    const submitBtn = document.getElementById('submit-btn');
+    const cancelBtn = document.getElementById('cancel-btn');
+
+    // Inputs
+    const inpName = document.getElementById('name');
+    const inpArtist = document.getElementById('artist');
+    const inpUrl = document.getElementById('url');
+    const inpImg = document.getElementById('img');
 
     try {
         const { createClient } = window.supabase;
@@ -111,69 +120,73 @@
         setTimeout(() => { if(type === 'success') statusEl.className = 'status'; }, 3000);
     }
 
-    // Helper: Convert bad GitHub links to good Raw links
     function fixGithubUrl(url) {
-        if (url.includes('github.com') && url.includes('/blob/')) {
-            return url.replace('github.com', 'raw.githubusercontent.com').replace('/blob/', '/');
-        }
-        if (url.includes('github.com') && url.includes('/raw/')) {
-            // Fixes the exact error you faced
-            return url.replace('github.com', 'raw.githubusercontent.com').replace('/raw/', '/'); 
-        }
+        if (url.includes('github.com') && url.includes('/blob/')) return url.replace('github.com', 'raw.githubusercontent.com').replace('/blob/', '/');
+        if (url.includes('github.com') && url.includes('/raw/')) return url.replace('github.com', 'raw.githubusercontent.com').replace('/raw/', '/'); 
         return url;
     }
 
-    async function addSong() {
-        const name = document.getElementById('name').value.trim();
-        const artist = document.getElementById('artist').value.trim();
-        let url = document.getElementById('url').value.trim();
-        const img = document.getElementById('img').value.trim();
-
-        if (!name || !artist || !url) return showStatus("Fill Name, Artist, and URL.", "error");
+    async function handleSubmit() {
         if (!supabase) return showStatus("Supabase not configured.", "error");
 
-        // Auto-fix URL
+        const name = inpName.value.trim();
+        const artist = inpArtist.value.trim();
+        let url = inpUrl.value.trim();
+        const img = inpImg.value.trim();
+
+        if (!name || !artist || !url) return showStatus("Fill Name, Artist, and URL.", "error");
+        
         url = fixGithubUrl(url);
+        showStatus(editingId ? "Updating..." : "Adding...", "loading");
 
-        showStatus("Adding...", "loading");
-
-        const { error } = await supabase.from('songs').insert([{ name, artist, url, img }]);
+        let error;
+        
+        if (editingId) {
+            // Update Existing
+            const res = await supabase.from('songs').update({ name, artist, url, img }).eq('id', editingId);
+            error = res.error;
+        } else {
+            // Create New
+            const res = await supabase.from('songs').insert([{ name, artist, url, img }]);
+            error = res.error;
+        }
 
         if (error) {
             showStatus("Error: " + error.message, "error");
         } else {
-            showStatus("Success! Song saved.", "success");
-            document.getElementById('name').value = '';
-            document.getElementById('artist').value = '';
-            document.getElementById('url').value = '';
-            document.getElementById('img').value = '';
+            showStatus(editingId ? "Updated successfully!" : "Added successfully!", "success");
+            resetForm();
             fetchSongs();
         }
     }
 
-    async function restoreDefaults() {
-        if(!supabase) return showStatus("Supabase not configured.", "error");
-        if(!confirm("This will add 9 default songs to your database. Continue?")) return;
+    function editSong(id, name, artist, url, img) {
+        editingId = id;
+        inpName.value = name;
+        inpArtist.value = artist;
+        inpUrl.value = url;
+        inpImg.value = img || '';
         
-        showStatus("Restoring defaults...", "loading");
-        
-        const { error } = await supabase.from('songs').insert(DEFAULT_SONGS);
-        
-        if (error) showStatus("Error: " + error.message, "error");
-        else {
-            showStatus("Defaults restored!", "success");
-            fetchSongs();
-        }
+        submitBtn.textContent = "Update Song";
+        cancelBtn.style.display = "block";
+        window.scrollTo(0, 0);
+    }
+
+    function resetForm() {
+        editingId = null;
+        inpName.value = '';
+        inpArtist.value = '';
+        inpUrl.value = '';
+        inpImg.value = '';
+        submitBtn.textContent = "Add Song";
+        cancelBtn.style.display = "none";
     }
 
     async function fetchSongs() {
         if(!supabase) return;
         listEl.innerHTML = '<div style="color:#666; text-align:center;">Updating list...</div>';
         
-        const { data, error } = await supabase
-            .from('songs')
-            .select('*')
-            .order('id', { ascending: false });
+        const { data, error } = await supabase.from('songs').select('*').order('id', { ascending: false });
 
         if (error) {
             listEl.innerHTML = `<div style="color:red">Error fetching list</div>`;
@@ -183,9 +196,12 @@
                     <div class="song-info">
                         <div class="song-title">${escapeHtml(song.name)}</div>
                         <div class="song-artist">${escapeHtml(song.artist)}</div>
-                        <div style="font-size:0.7rem; color:#666; overflow:hidden; text-overflow:ellipsis; max-width:200px;">${escapeHtml(song.url)}</div>
+                        <div class="song-url">${escapeHtml(song.url)}</div>
                     </div>
-                    <button class="delete-btn" onclick="deleteSong(${song.id})">Delete</button>
+                    <div class="action-btns">
+                        <button class="sm-btn edit-btn" onclick="editSong(${song.id}, '${escapeHtmlAttr(song.name)}', '${escapeHtmlAttr(song.artist)}', '${escapeHtmlAttr(song.url)}', '${escapeHtmlAttr(song.img)}')">Edit</button>
+                        <button class="sm-btn delete-btn" onclick="deleteSong(${song.id})">Del</button>
+                    </div>
                 </div>
             `).join('');
         } else {
@@ -203,6 +219,11 @@
     function escapeHtml(text) {
         if(!text) return "";
         return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+    
+    function escapeHtmlAttr(text) {
+        if(!text) return "";
+        return text.replace(/'/g, "\\'").replace(/"/g, "&quot;");
     }
 </script>
 
