@@ -4,170 +4,160 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Music Admin Panel</title>
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: sans-serif; background: #111; color: #eee; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
-        .container { background: #222; padding: 2rem; border-radius: 8px; width: 400px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
-        h1 { margin-top: 0; color: #1db954; }
+        body { font-family: sans-serif; background: #111; color: #eee; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
+        .container { background: #222; padding: 2rem; border-radius: 8px; width: 100%; max-width: 500px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+        h1 { margin-top: 0; color: #3ecf8e; text-align: center; }
         label { display: block; margin-bottom: 0.5rem; font-size: 0.9rem; color: #aaa; }
-        input { width: 100%; padding: 0.5rem; margin-bottom: 1rem; background: #333; border: 1px solid #444; color: white; border-radius: 4px; }
-        button { width: 100%; padding: 0.75rem; background: #1db954; color: black; border: none; font-weight: bold; border-radius: 4px; cursor: pointer; }
-        button:hover { background: #1ed760; }
-        .status { margin-top: 1rem; text-align: center; font-size: 0.9rem; min-height: 1.2em; }
-        .success { color: #1db954; }
-        .error { color: #e91e63; }
-        hr { border: 0; border-top: 1px solid #333; margin: 1.5rem 0; }
-        .warning-banner { background: #ff9800; color: black; padding: 10px; margin-bottom: 15px; border-radius: 4px; font-size: 0.8rem; display: none; }
+        input { width: 100%; padding: 0.5rem; margin-bottom: 1rem; background: #333; border: 1px solid #444; color: white; border-radius: 4px; box-sizing: border-box; }
+        button.add-btn { width: 100%; padding: 0.75rem; background: #3ecf8e; color: black; border: none; font-weight: bold; border-radius: 4px; cursor: pointer; }
+        button.add-btn:hover { background: #34b27b; }
+        
+        .status { margin-top: 1rem; text-align: center; font-size: 0.9rem; padding: 10px; border-radius: 4px; display: none; }
+        .status.show { display: block; }
+        .status.success { background: rgba(62, 207, 142, 0.2); color: #3ecf8e; }
+        .status.error { background: rgba(233, 30, 99, 0.2); color: #e91e63; }
+        
+        .connection-bar { margin-bottom: 20px; padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: bold; display: flex; align-items: center; gap: 8px; background: #333; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; background: #555; }
+        .dot.green { background: #00ff00; box-shadow: 0 0 5px #00ff00; }
+
+        /* Song List Styles */
+        .song-list { margin-top: 2rem; border-top: 1px solid #333; padding-top: 1rem; }
+        .song-item { display: flex; justify-content: space-between; align-items: center; background: #1a1a1a; padding: 10px; margin-bottom: 8px; border-radius: 4px; border: 1px solid #333; }
+        .song-info { font-size: 0.9rem; }
+        .song-title { color: white; font-weight: bold; }
+        .song-artist { color: #aaa; font-size: 0.8rem; }
+        .delete-btn { background: #e91e63; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
+        .delete-btn:hover { background: #c2185b; }
     </style>
 </head>
 <body>
 
+<div class="connection-bar">
+    <div id="conn-dot" class="dot green"></div>
+    <span id="conn-text">Using Supabase (Free Tier)</span>
+</div>
+
 <div class="container">
-    <div id="config-warning" class="warning-banner">
-        <strong>Config Missing:</strong> You are running this file locally. You must paste your Firebase Config in the code to make it work.
+    <h1>Manage Library</h1>
+    
+    <div id="add-form">
+        <label>Song Title</label>
+        <input type="text" id="name" placeholder="e.g. Blinding Lights">
+        
+        <label>Artist</label>
+        <input type="text" id="artist" placeholder="e.g. The Weeknd">
+        
+        <label>Audio URL (Link)</label>
+        <input type="text" id="url" placeholder="https://...">
+        
+        <label>Album Art URL (Optional)</label>
+        <input type="text" id="img" placeholder="https://...">
+        
+        <button class="add-btn" onclick="addSong()">Add Song</button>
+        <div id="status" class="status"></div>
     </div>
 
-    <h1>Add New Song</h1>
-    
-    <label>Song Title</label>
-    <input type="text" id="name" placeholder="e.g. Blinding Lights">
-    
-    <label>Artist</label>
-    <input type="text" id="artist" placeholder="e.g. The Weeknd">
-    
-    <label>Audio URL (Link)</label>
-    <input type="text" id="url" placeholder="https://...">
-    
-    <label>Album Art URL (Optional)</label>
-    <input type="text" id="img" placeholder="https://...">
-    
-    <button onclick="addSong()">Add to Library</button>
-    
-    <div id="status" class="status"></div>
+    <div class="song-list">
+        <h3 style="color:#aaa; font-size:1rem;">Current Songs</h3>
+        <div id="library-list">Loading...</div>
+    </div>
 </div>
 
 <script>
-    let auth, db;
-    // We default to a generic app id if not in the specialized environment
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'music-player-default';
+    // --- CONFIGURATION ---
+    const SUPABASE_URL = "https://nfjxvgvobkjmioniviex.supabase.co"; 
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5manh2Z3ZvYmtqbWlvbml2aWV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ1NzkyMjYsImV4cCI6MjA4MDE1NTIyNn0.mcMQ2WmMLKFvWe02PLY62eOIjeDIU8rQEkYoKc_Th1A";
 
-    // Initialize Firebase
-    function initFirebase() {
-        try {
-            // 1. Check for Environment Variable (Chat Preview)
-            if (typeof __firebase_config !== 'undefined') {
-                const config = JSON.parse(__firebase_config);
-                if (!firebase.apps.length) firebase.initializeApp(config);
-                auth = firebase.auth();
-                db = firebase.firestore();
-                
-                // Auto Login
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                     auth.signInWithCustomToken(__initial_auth_token);
-                } else {
-                     auth.signInAnonymously();
-                }
-            } 
-            // 2. Check for Manual Config (Local File Usage)
-            else {
-                // --- PASTE YOUR FIREBASE CONFIG HERE IF RUNNING LOCALLY ---
-                const firebaseConfig = {
-                    apiKey: "AIzaSyCLQYTa2R9UYIE-jD5c6eG7Izg6CsUMpuw",
-                    authDomain: "musicplayer-81ed9.firebaseapp.com",
-                    projectId: "musicplayer-81ed9",
-                    storageBucket: "musicplayer-81ed9.firebasestorage.app",
-                    messagingSenderId: "740998918130",
-                    appId: "1:740998918130:web:fc1c8614724b3217c5456b"
-                };
-                
-                if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-                auth = firebase.auth();
-                db = firebase.firestore();
-                
-                // Attempt Anonymous Auth with visual error handling
-                auth.signInAnonymously().catch(e => {
-                    console.error("Anon Auth Failed", e);
-                    const status = document.getElementById('status');
-                    status.className = "status error";
-                    
-                    if (e.code === 'auth/configuration-not-found' || e.code === 'auth/operation-not-allowed') {
-                        status.textContent = "Error: Anonymous Auth Disabled.";
-                        alert("ACTION REQUIRED: You must enable 'Anonymous' in your Firebase Console -> Authentication -> Sign-in method.");
-                    } else {
-                        status.textContent = "Auth Error: " + e.message;
-                    }
-                });
-                
-                // If still undefined, warn user
-                if (!db) {
-                    document.getElementById('config-warning').style.display = 'block';
-                    console.warn("Firebase config not found. Please edit the file to add it.");
-                }
-            }
-        } catch (e) { console.error("Init Error:", e); }
+    let supabase;
+    const statusEl = document.getElementById('status');
+    const listEl = document.getElementById('library-list');
+
+    // Init
+    try {
+        const { createClient } = window.supabase;
+        if (SUPABASE_URL.includes("YOUR_")) {
+            showStatus("Config Missing: Edit file and paste keys.", "error");
+        } else {
+            supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+            console.log("Supabase Initialized");
+            fetchSongs(); // Load list on start
+        }
+    } catch(e) { console.error(e); }
+
+    function showStatus(msg, type) {
+        statusEl.textContent = msg;
+        statusEl.className = `status show ${type}`;
+        setTimeout(() => { if(type === 'success') statusEl.className = 'status'; }, 3000);
     }
-
-    initFirebase();
 
     async function addSong() {
         const name = document.getElementById('name').value.trim();
         const artist = document.getElementById('artist').value.trim();
         const url = document.getElementById('url').value.trim();
         const img = document.getElementById('img').value.trim();
-        const status = document.getElementById('status');
 
-        // Robust Check: Is DB initialized?
-        if (!db) {
-            status.textContent = "Error: Database not connected. Check Config.";
-            status.className = "status error";
-            return;
-        }
-        
-        // Robust Check: Is User Authenticated?
-        if (!auth.currentUser) {
-            status.textContent = "Error: Not Authenticated. Check Console.";
-            status.className = "status error";
-            alert("You are not logged in. Please ensure Anonymous Auth is enabled in Firebase Console.");
-            return;
-        }
+        if (!name || !artist || !url) return showStatus("Fill Name, Artist, and URL.", "error");
+        if (!supabase) return showStatus("Supabase not configured.", "error");
 
-        if (!name || !artist || !url) {
-            status.textContent = "Please fill in Name, Artist, and Audio URL.";
-            status.className = "status error";
-            return;
-        }
+        showStatus("Adding...", "loading");
 
-        try {
-            status.textContent = "Adding...";
-            status.className = "status";
+        const { error } = await supabase.from('songs').insert([{ name, artist, url, img }]);
 
-            // Add to public songs collection
-            // Path: artifacts/{appId}/public/data/songs/{autoId}
-            await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('songs').add({
-                name,
-                artist,
-                url,
-                img,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-
-            status.textContent = "Success! Song added to database.";
-            status.className = "status success";
-            
+        if (error) {
+            showStatus("Error: " + error.message, "error");
+        } else {
+            showStatus("Success! Song saved.", "success");
             // Clear inputs
             document.getElementById('name').value = '';
             document.getElementById('artist').value = '';
             document.getElementById('url').value = '';
             document.getElementById('img').value = '';
-            
-        } catch (e) {
-            console.error(e);
-            status.textContent = "Error adding song: " + e.message;
-            status.className = "status error";
+            fetchSongs(); // Refresh list
         }
+    }
+
+    async function fetchSongs() {
+        if(!supabase) return;
+        listEl.innerHTML = '<div style="color:#666; text-align:center;">Updating list...</div>';
+        
+        const { data, error } = await supabase
+            .from('songs')
+            .select('*')
+            .order('id', { ascending: false }); // Newest first
+
+        if (error) {
+            listEl.innerHTML = `<div style="color:red">Error fetching list</div>`;
+        } else if (data && data.length > 0) {
+            listEl.innerHTML = data.map(song => `
+                <div class="song-item">
+                    <div class="song-info">
+                        <div class="song-title">${escapeHtml(song.name)}</div>
+                        <div class="song-artist">${escapeHtml(song.artist)}</div>
+                    </div>
+                    <button class="delete-btn" onclick="deleteSong(${song.id})">Delete</button>
+                </div>
+            `).join('');
+        } else {
+            listEl.innerHTML = '<div style="color:#666; text-align:center;">Library is empty.</div>';
+        }
+    }
+
+    async function deleteSong(id) {
+        if(!confirm("Delete this song?")) return;
+        
+        const { error } = await supabase.from('songs').delete().eq('id', id);
+        
+        if (error) showStatus("Delete failed: " + error.message, "error");
+        else fetchSongs();
+    }
+
+    function escapeHtml(text) {
+        if(!text) return "";
+        return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
     }
 </script>
 
