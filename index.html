@@ -4,10 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cloud Music Player</title>
-    <!-- Firebase SDKs (Compat version for broader support) -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
         :root {
@@ -16,8 +14,7 @@
             --surface-hover: #282828;
             --text-primary: #ffffff;
             --text-secondary: #b3b3b3;
-            --accent-color: #1db954;
-            --error-color: #e91e63;
+            --accent-color: #3ecf8e; /* Supabase Green */
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
@@ -32,154 +29,75 @@
             overflow: hidden;
         }
 
-        /* --- UI Components --- */
-        button { cursor: pointer; border: none; background: none; color: inherit; font-family: inherit; }
-        
-        /* Sidebar */
+        /* --- Sidebar --- */
         #nav-panel {
-            width: 240px;
-            background: #000;
-            display: flex;
-            flex-direction: column;
-            padding: 24px;
-            gap: 24px;
-            flex-shrink: 0;
+            width: 240px; background: #000; display: flex; flex-direction: column; padding: 24px; gap: 24px; flex-shrink: 0;
         }
-
-        .logo {
-            font-size: 24px; font-weight: 700; display: flex; align-items: center; gap: 8px; color: white;
-        }
-
+        .logo { font-size: 24px; font-weight: 700; display: flex; align-items: center; gap: 8px; color: white; }
         .nav-btn {
-            display: flex; align-items: center; gap: 16px; 
-            padding: 10px 16px; border-radius: 4px;
-            color: var(--text-secondary); font-weight: 700; font-size: 14px;
-            transition: 0.2s;
+            display: flex; align-items: center; gap: 16px; padding: 10px 16px; border-radius: 4px;
+            color: var(--text-secondary); font-weight: 700; font-size: 14px; transition: 0.2s; cursor: pointer;
         }
         .nav-btn:hover, .nav-btn.active { color: white; background: var(--surface-hover); }
         .nav-btn svg { width: 24px; height: 24px; fill: currentColor; }
 
-        /* Auth Button */
-        #auth-section { margin-top: auto; }
-        .google-btn {
-            background: white; color: black; font-weight: 700; border-radius: 500px;
-            padding: 12px 24px; display: flex; align-items: center; justify-content: center; gap: 10px;
-            width: 100%; font-size: 14px; transition: transform 0.1s;
-        }
-        .google-btn:hover { transform: scale(1.02); }
-        .google-btn:active { transform: scale(0.98); }
-
-        /* Main Content */
+        /* --- Main Content --- */
         #main-view {
-            flex: 1;
-            background: linear-gradient(180deg, #222 0%, #121212 40%);
-            overflow-y: auto;
-            position: relative;
-            padding: 24px 32px;
-            padding-bottom: 120px; /* Space for footer */
+            flex: 1; background: linear-gradient(180deg, #222 0%, #121212 40%);
+            overflow-y: auto; position: relative; padding: 24px 32px; padding-bottom: 120px;
         }
-        
         h2 { font-size: 24px; font-weight: 700; margin-bottom: 20px; color: white; }
 
-        /* Grids */
-        .card-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 24px;
-            margin-bottom: 40px;
-        }
-
+        /* Cards */
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 24px; margin-bottom: 40px; }
         .music-card {
-            background: #181818; padding: 16px; border-radius: 8px;
-            transition: background 0.3s; cursor: pointer;
+            background: #181818; padding: 16px; border-radius: 8px; transition: background 0.3s; cursor: pointer;
             position: relative; display: flex; flex-direction: column; gap: 12px;
         }
         .music-card:hover { background: #282828; }
-        
         .card-img-wrap {
-            width: 100%; aspect-ratio: 1; border-radius: 4px; overflow: hidden;
-            background: #333; position: relative; box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            width: 100%; aspect-ratio: 1; border-radius: 4px; overflow: hidden; background: #333; position: relative;
         }
         .card-img-wrap img { width: 100%; height: 100%; object-fit: cover; }
         
-        .play-overlay {
-            position: absolute; bottom: 8px; right: 8px;
-            width: 48px; height: 48px; border-radius: 50%;
-            background: var(--accent-color); color: black;
-            display: flex; align-items: center; justify-content: center;
-            opacity: 0; transform: translateY(8px); transition: all 0.3s;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
-        }
-        .music-card:hover .play-overlay { opacity: 1; transform: translateY(0); }
-
-        .card-title { font-weight: 700; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .card-sub { font-size: 14px; color: var(--text-secondary); line-height: 1.4; }
-
-        /* List View */
+        /* List Rows */
         .track-row {
-            display: grid; grid-template-columns: 40px 1fr 120px; align-items: center;
-            padding: 10px 16px; border-radius: 4px; color: var(--text-secondary);
+            display: grid; grid-template-columns: 40px 1fr 120px; align-items: center; padding: 10px 16px; border-radius: 4px; color: var(--text-secondary); cursor: pointer;
         }
         .track-row:hover { background: hsla(0,0%,100%,.1); }
         .track-row.active { color: var(--accent-color); }
-        .track-info { display: flex; flex-direction: column; }
         .track-title { color: white; font-size: 16px; margin-bottom: 4px; }
         .track-row.active .track-title { color: var(--accent-color); }
-        
-        /* Player Footer */
-        #player-footer {
-            position: fixed; bottom: 0; left: 0; right: 0;
-            height: 90px; background: #181818; border-top: 1px solid #282828;
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 0 16px; z-index: 100;
-        }
 
+        /* --- Footer Player --- */
+        #player-footer {
+            position: fixed; bottom: 0; left: 0; right: 0; height: 90px; background: #181818; border-top: 1px solid #282828;
+            display: flex; align-items: center; justify-content: space-between; padding: 0 16px; z-index: 100;
+        }
         .footer-left { width: 30%; display: flex; align-items: center; gap: 14px; }
-        .current-art { width: 56px; height: 56px; background: #333; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+        .current-art { width: 56px; height: 56px; background: #333; border-radius: 4px; overflow: hidden; }
+        .current-art img { width: 100%; height: 100%; object-fit: cover; }
         
         .footer-center { width: 40%; display: flex; flex-direction: column; align-items: center; gap: 8px; }
         .player-controls { display: flex; gap: 16px; align-items: center; }
-        .ctrl-btn { color: #b3b3b3; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; }
+        .ctrl-btn { color: #b3b3b3; background: none; border: none; width: 32px; height: 32px; cursor: pointer; }
         .ctrl-btn:hover { color: white; }
-        .ctrl-btn.main { background: white; color: black; border-radius: 50%; width: 32px; height: 32px; transform: scale(1); transition: transform 0.1s; }
-        .ctrl-btn.main:hover { transform: scale(1.06); }
+        .ctrl-btn.main { background: white; color: black; border-radius: 50%; transform: scale(1); }
         
         .progress-bar-area { width: 100%; display: flex; align-items: center; gap: 8px; font-size: 11px; color: #a7a7a7; }
         .progress-rail { flex: 1; height: 4px; background: #4d4d4d; border-radius: 2px; position: relative; cursor: pointer; }
-        .progress-rail:hover .progress-fill { background: var(--accent-color); }
         .progress-fill { height: 100%; background: white; border-radius: 2px; width: 0%; }
 
         .footer-right { width: 30%; display: flex; justify-content: flex-end; align-items: center; }
         
-        /* Utils */
         .hidden { display: none !important; }
         .view-section { display: none; }
         .view-section.active { display: block; }
 
-        /* Setup Modal */
-        #setup-modal {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.8); z-index: 1000;
-            display: none; align-items: center; justify-content: center;
-        }
-        .modal-content {
-            background: #242424; padding: 32px; border-radius: 8px; max-width: 500px; color: #ccc;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-        }
-        .modal-content h3 { color: white; margin-bottom: 16px; }
-        .modal-content ol { margin-left: 20px; margin-bottom: 20px; line-height: 1.6; }
-        .code-block { background: #111; padding: 10px; font-family: monospace; font-size: 12px; border-radius: 4px; color: var(--accent-color); }
+        /* Visualizer Canvas */
+        #visualizer { position: absolute; bottom: 0; left: 0; width: 100%; height: 200px; pointer-events: none; opacity: 0.15; z-index: 0; }
 
-        #visualizer {
-            position: absolute; bottom: 0; left: 0; width: 100%; height: 200px;
-            pointer-events: none; opacity: 0.1; z-index: 0;
-        }
-
-        /* Mobile */
-        @media (max-width: 768px) {
-            #nav-panel { display: none; }
-            #main-view { padding: 16px; }
-        }
+        @media (max-width: 768px) { #nav-panel { display: none; } #main-view { padding: 16px; } }
     </style>
 </head>
 <body>
@@ -193,33 +111,11 @@
             </div>
             
             <div style="flex:1; display:flex; flex-direction:column; gap:8px;">
-                <button class="nav-btn active" onclick="router.go('home')">
-                    <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-                    Home
-                </button>
-                <button class="nav-btn" onclick="router.go('library')">
-                    <svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12z"/></svg>
-                    Library
-                </button>
-                <button class="nav-btn" onclick="router.go('liked')">
-                    <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                    Liked Songs
-                </button>
+                <button class="nav-btn active" onclick="router.go('home')">Home</button>
+                <button class="nav-btn" onclick="router.go('library')">Library</button>
+                <button class="nav-btn" onclick="router.go('liked')">Liked Songs</button>
             </div>
-
-            <div id="auth-section">
-                <!-- Google Sign In Button -->
-                <button id="google-sign-in" class="google-btn" onclick="authManager.signIn()">
-                    <svg viewBox="0 0 24 24" width="18" height="18"><path d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/></svg>
-                    Sign in with Google
-                </button>
-                <div id="user-display" class="hidden" style="display:flex; align-items:center; gap:10px;">
-                    <div id="user-avatar" style="width:32px; height:32px; border-radius:50%; background:orange; display:flex; align-items:center; justify-content:center; font-weight:bold;">U</div>
-                    <span id="user-name" style="font-size:14px; font-weight:700;">User</span>
-                    <button onclick="authManager.signOut()" style="font-size:11px; text-decoration:underline; color:#999; margin-left:auto;">Logout</button>
-                </div>
-                <button onclick="document.getElementById('setup-modal').style.display='flex'" style="margin-top:10px; font-size:11px; color:#666; width:100%;">Config Help</button>
-            </div>
+            <div style="font-size:11px; color:#555;">Powered by Supabase</div>
         </div>
 
         <!-- Main -->
@@ -227,15 +123,15 @@
             <canvas id="visualizer"></canvas>
 
             <div id="view-home" class="view-section active">
-                <h2>Recommended for You</h2>
-                <div class="card-grid" id="rec-grid"></div>
-                <h2>Recently Played</h2>
+                <h2>Recommended</h2>
+                <div class="card-grid" id="rec-grid">Loading...</div>
+                <h2>Recent</h2>
                 <div class="card-grid" id="recent-grid"></div>
             </div>
 
             <div id="view-library" class="view-section">
                 <h2>Full Library</h2>
-                <div id="lib-list"></div>
+                <div id="lib-list">Loading...</div>
             </div>
 
             <div id="view-liked" class="view-section">
@@ -248,26 +144,21 @@
     <!-- Footer -->
     <div id="player-footer">
         <div class="footer-left">
-            <div class="current-art">
-                <svg viewBox="0 0 24 24" fill="white" width="24"><path d="M12 3v9.28c-.47-.17-.97-.28-1.5-.28C8.01 12 6 14.01 6 16.5S8.01 21 10.5 21c2.31 0 4.2-1.75 4.45-4H15V6h4V3h-7z"/></svg>
-            </div>
-            <div style="display:flex; flex-direction:column; justify-content:center;">
+            <div class="current-art" id="curr-art-img"></div>
+            <div style="display:flex; flex-direction:column; margin-left:14px;">
                 <div id="p-title" style="color:white; font-size:14px; font-weight:600;">Not Playing</div>
                 <div id="p-artist" style="color:#b3b3b3; font-size:11px;">--</div>
             </div>
-            <button onclick="player.toggleLike()" id="p-like-btn" style="margin-left:12px; color:#b3b3b3;">
-                <svg viewBox="0 0 24 24" width="16" height="16"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-            </button>
+            <button onclick="player.toggleLike()" id="p-like-btn" class="ctrl-btn" style="margin-left:12px;">❤</button>
         </div>
 
         <div class="footer-center">
             <div class="player-controls">
-                <button class="ctrl-btn" onclick="player.prev()"><svg viewBox="0 0 24 24" width="20"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
+                <button class="ctrl-btn" onclick="player.prev()">⏮</button>
                 <button class="ctrl-btn main" onclick="player.togglePlay()">
-                    <svg id="icon-play" viewBox="0 0 24 24" width="20"><path d="M8 5v14l11-7z"/></svg>
-                    <svg id="icon-pause" viewBox="0 0 24 24" width="20" class="hidden"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                    <span id="icon-play">▶</span><span id="icon-pause" class="hidden">⏸</span>
                 </button>
-                <button class="ctrl-btn" onclick="player.next()"><svg viewBox="0 0 24 24" width="20"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
+                <button class="ctrl-btn" onclick="player.next()">⏭</button>
             </div>
             <div class="progress-bar-area">
                 <span id="curr-time">0:00</span>
@@ -279,350 +170,123 @@
         </div>
 
         <div class="footer-right">
-            <input type="range" min="0" max="1" step="0.05" oninput="player.setVolume(this.value)" style="width:80px;">
+            <input type="range" min="0" max="1" step="0.05" oninput="audio.volume=this.value" style="width:80px;">
         </div>
     </div>
 
-    <!-- Audio Element (Crossorigin crucial for Visualizer) -->
     <video id="audio-el" crossorigin="anonymous" style="display:none;"></video>
 
-    <!-- Help Modal -->
-    <div id="setup-modal">
-        <div class="modal-content">
-            <h3>How to Enable Google Sign-In</h3>
-            <p>To make the "Sign In with Google" button work on your real website:</p>
-            <ol>
-                <li>Go to the <a href="https://console.firebase.google.com" target="_blank" style="color:white">Firebase Console</a>.</li>
-                <li>Select your project -> <strong>Authentication</strong> -> <strong>Sign-in method</strong>.</li>
-                <li>Click <strong>Add new provider</strong> -> <strong>Google</strong>.</li>
-                <li>Enable it and save.</li>
-                <li>Ensure your domain is in <strong>Authorized domains</strong>.</li>
-            </ol>
-            <p>Then, in this code, look for <code>authManager.signIn()</code> and uncomment the Google Auth Provider lines.</p>
-            <div style="text-align:right; margin-top:20px;">
-                <button onclick="document.getElementById('setup-modal').style.display='none'" style="background:white; color:black; padding:8px 16px; border-radius:20px; font-weight:bold;">Got it</button>
-            </div>
-        </div>
-    </div>
-
     <script>
-        // --- CONSTANTS ---
-        const BASE_OLD = "https://raw.githubusercontent.com/Dcode9/MPLayer/58e6474295f9ea49d0ea3f3f911cc157988b39b0/";
-        const BASE_NEW = "https://raw.githubusercontent.com/Dcode9/MPLayer/bf9d03e2173b29268840658dd69308e472b53b9a/";
+        // --- CONFIGURATION ---
+        const SUPABASE_URL = "https://nfjxvgvobkjmioniviex.supabase.co"; 
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5manh2Z3ZvYmtqbWlvbml2aWV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ1NzkyMjYsImV4cCI6MjA4MDE1NTIyNn0.mcMQ2WmMLKFvWe02PLY62eOIjeDIU8rQEkYoKc_Th1A";
 
-        const LIBRARY = [
-            { id: '1', name: "APT.", artist: "Rosé & Bruno Mars", img: "", url: BASE_OLD + "APT..m4a" },
-            { id: '2', name: "Aaj Ki Raat", artist: "Stree 2", img: "", url: BASE_OLD + "Aaj%20Ki%20Raat%20.m4a" },
-            { id: '3', name: "Bhool Bhulaiyaa 2", artist: "Pritam", img: "", url: BASE_OLD + "Bhool%20Bhulaiyaa%202%20(Title%20Track)%20Kartik%20A%2C%20Kiara%20A%2C%20Tabu%20%20Pritam%2C%20Tanishk%2C%20Neeraj%2C%20Anees%20B%2C%20Bhushan%20K.mp3" },
-            { id: '4', name: "Ek Zindagi", artist: "Soundtrack", img: "", url: BASE_NEW + "Ek%20Zindagi.m4a" },
-            { id: '5', name: "BB3 Title Track", artist: "Pritam", img: "", url: BASE_NEW + "BB3%20Title%20Track.m4a" },
-            { id: '6', name: "Ami Je Tomar 3.0", artist: "Shreya Ghoshal", img: "", url: BASE_NEW + "Ami%20Je%20Tomar%203.0.m4a" },
-            { id: '7', name: "Akhiyaan Gulaab", artist: "Mitraz", img: "", url: BASE_NEW + "Akhiyaan%20Gulaab.m4a" },
-            { id: '8', name: "Ajab Si", artist: "KK", img: "", url: BASE_NEW + "Ajab%20Si.m4a" },
-            { id: '9', name: "Abhi Toh Party", artist: "Badshah", img: "", url: BASE_NEW + "Abhi%20Toh%20Party%20Shuru%20Hui%20Hai.m4a" }
+        // Hardcoded fallbacks if DB is empty
+        const FALLBACK_LIB = [
+            { id: 999, name: "Demo Song", artist: "Unknown", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3", img: "" }
         ];
 
-        // --- APP STATE ---
+        let LIBRARY = [];
+        let supabase;
+
+        // State
         const state = {
-            queue: [...LIBRARY],
+            queue: [],
             idx: -1,
             playing: false,
-            user: null,
-            likedIds: [], // Synced with DB or LocalStorage
-            isOfflineMode: false // Fallback if Firebase fails
+            likedIds: JSON.parse(localStorage.getItem('likedIds') || '[]')
         };
 
-        // --- AUTH & FIREBASE ---
-        let auth, db;
-        
-        try {
-            if (typeof __firebase_config !== 'undefined') {
-                const config = JSON.parse(__firebase_config);
-                firebase.initializeApp(config);
-                auth = firebase.auth();
-                db = firebase.firestore();
-            } else {
-                throw new Error("No Config");
-            }
-        } catch (e) {
-            console.warn("Firebase Init Failed. Using Offline Mode.");
-            state.isOfflineMode = true;
+        // --- INIT ---
+        function init() {
+            try {
+                const { createClient } = window.supabase;
+                if (!SUPABASE_URL.includes("YOUR_")) {
+                    supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+                    fetchSongs();
+                } else {
+                    console.warn("Supabase Keys missing in index.html");
+                    LIBRARY = FALLBACK_LIB;
+                    ui.render();
+                }
+            } catch(e) { console.error(e); }
+            
+            ui.initListeners();
+            ui.updateLikeBtn(); // Init visual state
         }
 
-        const authManager = {
-            init: async () => {
-                if (state.isOfflineMode) return;
-
-                auth.onAuthStateChanged(user => {
-                    if (user) {
-                        state.user = user;
-                        ui.updateAuthUI(user);
-                        dataManager.sync();
-                    } else {
-                        state.user = null;
-                        ui.updateAuthUI(null);
-                        // If no user, we check for guest token or fallback
-                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                            auth.signInWithCustomToken(__initial_auth_token).catch(e => console.log("Guest login failed"));
-                        } else {
-                            // In this specific preview env, we often need anonymous
-                            auth.signInAnonymously().catch(e => console.log("Anon login failed"));
-                        }
-                    }
-                });
-            },
-
-            signIn: async () => {
-                if (state.isOfflineMode) {
-                    alert("App is in offline mode (No Firebase config).");
-                    return;
-                }
-                
-                // --- GOOGLE SIGN IN CODE START ---
-                // To enable this in production:
-                // 1. Uncomment the lines below
-                // 2. Ensure Google Provider is enabled in Firebase Console
-                
-                /*
-                const provider = new firebase.auth.GoogleAuthProvider();
-                try {
-                    await auth.signInWithPopup(provider);
-                } catch (error) {
-                    console.error("Google Sign In Error", error);
-                    alert("Sign In Error: " + error.message);
-                }
-                */
-                // --- GOOGLE SIGN IN CODE END ---
-
-                // For THIS preview environment, we simulate a login visually
-                // because we cannot open popups in this iframe.
-                alert("In this preview, we simulate Google Sign-In. Check the 'Config Help' button for production code.");
-                const fakeUser = { displayName: "Demo User", email: "demo@gmail.com", uid: "demo123" };
-                state.user = fakeUser;
-                ui.updateAuthUI(fakeUser);
-            },
-
-            signOut: () => {
-                if (!state.isOfflineMode) auth.signOut();
-                state.user = null;
-                ui.updateAuthUI(null);
-                state.likedIds = []; // Clear user data
-                ui.renderViews();
+        async function fetchSongs() {
+            const { data, error } = await supabase.from('songs').select('*').order('id', {ascending: false});
+            if (data && data.length > 0) {
+                LIBRARY = data;
+            } else {
+                LIBRARY = FALLBACK_LIB;
             }
-        };
+            state.queue = [...LIBRARY];
+            ui.render();
+        }
 
-        // --- DATA MANAGER (Robust Fallbacks) ---
-        const dataManager = {
-            sync: () => {
-                if (state.isOfflineMode || !state.user || !db) return;
-                
-                // Using the prompt's mandated path structure
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app';
-                const docRef = db.collection('artifacts').doc(appId).collection('users').doc(state.user.uid).collection('data').doc('music');
-
-                docRef.onSnapshot((doc) => {
-                    if (doc.exists) {
-                        const data = doc.data();
-                        state.likedIds = data.likedIds || [];
-                        ui.renderViews(); // Re-render to show hearts
-                        ui.updateLikeBtn();
-                    }
-                }, (err) => {
-                    console.log("Sync error (using local)", err);
-                });
-            },
-
-            toggleLike: (id) => {
-                const idx = state.likedIds.indexOf(id);
-                if (idx === -1) state.likedIds.push(id);
-                else state.likedIds.splice(idx, 1);
-
-                ui.updateLikeBtn();
-                ui.renderViews(); // Update lists
-
-                // Save
-                if (state.isOfflineMode || !state.user || !db) {
-                    // LocalStorage fallback could go here
-                } else {
-                    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app';
-                    const docRef = db.collection('artifacts').doc(appId).collection('users').doc(state.user.uid).collection('data').doc('music');
-                    docRef.set({ likedIds: state.likedIds }, { merge: true });
-                }
-            }
-        };
-
-        // --- AUDIO PLAYER ---
+        // --- PLAYER ---
         const audio = document.getElementById('audio-el');
         const player = {
             playTrack: (index) => {
-                try {
-                    state.idx = index;
-                    const track = state.queue[index];
-                    audio.src = track.url;
-                    
-                    // Promise handling for robustness
-                    const playPromise = audio.play();
-                    if (playPromise !== undefined) {
-                        playPromise
-                            .then(() => {
-                                state.playing = true;
-                                ui.updatePlayerUI();
-                                ui.updateLikeBtn();
-                                viz.start(); // Start visualizer only on success
-                            })
-                            .catch(error => {
-                                console.error("Playback failed:", error);
-                                state.playing = false;
-                                ui.updatePlayerUI();
-                            });
-                    }
-                    
-                    document.getElementById('p-title').textContent = track.name;
-                    document.getElementById('p-artist').textContent = track.artist;
-                } catch (e) {
-                    console.error("Critical Player Error", e);
-                }
-            },
+                state.idx = index;
+                const track = LIBRARY[index];
+                if(!track) return;
 
-            togglePlay: () => {
-                if (state.idx === -1) {
-                    player.playTrack(0);
-                    return;
-                }
-                if (state.playing) {
-                    audio.pause();
-                    state.playing = false;
-                } else {
-                    audio.play();
+                audio.src = track.url;
+                audio.play().then(() => {
                     state.playing = true;
+                    ui.updatePlayBtn();
                     viz.start();
-                }
-                ui.updatePlayerUI();
-            },
+                }).catch(console.error);
 
+                document.getElementById('p-title').textContent = track.name;
+                document.getElementById('p-artist').textContent = track.artist;
+                
+                // Update Art
+                const artDiv = document.getElementById('curr-art-img');
+                if (track.img) artDiv.innerHTML = `<img src="${track.img}">`;
+                else artDiv.innerHTML = `<div style="width:100%;height:100%;background:#333;"></div>`;
+                
+                ui.updateLikeBtn();
+            },
+            togglePlay: () => {
+                if(state.idx === -1) { player.playTrack(0); return; }
+                if(state.playing) { audio.pause(); state.playing = false; }
+                else { audio.play(); state.playing = true; viz.start(); }
+                ui.updatePlayBtn();
+            },
             next: () => {
                 let next = state.idx + 1;
-                if (next >= state.queue.length) next = 0;
+                if(next >= LIBRARY.length) next = 0;
                 player.playTrack(next);
             },
-
             prev: () => {
                 let prev = state.idx - 1;
-                if (prev < 0) prev = state.queue.length - 1;
+                if(prev < 0) prev = LIBRARY.length - 1;
                 player.playTrack(prev);
             },
-
-            setVolume: (val) => {
-                audio.volume = val;
-            },
-            
             toggleLike: () => {
                 if(state.idx === -1) return;
-                const track = state.queue[state.idx];
-                dataManager.toggleLike(track.id);
+                const id = LIBRARY[state.idx].id;
+                const index = state.likedIds.indexOf(id);
+                if(index === -1) state.likedIds.push(id);
+                else state.likedIds.splice(index, 1);
+                
+                localStorage.setItem('likedIds', JSON.stringify(state.likedIds));
+                ui.updateLikeBtn();
+                ui.render(); // Refresh liked list
             }
         };
 
         // --- UI ---
-        const ui = {
-            init: () => {
-                ui.renderViews();
-                
-                // Seek Bar Interaction
-                document.getElementById('seek-rail').addEventListener('click', (e) => {
-                    if(!audio.duration) return;
-                    const rect = e.target.getBoundingClientRect();
-                    const pct = (e.clientX - rect.left) / rect.width;
-                    audio.currentTime = pct * audio.duration;
-                });
-            },
-
-            updateAuthUI: (user) => {
-                const btn = document.getElementById('google-sign-in');
-                const disp = document.getElementById('user-display');
-                if (user) {
-                    btn.classList.add('hidden');
-                    disp.classList.remove('hidden');
-                    document.getElementById('user-name').textContent = user.displayName || "User";
-                } else {
-                    btn.classList.remove('hidden');
-                    disp.classList.add('hidden');
-                }
-            },
-
-            renderViews: () => {
-                // Home (Recommendations & Recent)
-                const recGrid = document.getElementById('rec-grid');
-                recGrid.innerHTML = LIBRARY.slice(0, 4).map(t => ui.createCard(t)).join('');
-                
-                // Full Library
-                const libList = document.getElementById('lib-list');
-                libList.innerHTML = LIBRARY.map((t, i) => ui.createRow(t, i)).join('');
-
-                // Liked
-                const likedList = document.getElementById('liked-list');
-                const likedTracks = LIBRARY.filter(t => state.likedIds.includes(t.id));
-                if(likedTracks.length === 0) likedList.innerHTML = "<div style='color:#666; padding:20px;'>No liked songs yet.</div>";
-                else likedList.innerHTML = likedTracks.map((t, i) => ui.createRow(t, i)).join('');
-            },
-
-            createCard: (t) => {
-                return `
-                <div class="music-card" onclick="player.playTrack(LIBRARY.findIndex(x=>x.id=='${t.id}'))">
-                    <div class="card-img-wrap">
-                        <div style="width:100%; height:100%; background:#222; display:flex; align-items:center; justify-content:center;">
-                            <svg viewBox="0 0 24 24" fill="#444" width="48"><path d="M12 3v9.28c-.47-.17-.97-.28-1.5-.28C8.01 12 6 14.01 6 16.5S8.01 21 10.5 21c2.31 0 4.2-1.75 4.45-4H15V6h4V3h-7z"/></svg>
-                        </div>
-                        <div class="play-overlay">▶</div>
-                    </div>
-                    <div class="card-title">${t.name}</div>
-                    <div class="card-sub">${t.artist}</div>
-                </div>`;
-            },
-
-            createRow: (t, i) => {
-                const isLiked = state.likedIds.includes(t.id);
-                return `
-                <div class="track-row" onclick="player.playTrack(LIBRARY.findIndex(x=>x.id=='${t.id}'))">
-                    <div>${i + 1}</div>
-                    <div class="track-info">
-                        <div class="track-title" style="${state.idx === LIBRARY.findIndex(x=>x.id===t.id) ? 'color:var(--accent-color)' : ''}">${t.name}</div>
-                        <div style="font-size:12px;">${t.artist}</div>
-                    </div>
-                    <div style="text-align:right;">
-                        ${isLiked ? '<span style="color:var(--accent-color)">❤</span>' : ''}
-                    </div>
-                </div>`;
-            },
-
-            updatePlayerUI: () => {
-                const play = document.getElementById('icon-play');
-                const pause = document.getElementById('icon-pause');
-                if (state.playing) {
-                    play.classList.add('hidden');
-                    pause.classList.remove('hidden');
-                } else {
-                    play.classList.remove('hidden');
-                    pause.classList.add('hidden');
-                }
-            },
-            
-            updateLikeBtn: () => {
-                if(state.idx === -1) return;
-                const t = state.queue[state.idx];
-                const btn = document.getElementById('p-like-btn');
-                if(state.likedIds.includes(t.id)) btn.style.color = 'var(--accent-color)';
-                else btn.style.color = '#b3b3b3';
-            }
-        };
-
         const router = {
             go: (view) => {
                 document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
                 document.getElementById('view-'+view).classList.add('active');
-                
                 document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
-                // Simple active state logic
+                // simple highlight logic
                 const btns = document.querySelectorAll('.nav-btn');
                 if(view==='home') btns[0].classList.add('active');
                 if(view==='library') btns[1].classList.add('active');
@@ -630,11 +294,75 @@
             }
         };
 
-        // --- VISUALIZER (Robust) ---
+        const ui = {
+            initListeners: () => {
+                document.getElementById('seek-rail').addEventListener('click', (e) => {
+                    if(!audio.duration) return;
+                    const rect = e.target.getBoundingClientRect();
+                    const pct = (e.clientX - rect.left) / rect.width;
+                    audio.currentTime = pct * audio.duration;
+                });
+                audio.addEventListener('timeupdate', () => {
+                    if(!audio.duration) return;
+                    const pct = (audio.currentTime / audio.duration) * 100;
+                    document.getElementById('seek-fill').style.width = pct + '%';
+                    const m = Math.floor(audio.currentTime / 60);
+                    const s = Math.floor(audio.currentTime % 60);
+                    document.getElementById('curr-time').textContent = `${m}:${s.toString().padStart(2,'0')}`;
+                });
+                audio.addEventListener('loadedmetadata', () => {
+                    const m = Math.floor(audio.duration / 60);
+                    const s = Math.floor(audio.duration % 60);
+                    document.getElementById('dur-time').textContent = `${m}:${s.toString().padStart(2,'0')}`;
+                });
+                audio.addEventListener('ended', () => player.next());
+            },
+            render: () => {
+                // Home
+                const recGrid = document.getElementById('rec-grid');
+                recGrid.innerHTML = LIBRARY.slice(0,4).map(ui.createCard).join('');
+                
+                // Library
+                const libList = document.getElementById('lib-list');
+                libList.innerHTML = LIBRARY.map(ui.createRow).join('');
+
+                // Liked
+                const likedList = document.getElementById('liked-list');
+                const likedTracks = LIBRARY.filter(t => state.likedIds.includes(t.id));
+                if(likedTracks.length === 0) likedList.innerHTML = '<div style="color:#666">No liked songs yet.</div>';
+                else likedList.innerHTML = likedTracks.map(ui.createRow).join('');
+            },
+            createCard: (t, i) => `
+                <div class="music-card" onclick="player.playTrack(${LIBRARY.indexOf(t)})">
+                    <div class="card-img-wrap">
+                        ${t.img ? `<img src="${t.img}">` : '<div style="background:#333;height:100%"></div>'}
+                    </div>
+                    <div style="font-weight:bold">${t.name}</div>
+                    <div style="font-size:12px;color:#aaa">${t.artist}</div>
+                </div>`,
+            createRow: (t, i) => `
+                <div class="track-row" onclick="player.playTrack(${LIBRARY.indexOf(t)})">
+                    <div>${i+1}</div>
+                    <div class="track-title" style="${state.idx === LIBRARY.indexOf(t) ? 'color:var(--accent-color)' : ''}">${t.name}</div>
+                    <div style="color:#aaa">${t.artist}</div>
+                </div>`,
+            updatePlayBtn: () => {
+                document.getElementById('icon-play').className = state.playing ? 'hidden' : '';
+                document.getElementById('icon-pause').className = state.playing ? '' : 'hidden';
+            },
+            updateLikeBtn: () => {
+                if(state.idx === -1) return;
+                const id = LIBRARY[state.idx].id;
+                const btn = document.getElementById('p-like-btn');
+                btn.style.color = state.likedIds.includes(id) ? 'var(--accent-color)' : '#b3b3b3';
+            }
+        };
+
+        // --- VISUALIZER ---
         const viz = {
             ctx: null, source: null, analyser: null,
-            init: () => {
-                if (viz.ctx) return;
+            start: () => {
+                if(viz.ctx) return;
                 try {
                     const AudioContext = window.AudioContext || window.webkitAudioContext;
                     viz.ctx = new AudioContext();
@@ -642,62 +370,30 @@
                     viz.source = viz.ctx.createMediaElementSource(audio);
                     viz.source.connect(viz.analyser);
                     viz.analyser.connect(viz.ctx.destination);
-                    viz.analyser.fftSize = 64; // Low for performance
+                    viz.analyser.fftSize = 64;
                     viz.draw();
-                } catch(e) {
-                    console.warn("Visualizer failed to init (CORS or browser restriction)", e);
-                }
-            },
-            start: () => {
-                if (!viz.ctx) viz.init();
-                if (viz.ctx && viz.ctx.state === 'suspended') viz.ctx.resume();
+                } catch(e) {}
             },
             draw: () => {
                 requestAnimationFrame(viz.draw);
                 const buffer = viz.analyser.frequencyBinCount;
                 const data = new Uint8Array(buffer);
                 viz.analyser.getByteFrequencyData(data);
-                
                 const canvas = document.getElementById('visualizer');
-                const cCtx = canvas.getContext('2d');
+                const ctx = canvas.getContext('2d');
                 canvas.width = window.innerWidth;
                 canvas.height = 200;
-                cCtx.clearRect(0,0,canvas.width,canvas.height);
-                
-                const barW = (canvas.width / buffer);
-                let x = 0;
+                ctx.clearRect(0,0,canvas.width,canvas.height);
+                const barW = canvas.width / buffer;
                 for(let i=0; i<buffer; i++) {
-                    const barH = data[i] / 2; // Scale down
-                    cCtx.fillStyle = `rgba(29, 185, 84, ${barH/200})`; 
-                    cCtx.fillRect(x, canvas.height - barH, barW, barH);
-                    x += barW;
+                    const barH = data[i]/1.5;
+                    ctx.fillStyle = `rgba(62, 207, 142, ${barH/255})`;
+                    ctx.fillRect(i*barW, canvas.height-barH, barW, barH);
                 }
             }
         };
 
-        // --- LISTENERS ---
-        audio.addEventListener('timeupdate', () => {
-            if(!audio.duration) return;
-            const pct = (audio.currentTime / audio.duration) * 100;
-            document.getElementById('seek-fill').style.width = pct + '%';
-            
-            const m = Math.floor(audio.currentTime / 60);
-            const s = Math.floor(audio.currentTime % 60);
-            document.getElementById('curr-time').textContent = `${m}:${s.toString().padStart(2,'0')}`;
-        });
-        
-        audio.addEventListener('loadedmetadata', () => {
-            const m = Math.floor(audio.duration / 60);
-            const s = Math.floor(audio.duration % 60);
-            document.getElementById('dur-time').textContent = `${m}:${s.toString().padStart(2,'0')}`;
-        });
-        
-        audio.addEventListener('ended', () => player.next());
-
-        // --- BOOT ---
-        authManager.init();
-        ui.init();
-        
+        init();
     </script>
 </body>
 </html>
