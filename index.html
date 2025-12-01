@@ -80,7 +80,7 @@
         
         .footer-center { width: 40%; display: flex; flex-direction: column; align-items: center; gap: 8px; }
         .player-controls { display: flex; gap: 16px; align-items: center; }
-        .ctrl-btn { color: #b3b3b3; background: none; border: none; width: 32px; height: 32px; cursor: pointer; }
+        .ctrl-btn { color: #b3b3b3; background: none; border: none; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .ctrl-btn:hover { color: white; }
         .ctrl-btn.main { background: white; color: black; border-radius: 50%; transform: scale(1); }
         
@@ -88,14 +88,18 @@
         .progress-rail { flex: 1; height: 4px; background: #4d4d4d; border-radius: 2px; position: relative; cursor: pointer; }
         .progress-fill { height: 100%; background: white; border-radius: 2px; width: 0%; }
 
-        .footer-right { width: 30%; display: flex; justify-content: flex-end; align-items: center; }
-        
+        .footer-right { width: 30%; display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
+        .pip-btn { color: #b3b3b3; background: none; border: 1px solid #444; border-radius: 4px; font-size: 10px; padding: 4px 8px; cursor: pointer; }
+        .pip-btn:hover { color: white; border-color: white; }
+
         .hidden { display: none !important; }
         .view-section { display: none; }
         .view-section.active { display: block; }
 
-        /* Visualizer Canvas */
+        /* Visualizer Canvas & Pip Canvas */
         #visualizer { position: absolute; bottom: 0; left: 0; width: 100%; height: 200px; pointer-events: none; opacity: 0.15; z-index: 0; }
+        /* Hidden Elements for PiP generation */
+        #pip-canvas { display: none; } 
 
         @media (max-width: 768px) { #nav-panel { display: none; } #main-view { padding: 16px; } }
     </style>
@@ -170,30 +174,24 @@
         </div>
 
         <div class="footer-right">
+            <button class="pip-btn" onclick="pipManager.toggle()">Mini Player</button>
             <input type="range" min="0" max="1" step="0.05" oninput="audio.volume=this.value" style="width:80px;">
         </div>
     </div>
 
-    <!-- Crossorigin is needed for visualizer, BUT can cause playback failure if server CORS are bad.
-         The Admin panel fixes URLs to be CORS-friendly (raw.githubusercontent.com) -->
     <video id="audio-el" crossorigin="anonymous" style="display:none;"></video>
+    
+    <!-- PiP Helper Elements -->
+    <canvas id="pip-canvas" width="500" height="500"></canvas>
+    <video id="pip-video" muted style="position:fixed; top:-1000px; width:1px; height:1px;"></video>
 
     <script>
         // --- CONFIGURATION ---
-        const SUPABASE_URL = "https://nfjxvgvobkjmioniviex.supabase.co"; 
-        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5manh2Z3ZvYmtqbWlvbml2aWV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ1NzkyMjYsImV4cCI6MjA4MDE1NTIyNn0.mcMQ2WmMLKFvWe02PLY62eOIjeDIU8rQEkYoKc_Th1A";
+        const SUPABASE_URL = "YOUR_SUPABASE_URL_HERE"; 
+        const SUPABASE_KEY = "YOUR_SUPABASE_ANON_KEY_HERE";
 
-        // FALLBACK Songs (Same as Admin Defaults)
         const FALLBACK_LIB = [
-            { id: 901, name: "APT.", artist: "Rosé & Bruno Mars", img: "https://placehold.co/300/ff69b4/fff?text=APT", url: "https://raw.githubusercontent.com/Dcode9/MPLayer/58e6474295f9ea49d0ea3f3f911cc157988b39b0/APT..m4a" },
-            { id: 902, name: "Aaj Ki Raat", artist: "Stree 2", img: "https://placehold.co/300/222/fff?text=Stree+2", url: "https://raw.githubusercontent.com/Dcode9/MPLayer/58e6474295f9ea49d0ea3f3f911cc157988b39b0/Aaj%20Ki%20Raat%20.m4a" },
-            { id: 903, name: "Bhool Bhulaiyaa 2", artist: "Pritam", img: "https://placehold.co/300/800000/fff?text=BB2", url: "https://raw.githubusercontent.com/Dcode9/MPLayer/58e6474295f9ea49d0ea3f3f911cc157988b39b0/Bhool%20Bhulaiyaa%202%20(Title%20Track)%20Kartik%20A%2C%20Kiara%20A%2C%20Tabu%20%20Pritam%2C%20Tanishk%2C%20Neeraj%2C%20Anees%20B%2C%20Bhushan%20K.mp3" },
-            { id: 904, name: "Ek Zindagi", artist: "Soundtrack", img: "https://placehold.co/300/1e90ff/fff?text=Ek+Zindagi", url: "https://raw.githubusercontent.com/Dcode9/MPLayer/bf9d03e2173b29268840658dd69308e472b53b9a/Ek%20Zindagi.m4a" },
-            { id: 905, name: "BB3 Title Track", artist: "Pritam", img: "https://placehold.co/300/8b0000/fff?text=BB3", url: "https://raw.githubusercontent.com/Dcode9/MPLayer/bf9d03e2173b29268840658dd69308e472b53b9a/BB3%20Title%20Track.m4a" },
-            { id: 906, name: "Ami Je Tomar 3.0", artist: "Shreya Ghoshal", img: "https://placehold.co/300/4b0082/fff?text=Ami+Je+Tomar", url: "https://raw.githubusercontent.com/Dcode9/MPLayer/bf9d03e2173b29268840658dd69308e472b53b9a/Ami%20Je%20Tomar%203.0.m4a" },
-            { id: 907, name: "Akhiyaan Gulaab", artist: "Mitraz", img: "https://placehold.co/300/ff1493/fff?text=Gulaab", url: "https://raw.githubusercontent.com/Dcode9/MPLayer/bf9d03e2173b29268840658dd69308e472b53b9a/Akhiyaan%20Gulaab.m4a" },
-            { id: 908, name: "Ajab Si", artist: "KK", img: "https://placehold.co/300/000/fff?text=Om+Shanti+Om", url: "https://raw.githubusercontent.com/Dcode9/MPLayer/bf9d03e2173b29268840658dd69308e472b53b9a/Ajab%20Si.m4a" },
-            { id: 909, name: "Abhi Toh Party", artist: "Badshah", img: "https://placehold.co/300/ff4500/fff?text=Party", url: "https://raw.githubusercontent.com/Dcode9/MPLayer/bf9d03e2173b29268840658dd69308e472b53b9a/Abhi%20Toh%20Party%20Shuru%20Hui%20Hai.m4a" }
+            { id: 901, name: "APT.", artist: "Rosé & Bruno Mars", img: "https://placehold.co/300/ff69b4/fff?text=APT", url: "https://raw.githubusercontent.com/Dcode9/MPLayer/58e6474295f9ea49d0ea3f3f911cc157988b39b0/APT..m4a" }
         ];
 
         let LIBRARY = [];
@@ -227,20 +225,16 @@
 
         async function fetchSongs() {
             const { data, error } = await supabase.from('songs').select('*').order('id', {ascending: false});
-            if (data && data.length > 0) {
-                LIBRARY = data;
-            } else {
-                console.log("DB Empty or Error, using fallback");
-                LIBRARY = FALLBACK_LIB;
-            }
-            // Fix potential bad URLs from DB in client as well
+            if (data && data.length > 0) LIBRARY = data;
+            else LIBRARY = FALLBACK_LIB;
+            
+            // Fix URLs
             LIBRARY = LIBRARY.map(s => {
                 if(s.url.includes('github.com') && !s.url.includes('raw.githubusercontent.com')) {
                    s.url = s.url.replace('github.com', 'raw.githubusercontent.com').replace('/blob/', '/').replace('/raw/', '/');
                 }
                 return s;
             });
-            
             state.queue = [...LIBRARY];
             ui.render();
         }
@@ -248,13 +242,10 @@
         // --- PLAYER ---
         const audio = document.getElementById('audio-el');
         
-        // Handle playback errors (like CORS) gracefully
         audio.onerror = (e) => {
-            console.error("Media Error:", e);
             if(state.playing) {
                 state.playing = false;
                 ui.updatePlayBtn();
-                alert("Error playing song. Possible CORS issue with the link.\nTry deleting it in Admin and adding the raw link.");
             }
         };
 
@@ -269,15 +260,15 @@
                     state.playing = true;
                     ui.updatePlayBtn();
                     viz.start();
-                }).catch(err => {
-                    console.error("Play request failed", err);
-                    // Don't alert here, let onError handle it if it's a load error
-                });
+                    // Update System Media Session
+                    mediaSessionManager.update(track);
+                    // Update PiP Canvas if active
+                    pipManager.drawCanvas(track);
+                }).catch(console.error);
 
                 document.getElementById('p-title').textContent = track.name;
                 document.getElementById('p-artist').textContent = track.artist;
                 
-                // Update Art
                 const artDiv = document.getElementById('curr-art-img');
                 if (track.img) artDiv.innerHTML = `<img src="${track.img}">`;
                 else artDiv.innerHTML = `<div style="width:100%;height:100%;background:#333;"></div>`;
@@ -289,6 +280,8 @@
                 if(state.playing) { audio.pause(); state.playing = false; }
                 else { audio.play(); state.playing = true; viz.start(); }
                 ui.updatePlayBtn();
+                // Update play state for media session
+                if(navigator.mediaSession) navigator.mediaSession.playbackState = state.playing ? "playing" : "paused";
             },
             next: () => {
                 let next = state.idx + 1;
@@ -306,10 +299,78 @@
                 const index = state.likedIds.indexOf(id);
                 if(index === -1) state.likedIds.push(id);
                 else state.likedIds.splice(index, 1);
-                
                 localStorage.setItem('likedIds', JSON.stringify(state.likedIds));
                 ui.updateLikeBtn();
-                ui.render(); // Refresh liked list
+                ui.render();
+            }
+        };
+
+        // --- MEDIA SESSION (Notification Controls) ---
+        const mediaSessionManager = {
+            update: (track) => {
+                if ('mediaSession' in navigator) {
+                    navigator.mediaSession.metadata = new MediaMetadata({
+                        title: track.name,
+                        artist: track.artist,
+                        artwork: [
+                            { src: track.img || 'https://placehold.co/512/333/fff?text=Music', sizes: '512x512', type: 'image/png' }
+                        ]
+                    });
+                    
+                    navigator.mediaSession.setActionHandler('play', player.togglePlay);
+                    navigator.mediaSession.setActionHandler('pause', player.togglePlay);
+                    navigator.mediaSession.setActionHandler('previoustrack', player.prev);
+                    navigator.mediaSession.setActionHandler('nexttrack', player.next);
+                }
+            }
+        };
+
+        // --- VISUAL PIP (Mini Player) ---
+        const pipManager = {
+            video: document.getElementById('pip-video'),
+            canvas: document.getElementById('pip-canvas'),
+            ctx: document.getElementById('pip-canvas').getContext('2d'),
+            active: false,
+            
+            toggle: async () => {
+                if (document.pictureInPictureElement) {
+                    document.exitPictureInPicture();
+                } else {
+                    if (state.idx !== -1) pipManager.drawCanvas(LIBRARY[state.idx]);
+                    
+                    // Capture stream from canvas
+                    const stream = pipManager.canvas.captureStream();
+                    pipManager.video.srcObject = stream;
+                    await pipManager.video.play();
+                    
+                    try {
+                        await pipManager.video.requestPictureInPicture();
+                    } catch(e) {
+                        alert("PiP Failed: " + e.message);
+                    }
+                }
+            },
+            
+            drawCanvas: (track) => {
+                const ctx = pipManager.ctx;
+                const w = 500, h = 500;
+                
+                // BG
+                ctx.fillStyle = "#111";
+                ctx.fillRect(0, 0, w, h);
+                
+                // Load Image
+                const img = new Image();
+                img.crossOrigin = "anonymous";
+                img.src = track.img || 'https://placehold.co/500/333/fff?text=No+Art';
+                img.onload = () => {
+                    ctx.drawImage(img, 0, 0, w, w); // Draw Art
+                    // Add Title Overlay (Optional, Art usually has text)
+                };
+                // Fallback text if image loads slow
+                ctx.fillStyle = "white";
+                ctx.font = "bold 40px sans-serif";
+                ctx.fillText(track.name, 20, 450);
             }
         };
 
@@ -319,7 +380,6 @@
                 document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
                 document.getElementById('view-'+view).classList.add('active');
                 document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
-                // simple highlight logic
                 const btns = document.querySelectorAll('.nav-btn');
                 if(view==='home') btns[0].classList.add('active');
                 if(view==='library') btns[1].classList.add('active');
@@ -351,17 +411,14 @@
                 audio.addEventListener('ended', () => player.next());
             },
             render: () => {
-                // Home
                 const recGrid = document.getElementById('rec-grid');
                 recGrid.innerHTML = LIBRARY.slice(0,4).map(ui.createCard).join('');
                 const recentGrid = document.getElementById('recent-grid');
                 recentGrid.innerHTML = LIBRARY.slice(4,8).map(ui.createCard).join('');
                 
-                // Library
                 const libList = document.getElementById('lib-list');
                 libList.innerHTML = LIBRARY.map(ui.createRow).join('');
 
-                // Liked
                 const likedList = document.getElementById('liked-list');
                 const likedTracks = LIBRARY.filter(t => state.likedIds.includes(t.id));
                 if(likedTracks.length === 0) likedList.innerHTML = '<div style="color:#666">No liked songs yet.</div>';
@@ -393,7 +450,6 @@
             }
         };
 
-        // --- VISUALIZER ---
         const viz = {
             ctx: null, source: null, analyser: null,
             start: () => {
