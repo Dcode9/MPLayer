@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Music Admin Panel</title>
-    <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: sans-serif; background: #111; color: #eee; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
@@ -13,14 +12,11 @@
         label { display: block; margin-bottom: 0.5rem; font-size: 0.9rem; color: #aaa; }
         input { width: 100%; padding: 0.5rem; margin-bottom: 1rem; background: #333; border: 1px solid #444; color: white; border-radius: 4px; box-sizing: border-box; }
         
-        /* Button Group */
         .btn-group { display: flex; gap: 10px; margin-bottom: 20px; }
         button { flex: 1; padding: 0.75rem; border: none; font-weight: bold; border-radius: 4px; cursor: pointer; }
-        
         .add-btn { background: #3ecf8e; color: black; }
         .add-btn:hover { background: #34b27b; }
-        
-        .cancel-btn { background: #555; color: white; display: none; } /* Hidden by default */
+        .cancel-btn { background: #555; color: white; display: none; }
         .cancel-btn:hover { background: #666; }
 
         .status { margin-top: 1rem; text-align: center; font-size: 0.9rem; padding: 10px; border-radius: 4px; display: none; }
@@ -31,27 +27,23 @@
         .connection-bar { margin-bottom: 20px; padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: bold; display: flex; align-items: center; gap: 8px; background: #333; }
         .dot { width: 8px; height: 8px; border-radius: 50%; background: #555; }
         .dot.green { background: #00ff00; box-shadow: 0 0 5px #00ff00; }
+        .dot.yellow { background: #ff9800; box-shadow: 0 0 5px #ff9800; }
 
         .song-list { margin-top: 2rem; border-top: 1px solid #333; padding-top: 1rem; }
         .song-item { display: flex; justify-content: space-between; align-items: center; background: #1a1a1a; padding: 10px; margin-bottom: 8px; border-radius: 4px; border: 1px solid #333; }
         .song-info { font-size: 0.9rem; flex: 1; overflow: hidden; padding-right: 10px; }
         .song-title { color: white; font-weight: bold; }
-        .song-artist { color: #aaa; font-size: 0.8rem; }
-        .song-url { font-size: 0.7rem; color: #555; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        
         .action-btns { display: flex; gap: 5px; }
         .sm-btn { padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; width: auto; }
         .delete-btn { background: #e91e63; color: white; }
-        .delete-btn:hover { background: #c2185b; }
         .edit-btn { background: #2196F3; color: white; }
-        .edit-btn:hover { background: #1976D2; }
     </style>
 </head>
 <body>
 
 <div class="connection-bar">
-    <div id="conn-dot" class="dot green"></div>
-    <span id="conn-text">Using Supabase (Free Tier)</span>
+    <div id="conn-dot" class="dot yellow"></div>
+    <span id="conn-text">Connecting...</span>
 </div>
 
 <div class="container">
@@ -60,13 +52,10 @@
     <div id="add-form">
         <label>Song Title</label>
         <input type="text" id="name" placeholder="e.g. Sapphire">
-        
         <label>Artist</label>
         <input type="text" id="artist" placeholder="e.g. Dcode9">
-        
         <label>Audio URL (Link)</label>
         <input type="text" id="url" placeholder="Paste GitHub link here...">
-        
         <label>Album Art URL (Optional)</label>
         <input type="text" id="img" placeholder="https://...">
         
@@ -74,7 +63,6 @@
             <button id="submit-btn" class="add-btn" onclick="handleSubmit()">Add Song</button>
             <button id="cancel-btn" class="cancel-btn" onclick="resetForm()">Cancel Edit</button>
         </div>
-        
         <div id="status" class="status"></div>
     </div>
 
@@ -85,34 +73,61 @@
 </div>
 
 <script>
-    // --- CONFIGURATION ---
-    const SUPABASE_URL = "YOUR_SUPABASE_URL_HERE"; 
-    const SUPABASE_KEY = "YOUR_SUPABASE_ANON_KEY_HERE";
-
     let supabase;
-    let editingId = null; // Track if we are editing a song
-
+    let editingId = null;
     const statusEl = document.getElementById('status');
     const listEl = document.getElementById('library-list');
     const submitBtn = document.getElementById('submit-btn');
     const cancelBtn = document.getElementById('cancel-btn');
+    const connDot = document.getElementById('conn-dot');
+    const connText = document.getElementById('conn-text');
 
-    // Inputs
     const inpName = document.getElementById('name');
     const inpArtist = document.getElementById('artist');
     const inpUrl = document.getElementById('url');
     const inpImg = document.getElementById('img');
 
-    try {
-        const { createClient } = window.supabase;
-        if (SUPABASE_URL.includes("YOUR_")) {
-            showStatus("Config Missing: Edit file and paste keys.", "error");
-        } else {
-            supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-            console.log("Supabase Initialized");
-            fetchSongs();
+    // --- INITIALIZE ---
+    async function init() {
+        try {
+            // 1. Try fetching from Vercel API
+            const response = await fetch('/api/config');
+            if (response.ok) {
+                const config = await response.json();
+                if (config.supabaseUrl && config.supabaseKey) {
+                    const { createClient } = window.supabase;
+                    supabase = createClient(config.supabaseUrl, config.supabaseKey);
+                    connDot.className = "dot green";
+                    connText.textContent = "Connected via Vercel Env";
+                    fetchSongs();
+                    return;
+                }
+            }
+            
+            // 2. Fallback: Check for LocalStorage manual entry
+            // (Useful for local testing without 'vercel dev')
+            throw new Error("API Config not found");
+        } catch (e) {
+            console.warn("Env fetch failed, checking local config...");
+            checkLocalConfig();
         }
-    } catch(e) { console.error(e); }
+    }
+
+    function checkLocalConfig() {
+        // Fallback for local testing if API fails
+        const url = prompt("Vercel Env not found (are you running locally?). Enter Supabase URL:");
+        const key = prompt("Enter Supabase Anon Key:");
+        if(url && key) {
+            const { createClient } = window.supabase;
+            supabase = createClient(url, key);
+            connDot.className = "dot green";
+            connText.textContent = "Connected Manual";
+            fetchSongs();
+        } else {
+            connDot.className = "dot red";
+            connText.textContent = "Not Connected";
+        }
+    }
 
     function showStatus(msg, type) {
         statusEl.textContent = msg;
@@ -140,21 +155,17 @@
         showStatus(editingId ? "Updating..." : "Adding...", "loading");
 
         let error;
-        
         if (editingId) {
-            // Update Existing
             const res = await supabase.from('songs').update({ name, artist, url, img }).eq('id', editingId);
             error = res.error;
         } else {
-            // Create New
             const res = await supabase.from('songs').insert([{ name, artist, url, img }]);
             error = res.error;
         }
 
-        if (error) {
-            showStatus("Error: " + error.message, "error");
-        } else {
-            showStatus(editingId ? "Updated successfully!" : "Added successfully!", "success");
+        if (error) showStatus("Error: " + error.message, "error");
+        else {
+            showStatus(editingId ? "Updated!" : "Added!", "success");
             resetForm();
             fetchSongs();
         }
@@ -166,7 +177,6 @@
         inpArtist.value = artist;
         inpUrl.value = url;
         inpImg.value = img || '';
-        
         submitBtn.textContent = "Update Song";
         cancelBtn.style.display = "block";
         window.scrollTo(0, 0);
@@ -185,18 +195,15 @@
     async function fetchSongs() {
         if(!supabase) return;
         listEl.innerHTML = '<div style="color:#666; text-align:center;">Updating list...</div>';
-        
         const { data, error } = await supabase.from('songs').select('*').order('id', { ascending: false });
 
-        if (error) {
-            listEl.innerHTML = `<div style="color:red">Error fetching list</div>`;
-        } else if (data && data.length > 0) {
+        if (error) listEl.innerHTML = `<div style="color:red">Error fetching list</div>`;
+        else if (data && data.length > 0) {
             listEl.innerHTML = data.map(song => `
                 <div class="song-item">
                     <div class="song-info">
                         <div class="song-title">${escapeHtml(song.name)}</div>
                         <div class="song-artist">${escapeHtml(song.artist)}</div>
-                        <div class="song-url">${escapeHtml(song.url)}</div>
                     </div>
                     <div class="action-btns">
                         <button class="sm-btn edit-btn" onclick="editSong(${song.id}, '${escapeHtmlAttr(song.name)}', '${escapeHtmlAttr(song.artist)}', '${escapeHtmlAttr(song.url)}', '${escapeHtmlAttr(song.img)}')">Edit</button>
@@ -216,16 +223,10 @@
         else fetchSongs();
     }
 
-    function escapeHtml(text) {
-        if(!text) return "";
-        return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-    }
-    
-    function escapeHtmlAttr(text) {
-        if(!text) return "";
-        return text.replace(/'/g, "\\'").replace(/"/g, "&quot;");
-    }
-</script>
+    function escapeHtml(text) { return text ? text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : ""; }
+    function escapeHtmlAttr(text) { return text ? text.replace(/'/g, "\\'").replace(/"/g, "&quot;") : ""; }
 
+    init();
+</script>
 </body>
 </html>
