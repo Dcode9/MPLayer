@@ -51,7 +51,8 @@
 
 <script>
     let auth, db;
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app';
+    // We default to a generic app id if not in the specialized environment
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'music-player-default';
 
     // Initialize Firebase
     function initFirebase() {
@@ -85,7 +86,20 @@
                 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
                 auth = firebase.auth();
                 db = firebase.firestore();
-                auth.signInAnonymously().catch(e => console.error("Anon Auth Failed", e));
+                
+                // Attempt Anonymous Auth with visual error handling
+                auth.signInAnonymously().catch(e => {
+                    console.error("Anon Auth Failed", e);
+                    const status = document.getElementById('status');
+                    status.className = "status error";
+                    
+                    if (e.code === 'auth/configuration-not-found' || e.code === 'auth/operation-not-allowed') {
+                        status.textContent = "Error: Anonymous Auth Disabled.";
+                        alert("ACTION REQUIRED: You must enable 'Anonymous' in your Firebase Console -> Authentication -> Sign-in method.");
+                    } else {
+                        status.textContent = "Auth Error: " + e.message;
+                    }
+                });
                 
                 // If still undefined, warn user
                 if (!db) {
@@ -107,9 +121,16 @@
 
         // Robust Check: Is DB initialized?
         if (!db) {
-            status.textContent = "Error: Database not connected. Missing Config.";
+            status.textContent = "Error: Database not connected. Check Config.";
             status.className = "status error";
-            alert("You are running this file without a Firebase Configuration. Open the file in a text editor and look for the 'initFirebase' function to add your config.");
+            return;
+        }
+        
+        // Robust Check: Is User Authenticated?
+        if (!auth.currentUser) {
+            status.textContent = "Error: Not Authenticated. Check Console.";
+            status.className = "status error";
+            alert("You are not logged in. Please ensure Anonymous Auth is enabled in Firebase Console.");
             return;
         }
 
