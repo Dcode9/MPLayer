@@ -3,30 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Utilitarian Media Player</title>
+    <title>Cloud Music Player</title>
+    <!-- Firebase SDKs (Compat version for broader support) -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
     <style>
         :root {
-            --bg-color: #121212;
-            --surface-color: #1e1e1e;
-            --surface-hover: #2d2d2d;
-            --text-primary: #e0e0e0;
-            --text-secondary: #a0a0a0;
-            --accent-color: #ffffff;
-            --active-item-bg: rgba(255, 255, 255, 0.1);
-            --progress-bg: #333333;
-            --heart-color: #ff4081;
+            --bg-color: #000000;
+            --surface-color: #121212;
+            --surface-hover: #282828;
+            --text-primary: #ffffff;
+            --text-secondary: #b3b3b3;
+            --accent-color: #1db954;
+            --error-color: #e91e63;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
+        
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: 'Circular', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-primary);
             height: 100vh;
@@ -35,1330 +32,672 @@
             overflow: hidden;
         }
 
-        /* --- Main Viewport --- */
-        #player-container {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            position: relative;
+        /* --- UI Components --- */
+        button { cursor: pointer; border: none; background: none; color: inherit; font-family: inherit; }
+        
+        /* Sidebar */
+        #nav-panel {
+            width: 240px;
             background: #000;
-            overflow: hidden;
-        }
-
-        video {
-            max-width: 100%;
-            max-height: 100%;
-            outline: none;
-        }
-
-        /* --- Audio Visualizer / Icon --- */
-        #audio-indicator {
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 1rem;
-            opacity: 0.8;
-            animation: pulse 4s infinite ease-in-out;
-        }
-
-        @keyframes pulse {
-            0% { opacity: 0.6; transform: scale(0.98); }
-            50% { opacity: 1; transform: scale(1.02); }
-            100% { opacity: 0.6; transform: scale(0.98); }
-        }
-        
-        #audio-indicator svg {
-            width: 80px;
-            height: 80px;
-        }
-
-        .is-audio #audio-indicator {
-            display: flex;
-        }
-        
-        .is-audio video {
-            display: none;
-        }
-
-        /* --- Side Panel (Library/Queue) --- */
-        #side-panel {
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 350px;
-            height: 100%;
-            background: rgba(18, 18, 18, 0.98);
-            backdrop-filter: blur(15px);
-            border-left: 1px solid #333;
             display: flex;
             flex-direction: column;
-            transform: translateX(100%);
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 15;
-            box-shadow: -5px 0 20px rgba(0,0,0,0.5);
+            padding: 24px;
+            gap: 24px;
+            flex-shrink: 0;
         }
 
-        #side-panel.open {
-            transform: translateX(0);
+        .logo {
+            font-size: 24px; font-weight: 700; display: flex; align-items: center; gap: 8px; color: white;
         }
 
-        /* Tabs */
-        .panel-tabs {
-            display: flex;
-            border-bottom: 1px solid #333;
+        .nav-btn {
+            display: flex; align-items: center; gap: 16px; 
+            padding: 10px 16px; border-radius: 4px;
+            color: var(--text-secondary); font-weight: 700; font-size: 14px;
+            transition: 0.2s;
         }
+        .nav-btn:hover, .nav-btn.active { color: white; background: var(--surface-hover); }
+        .nav-btn svg { width: 24px; height: 24px; fill: currentColor; }
 
-        .tab-btn {
+        /* Auth Button */
+        #auth-section { margin-top: auto; }
+        .google-btn {
+            background: white; color: black; font-weight: 700; border-radius: 500px;
+            padding: 12px 24px; display: flex; align-items: center; justify-content: center; gap: 10px;
+            width: 100%; font-size: 14px; transition: transform 0.1s;
+        }
+        .google-btn:hover { transform: scale(1.02); }
+        .google-btn:active { transform: scale(0.98); }
+
+        /* Main Content */
+        #main-view {
             flex: 1;
-            padding: 1rem;
-            background: none;
-            border: none;
-            color: var(--text-secondary);
-            cursor: pointer;
-            font-size: 0.8rem;
-            font-weight: 600;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            transition: color 0.2s, background 0.2s;
-            border-bottom: 2px solid transparent;
-        }
-
-        .tab-btn:hover {
-            color: var(--text-primary);
-            background: rgba(255,255,255,0.03);
-        }
-
-        .tab-btn.active {
-            color: var(--accent-color);
-            border-bottom-color: var(--accent-color);
-        }
-
-        /* Views */
-        .panel-view {
-            flex: 1;
-            display: none;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .panel-view.active {
-            display: flex;
-        }
-
-        /* Header within views */
-        .view-header {
-            padding: 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #333;
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-        }
-        
-        .view-header button {
-            opacity: 0.8;
-            font-size: 0.8rem;
-        }
-
-        .list-content {
-            flex: 1;
+            background: linear-gradient(180deg, #222 0%, #121212 40%);
             overflow-y: auto;
-            padding: 0.5rem 0;
-        }
-
-        /* List Items */
-        .list-item {
-            padding: 8px 1rem;
-            font-size: 0.85rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 0.75rem;
-            border-left: 3px solid transparent;
-            transition: background 0.2s;
-            color: var(--text-secondary);
-            group: item;
-        }
-
-        .list-item:hover {
-            background: var(--surface-hover);
-            color: var(--text-primary);
-        }
-
-        .list-item.active {
-            background: var(--active-item-bg);
-            color: var(--accent-color);
-            border-left-color: var(--accent-color);
-        }
-
-        .list-item-info {
-            flex: 1;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-
-        .item-title {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            font-weight: 500;
-        }
-
-        .item-meta {
-            font-size: 0.75rem;
-            opacity: 0.6;
-        }
-
-        /* Action Buttons in List */
-        .item-actions {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            opacity: 0; /* Hidden by default */
-            transition: opacity 0.2s;
-        }
-
-        .list-item:hover .item-actions {
-            opacity: 1;
-        }
-
-        .action-btn {
-            padding: 4px;
-            opacity: 0.6;
-            min-width: 24px;
-        }
-        
-        .action-btn:hover {
-            opacity: 1;
-            background: rgba(255,255,255,0.1);
-            border-radius: 4px;
-        }
-
-        .action-btn.liked {
-            color: var(--heart-color);
-            opacity: 1;
-        }
-
-        /* Playlists Grid */
-        .playlist-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            gap: 1rem;
-            padding: 1rem;
-        }
-
-        .playlist-card {
-            background: var(--surface-hover);
-            border-radius: 8px;
-            padding: 1rem;
-            aspect-ratio: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: transform 0.2s, background 0.2s;
-            text-align: center;
-            gap: 0.5rem;
-        }
-
-        .playlist-card:hover {
-            background: #333;
-            transform: translateY(-2px);
-        }
-
-        .playlist-card svg {
-            width: 32px;
-            height: 32px;
-            opacity: 0.5;
-        }
-
-        .playlist-name {
-            font-size: 0.8rem;
-            font-weight: 500;
-            word-break: break-word;
-        }
-
-        /* Scrollbar */
-        .list-content::-webkit-scrollbar {
-            width: 6px;
-        }
-        .list-content::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        .list-content::-webkit-scrollbar-thumb {
-            background: #444;
-            border-radius: 3px;
-        }
-
-        /* --- Overlays & Modals --- */
-        #modal-overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.7);
-            z-index: 100;
-            display: none;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal {
-            background: var(--surface-color);
-            padding: 1.5rem;
-            border-radius: 8px;
-            width: 300px;
-            border: 1px solid #333;
-        }
-
-        .modal h3 {
-            margin-bottom: 1rem;
-            font-weight: 500;
-        }
-
-        .modal input {
-            width: 100%;
-            padding: 8px;
-            background: #121212;
-            border: 1px solid #333;
-            color: white;
-            border-radius: 4px;
-            margin-bottom: 1rem;
-            outline: none;
-        }
-        
-        .modal input:focus {
-            border-color: var(--text-secondary);
-        }
-
-        .modal-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 0.5rem;
-        }
-
-        .btn-primary {
-            background: white;
-            color: black;
-            font-weight: 600;
-        }
-        
-        .btn-primary:hover {
-            background: #e0e0e0;
-        }
-
-        #placeholder {
-            position: absolute;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 1rem;
-            color: var(--text-secondary);
-            text-align: center;
-            pointer-events: none;
-            z-index: 5;
-        }
-
-        .has-media #placeholder {
-            display: none;
-        }
-
-        .shortcut-hint {
-            margin-top: 2rem;
-            font-family: monospace;
-            font-size: 0.75rem;
-            opacity: 0.5;
-            display: grid;
-            grid-template-columns: auto auto;
-            gap: 0.5rem 1.5rem;
-            text-align: left;
-        }
-
-        .filename {
-            position: absolute;
-            top: 1rem;
-            left: 1rem;
-            background: rgba(0,0,0,0.6);
-            padding: 6px 10px;
-            border-radius: 4px;
-            font-size: 0.85rem;
-            color: var(--text-primary);
-            opacity: 0;
-            transition: opacity 0.3s;
-            pointer-events: none;
-            z-index: 5;
-            max-width: 60%;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        body:hover .filename, body.has-media .filename {
-            opacity: 1;
-        }
-
-        /* --- Controls Bar --- */
-        #controls {
-            height: 70px;
-            background-color: var(--surface-color);
-            display: flex;
-            align-items: center;
-            padding: 0 1.5rem;
-            gap: 1rem;
-            z-index: 20;
-            border-top: 1px solid #333;
-        }
-
-        button {
-            background: none;
-            border: none;
-            color: var(--text-primary);
-            cursor: pointer;
-            padding: 8px;
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0.7;
-            transition: all 0.2s;
-            min-width: 36px;
-        }
-
-        button:hover {
-            opacity: 1;
-            background-color: rgba(255,255,255,0.1);
-        }
-
-        button.active-mode {
-            color: var(--accent-color);
-            opacity: 1;
-            background-color: rgba(255,255,255,0.15);
-        }
-
-        /* Progress Bar */
-        .progress-container {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            cursor: pointer;
-            height: 100%;
-        }
-
-        #progress-bar-wrapper {
-            flex: 1;
-            height: 4px;
-            background-color: var(--progress-bg);
-            border-radius: 2px;
             position: relative;
-            overflow: hidden;
-            transition: height 0.1s;
+            padding: 24px 32px;
+            padding-bottom: 120px; /* Space for footer */
         }
         
-        #progress-bar-wrapper:hover {
-            height: 6px;
+        h2 { font-size: 24px; font-weight: 700; margin-bottom: 20px; color: white; }
+
+        /* Grids */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
         }
 
-        #progress-fill {
-            position: absolute;
-            top: 0;
-            left: 0;
-            height: 100%;
-            width: 0%;
-            background-color: var(--accent-color);
+        .music-card {
+            background: #181818; padding: 16px; border-radius: 8px;
+            transition: background 0.3s; cursor: pointer;
+            position: relative; display: flex; flex-direction: column; gap: 12px;
         }
-
-        /* Volume & Sliders */
-        .volume-container {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            width: 100px;
-        }
-
-        input[type="range"] {
-            -webkit-appearance: none;
-            width: 100%;
-            height: 4px;
-            background: var(--progress-bg);
-            border-radius: 2px;
-            outline: none;
-        }
-
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: var(--accent-color);
-            cursor: pointer;
-        }
-
-        /* Text Displays */
-        .time-display {
-            font-family: monospace;
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-            min-width: 90px;
-            text-align: center;
-        }
-
-        /* SVG Icons */
-        svg {
-            width: 20px;
-            height: 20px;
-            fill: currentColor;
-        }
-
-        /* Drag Overlay */
-        #drag-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.8);
-            border: 2px dashed var(--text-secondary);
-            display: none;
-            flex-direction: column;
-            gap: 1rem;
-            align-items: center;
-            justify-content: center;
-            z-index: 50;
-            font-size: 1.5rem;
-            color: var(--text-primary);
-        }
+        .music-card:hover { background: #282828; }
         
-        body.dragging #drag-overlay {
-            display: flex;
+        .card-img-wrap {
+            width: 100%; aspect-ratio: 1; border-radius: 4px; overflow: hidden;
+            background: #333; position: relative; box-shadow: 0 8px 24px rgba(0,0,0,0.5);
         }
-
-        /* Toast Notification */
-        #toast {
-            position: absolute;
-            bottom: 90px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(255,255,255,0.9);
-            color: black;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s;
-            z-index: 60;
-        }
+        .card-img-wrap img { width: 100%; height: 100%; object-fit: cover; }
         
-        #toast.show {
-            opacity: 1;
+        .play-overlay {
+            position: absolute; bottom: 8px; right: 8px;
+            width: 48px; height: 48px; border-radius: 50%;
+            background: var(--accent-color); color: black;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; transform: translateY(8px); transition: all 0.3s;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+        }
+        .music-card:hover .play-overlay { opacity: 1; transform: translateY(0); }
+
+        .card-title { font-weight: 700; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .card-sub { font-size: 14px; color: var(--text-secondary); line-height: 1.4; }
+
+        /* List View */
+        .track-row {
+            display: grid; grid-template-columns: 40px 1fr 120px; align-items: center;
+            padding: 10px 16px; border-radius: 4px; color: var(--text-secondary);
+        }
+        .track-row:hover { background: hsla(0,0%,100%,.1); }
+        .track-row.active { color: var(--accent-color); }
+        .track-info { display: flex; flex-direction: column; }
+        .track-title { color: white; font-size: 16px; margin-bottom: 4px; }
+        .track-row.active .track-title { color: var(--accent-color); }
+        
+        /* Player Footer */
+        #player-footer {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            height: 90px; background: #181818; border-top: 1px solid #282828;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 16px; z-index: 100;
         }
 
-        /* Utility */
+        .footer-left { width: 30%; display: flex; align-items: center; gap: 14px; }
+        .current-art { width: 56px; height: 56px; background: #333; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+        
+        .footer-center { width: 40%; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .player-controls { display: flex; gap: 16px; align-items: center; }
+        .ctrl-btn { color: #b3b3b3; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; }
+        .ctrl-btn:hover { color: white; }
+        .ctrl-btn.main { background: white; color: black; border-radius: 50%; width: 32px; height: 32px; transform: scale(1); transition: transform 0.1s; }
+        .ctrl-btn.main:hover { transform: scale(1.06); }
+        
+        .progress-bar-area { width: 100%; display: flex; align-items: center; gap: 8px; font-size: 11px; color: #a7a7a7; }
+        .progress-rail { flex: 1; height: 4px; background: #4d4d4d; border-radius: 2px; position: relative; cursor: pointer; }
+        .progress-rail:hover .progress-fill { background: var(--accent-color); }
+        .progress-fill { height: 100%; background: white; border-radius: 2px; width: 0%; }
+
+        .footer-right { width: 30%; display: flex; justify-content: flex-end; align-items: center; }
+        
+        /* Utils */
         .hidden { display: none !important; }
-        .disabled { opacity: 0.3 !important; cursor: default !important; }
+        .view-section { display: none; }
+        .view-section.active { display: block; }
 
+        /* Setup Modal */
+        #setup-modal {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8); z-index: 1000;
+            display: none; align-items: center; justify-content: center;
+        }
+        .modal-content {
+            background: #242424; padding: 32px; border-radius: 8px; max-width: 500px; color: #ccc;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        .modal-content h3 { color: white; margin-bottom: 16px; }
+        .modal-content ol { margin-left: 20px; margin-bottom: 20px; line-height: 1.6; }
+        .code-block { background: #111; padding: 10px; font-family: monospace; font-size: 12px; border-radius: 4px; color: var(--accent-color); }
+
+        #visualizer {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 200px;
+            pointer-events: none; opacity: 0.1; z-index: 0;
+        }
+
+        /* Mobile */
+        @media (max-width: 768px) {
+            #nav-panel { display: none; }
+            #main-view { padding: 16px; }
+        }
     </style>
 </head>
-<body class="has-media">
+<body>
 
-    <input type="file" id="file-input" accept="video/*,audio/*" multiple style="display:none">
+    <div style="display:flex; height:100vh;">
+        <!-- Nav -->
+        <div id="nav-panel">
+            <div class="logo">
+                <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+                <span>MusicPlayer</span>
+            </div>
+            
+            <div style="flex:1; display:flex; flex-direction:column; gap:8px;">
+                <button class="nav-btn active" onclick="router.go('home')">
+                    <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+                    Home
+                </button>
+                <button class="nav-btn" onclick="router.go('library')">
+                    <svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12z"/></svg>
+                    Library
+                </button>
+                <button class="nav-btn" onclick="router.go('liked')">
+                    <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                    Liked Songs
+                </button>
+            </div>
 
-    <div id="player-container">
-        <video id="media-element"></video>
-        
-        <div id="audio-indicator">
-            <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
-            <span style="font-size: 0.9rem; letter-spacing: 1px;">AUDIO PLAYBACK</span>
-        </div>
-        
-        <div id="placeholder">
-            <h1>MEDIA PLAYER</h1>
-            <p>Drag & Drop files or Select from Library</p>
-            <div class="shortcut-hint">
-                <span>Space</span> <span>Play / Pause</span>
-                <span>N / P</span> <span>Next / Prev</span>
-                <span>L / S</span> <span>Loop / Shuffle</span>
-                <span>M</span> <span>Mute</span>
+            <div id="auth-section">
+                <!-- Google Sign In Button -->
+                <button id="google-sign-in" class="google-btn" onclick="authManager.signIn()">
+                    <svg viewBox="0 0 24 24" width="18" height="18"><path d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/></svg>
+                    Sign in with Google
+                </button>
+                <div id="user-display" class="hidden" style="display:flex; align-items:center; gap:10px;">
+                    <div id="user-avatar" style="width:32px; height:32px; border-radius:50%; background:orange; display:flex; align-items:center; justify-content:center; font-weight:bold;">U</div>
+                    <span id="user-name" style="font-size:14px; font-weight:700;">User</span>
+                    <button onclick="authManager.signOut()" style="font-size:11px; text-decoration:underline; color:#999; margin-left:auto;">Logout</button>
+                </div>
+                <button onclick="document.getElementById('setup-modal').style.display='flex'" style="margin-top:10px; font-size:11px; color:#666; width:100%;">Config Help</button>
             </div>
         </div>
-        
-        <div id="filename-display" class="filename">No Media</div>
-        
-        <div id="drag-overlay">
-            <svg style="width: 48px; height: 48px;" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-            <span>Add to Library</span>
-        </div>
 
-        <!-- Side Panel -->
-        <div id="side-panel">
-            <div class="panel-tabs">
-                <button class="tab-btn active" onclick="switchTab('queue')">Queue</button>
-                <button class="tab-btn" onclick="switchTab('library')">Library</button>
-                <button class="tab-btn" onclick="switchTab('playlists')">Playlists</button>
+        <!-- Main -->
+        <div id="main-view">
+            <canvas id="visualizer"></canvas>
+
+            <div id="view-home" class="view-section active">
+                <h2>Recommended for You</h2>
+                <div class="card-grid" id="rec-grid"></div>
+                <h2>Recently Played</h2>
+                <div class="card-grid" id="recent-grid"></div>
             </div>
 
-            <!-- View 1: Queue -->
-            <div id="view-queue" class="panel-view active">
-                <div class="view-header">
-                    <span>NOW PLAYING</span>
-                    <button id="clear-queue-btn">Clear</button>
-                </div>
-                <div class="list-content" id="queue-list"></div>
+            <div id="view-library" class="view-section">
+                <h2>Full Library</h2>
+                <div id="lib-list"></div>
             </div>
 
-            <!-- View 2: Library -->
-            <div id="view-library" class="panel-view">
-                <div class="view-header">
-                    <span>ALL SONGS</span>
-                    <span id="lib-count">0 items</span>
-                </div>
-                <div class="list-content" id="library-list"></div>
-            </div>
-
-            <!-- View 3: Playlists -->
-            <div id="view-playlists" class="panel-view">
-                <div class="view-header">
-                    <span>YOUR COLLECTION</span>
-                    <button onclick="openCreatePlaylistModal()">+ New</button>
-                </div>
-                <div class="playlist-grid" id="playlists-list">
-                    <!-- Cards injected here -->
-                </div>
-                <!-- Sub-view for specific playlist (hidden by default) -->
-                <div id="playlist-details" class="hidden" style="flex:1; display:flex; flex-direction:column; background:var(--bg-color);">
-                     <div class="view-header" style="background:var(--surface-color);">
-                        <button onclick="closePlaylistDetails()">← Back</button>
-                        <span id="detail-title">Playlist Name</span>
-                        <button onclick="playFullPlaylist()">Play All</button>
-                     </div>
-                     <div class="list-content" id="detail-list"></div>
-                </div>
+            <div id="view-liked" class="view-section">
+                <h2>Liked Songs</h2>
+                <div id="liked-list"></div>
             </div>
         </div>
     </div>
 
-    <!-- Controls -->
-    <div id="controls">
-        <button id="shuffle-btn" title="Shuffle (S)">
-            <svg viewBox="0 0 24 24"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg>
-        </button>
-
-        <button id="prev-btn" title="Previous (P)">
-            <svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
-        </button>
-
-        <button id="play-pause-btn" title="Play/Pause (Space)">
-            <svg id="icon-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-            <svg id="icon-pause" viewBox="0 0 24 24" class="hidden"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-        </button>
-
-        <button id="next-btn" title="Next (N)">
-            <svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
-        </button>
-
-        <button id="loop-btn" title="Loop (L)">
-            <svg id="icon-loop-none" viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
-            <svg id="icon-loop-one" viewBox="0 0 24 24" class="hidden"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/><text x="10" y="13" font-size="6" font-weight="bold" fill="currentColor">1</text></svg>
-        </button>
-
-        <!-- Time & Progress -->
-        <div class="time-display">
-            <span id="current-time">00:00</span> / <span id="duration">00:00</span>
-        </div>
-
-        <div class="progress-container" id="seek-container">
-            <div id="progress-bar-wrapper">
-                <div id="progress-fill"></div>
+    <!-- Footer -->
+    <div id="player-footer">
+        <div class="footer-left">
+            <div class="current-art">
+                <svg viewBox="0 0 24 24" fill="white" width="24"><path d="M12 3v9.28c-.47-.17-.97-.28-1.5-.28C8.01 12 6 14.01 6 16.5S8.01 21 10.5 21c2.31 0 4.2-1.75 4.45-4H15V6h4V3h-7z"/></svg>
             </div>
-        </div>
-
-        <!-- Volume -->
-        <div class="volume-container">
-            <button id="mute-btn" title="Mute (M)" style="padding: 4px;">
-                <svg id="icon-vol-high" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
-                <svg id="icon-vol-mute" viewBox="0 0 24 24" class="hidden"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73 4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>
+            <div style="display:flex; flex-direction:column; justify-content:center;">
+                <div id="p-title" style="color:white; font-size:14px; font-weight:600;">Not Playing</div>
+                <div id="p-artist" style="color:#b3b3b3; font-size:11px;">--</div>
+            </div>
+            <button onclick="player.toggleLike()" id="p-like-btn" style="margin-left:12px; color:#b3b3b3;">
+                <svg viewBox="0 0 24 24" width="16" height="16"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
             </button>
-            <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="1">
         </div>
 
-        <button id="panel-toggle-btn" title="Toggle Library" class="active-mode">
-            <svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
-        </button>
+        <div class="footer-center">
+            <div class="player-controls">
+                <button class="ctrl-btn" onclick="player.prev()"><svg viewBox="0 0 24 24" width="20"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
+                <button class="ctrl-btn main" onclick="player.togglePlay()">
+                    <svg id="icon-play" viewBox="0 0 24 24" width="20"><path d="M8 5v14l11-7z"/></svg>
+                    <svg id="icon-pause" viewBox="0 0 24 24" width="20" class="hidden"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                </button>
+                <button class="ctrl-btn" onclick="player.next()"><svg viewBox="0 0 24 24" width="20"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
+            </div>
+            <div class="progress-bar-area">
+                <span id="curr-time">0:00</span>
+                <div class="progress-rail" id="seek-rail">
+                    <div class="progress-fill" id="seek-fill"></div>
+                </div>
+                <span id="dur-time">0:00</span>
+            </div>
+        </div>
 
-        <button id="fullscreen-btn" title="Fullscreen (F)">
-            <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
-        </button>
+        <div class="footer-right">
+            <input type="range" min="0" max="1" step="0.05" oninput="player.setVolume(this.value)" style="width:80px;">
+        </div>
     </div>
 
-    <div id="toast">Item Added</div>
+    <!-- Audio Element (Crossorigin crucial for Visualizer) -->
+    <video id="audio-el" crossorigin="anonymous" style="display:none;"></video>
 
-    <!-- Modals -->
-    <div id="modal-overlay">
-        <div class="modal" id="create-playlist-modal">
-            <h3>Create Playlist</h3>
-            <input type="text" id="new-playlist-name" placeholder="Playlist Name">
-            <div class="modal-actions">
-                <button onclick="closeModal()" style="color:var(--text-secondary)">Cancel</button>
-                <button onclick="confirmCreatePlaylist()" class="btn-primary">Create</button>
-            </div>
-        </div>
-        
-        <div class="modal" id="add-to-playlist-modal" style="display:none">
-            <h3>Add to Playlist</h3>
-            <div id="playlist-selection-list" style="max-height: 200px; overflow-y: auto; margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
-                <!-- Buttons injected here -->
-            </div>
-            <div class="modal-actions">
-                <button onclick="closeModal()" style="color:var(--text-secondary)">Cancel</button>
+    <!-- Help Modal -->
+    <div id="setup-modal">
+        <div class="modal-content">
+            <h3>How to Enable Google Sign-In</h3>
+            <p>To make the "Sign In with Google" button work on your real website:</p>
+            <ol>
+                <li>Go to the <a href="https://console.firebase.google.com" target="_blank" style="color:white">Firebase Console</a>.</li>
+                <li>Select your project -> <strong>Authentication</strong> -> <strong>Sign-in method</strong>.</li>
+                <li>Click <strong>Add new provider</strong> -> <strong>Google</strong>.</li>
+                <li>Enable it and save.</li>
+                <li>Ensure your domain is in <strong>Authorized domains</strong>.</li>
+            </ol>
+            <p>Then, in this code, look for <code>authManager.signIn()</code> and uncomment the Google Auth Provider lines.</p>
+            <div style="text-align:right; margin-top:20px;">
+                <button onclick="document.getElementById('setup-modal').style.display='none'" style="background:white; color:black; padding:8px 16px; border-radius:20px; font-weight:bold;">Got it</button>
             </div>
         </div>
     </div>
 
     <script>
-        // --- Data ---
-        // Normalizing GitHub links to raw content
+        // --- CONSTANTS ---
         const BASE_OLD = "https://raw.githubusercontent.com/Dcode9/MPLayer/58e6474295f9ea49d0ea3f3f911cc157988b39b0/";
         const BASE_NEW = "https://raw.githubusercontent.com/Dcode9/MPLayer/bf9d03e2173b29268840658dd69308e472b53b9a/";
 
-        const initialLibrary = [
-            { id: 1, name: "APT. (Rosé & Bruno Mars)", url: BASE_OLD + "APT..m4a" },
-            { id: 2, name: "Aaj Ki Raat (Stree 2)", url: BASE_OLD + "Aaj%20Ki%20Raat%20.m4a" },
-            { id: 3, name: "Bhool Bhulaiyaa 2", url: BASE_OLD + "Bhool%20Bhulaiyaa%202%20(Title%20Track)%20Kartik%20A%2C%20Kiara%20A%2C%20Tabu%20%20Pritam%2C%20Tanishk%2C%20Neeraj%2C%20Anees%20B%2C%20Bhushan%20K.mp3" },
-            { id: 4, name: "Ek Zindagi", url: BASE_NEW + "Ek%20Zindagi.m4a" },
-            { id: 5, name: "BB3 Title Track", url: BASE_NEW + "BB3%20Title%20Track.m4a" },
-            { id: 6, name: "Ami Je Tomar 3.0", url: BASE_NEW + "Ami%20Je%20Tomar%203.0.m4a" },
-            { id: 7, name: "Akhiyaan Gulaab", url: BASE_NEW + "Akhiyaan%20Gulaab.m4a" },
-            { id: 8, name: "Ajab Si", url: BASE_NEW + "Ajab%20Si.m4a" },
-            { id: 9, name: "Abhi Toh Party Shuru Hui Hai", url: BASE_NEW + "Abhi%20Toh%20Party%20Shuru%20Hui%20Hai.m4a" }
+        const LIBRARY = [
+            { id: '1', name: "APT.", artist: "Rosé & Bruno Mars", img: "", url: BASE_OLD + "APT..m4a" },
+            { id: '2', name: "Aaj Ki Raat", artist: "Stree 2", img: "", url: BASE_OLD + "Aaj%20Ki%20Raat%20.m4a" },
+            { id: '3', name: "Bhool Bhulaiyaa 2", artist: "Pritam", img: "", url: BASE_OLD + "Bhool%20Bhulaiyaa%202%20(Title%20Track)%20Kartik%20A%2C%20Kiara%20A%2C%20Tabu%20%20Pritam%2C%20Tanishk%2C%20Neeraj%2C%20Anees%20B%2C%20Bhushan%20K.mp3" },
+            { id: '4', name: "Ek Zindagi", artist: "Soundtrack", img: "", url: BASE_NEW + "Ek%20Zindagi.m4a" },
+            { id: '5', name: "BB3 Title Track", artist: "Pritam", img: "", url: BASE_NEW + "BB3%20Title%20Track.m4a" },
+            { id: '6', name: "Ami Je Tomar 3.0", artist: "Shreya Ghoshal", img: "", url: BASE_NEW + "Ami%20Je%20Tomar%203.0.m4a" },
+            { id: '7', name: "Akhiyaan Gulaab", artist: "Mitraz", img: "", url: BASE_NEW + "Akhiyaan%20Gulaab.m4a" },
+            { id: '8', name: "Ajab Si", artist: "KK", img: "", url: BASE_NEW + "Ajab%20Si.m4a" },
+            { id: '9', name: "Abhi Toh Party", artist: "Badshah", img: "", url: BASE_NEW + "Abhi%20Toh%20Party%20Shuru%20Hui%20Hai.m4a" }
         ];
 
-        // --- State ---
+        // --- APP STATE ---
         const state = {
-            library: [...initialLibrary], // Source of truth for songs
-            playlists: {
-                'Liked Songs': [] // Array of song IDs
-            },
-            queue: [...initialLibrary], // Current playing queue (Objects)
-            queueIndex: -1,
-            shuffle: false,
-            loop: 'all', 
-            lastVolume: 1,
-            activeTab: 'queue',
-            tempSongIdToAdd: null // For modal context
+            queue: [...LIBRARY],
+            idx: -1,
+            playing: false,
+            user: null,
+            likedIds: [], // Synced with DB or LocalStorage
+            isOfflineMode: false // Fallback if Firebase fails
         };
 
-        // --- DOM Elements ---
-        const video = document.getElementById('media-element');
-        const els = {
-            playBtn: document.getElementById('play-pause-btn'),
-            iconPlay: document.getElementById('icon-play'),
-            iconPause: document.getElementById('icon-pause'),
-            nextBtn: document.getElementById('next-btn'),
-            prevBtn: document.getElementById('prev-btn'),
-            shuffleBtn: document.getElementById('shuffle-btn'),
-            loopBtn: document.getElementById('loop-btn'),
-            loopIconNone: document.getElementById('icon-loop-none'),
-            loopIconOne: document.getElementById('icon-loop-one'),
-            
-            sidePanel: document.getElementById('side-panel'),
-            panelToggle: document.getElementById('panel-toggle-btn'),
-            
-            queueList: document.getElementById('queue-list'),
-            libraryList: document.getElementById('library-list'),
-            playlistsList: document.getElementById('playlists-list'),
-            playlistDetails: document.getElementById('playlist-details'),
-            detailTitle: document.getElementById('detail-title'),
-            detailList: document.getElementById('detail-list'),
-            
-            filename: document.getElementById('filename-display'),
-            progressFill: document.getElementById('progress-fill'),
-            currTime: document.getElementById('current-time'),
-            durTime: document.getElementById('duration'),
-            dragOverlay: document.getElementById('drag-overlay'),
-            fileInput: document.getElementById('file-input'),
-            playerContainer: document.getElementById('player-container'),
-            muteBtn: document.getElementById('mute-btn'),
-            volHigh: document.getElementById('icon-vol-high'),
-            volMute: document.getElementById('icon-vol-mute'),
-            volSlider: document.getElementById('volume-slider'),
-            fullScreenBtn: document.getElementById('fullscreen-btn'),
-            seekContainer: document.getElementById('seek-container'),
-            progressBarWrapper: document.getElementById('progress-bar-wrapper'),
-            placeholder: document.getElementById('placeholder'),
-            
-            modalOverlay: document.getElementById('modal-overlay'),
-            createPlaylistModal: document.getElementById('create-playlist-modal'),
-            addToPlaylistModal: document.getElementById('add-to-playlist-modal'),
-            newPlaylistInput: document.getElementById('new-playlist-name'),
-            playlistSelectionList: document.getElementById('playlist-selection-list'),
-            toast: document.getElementById('toast'),
-            libCount: document.getElementById('lib-count')
-        };
-
-        // --- Init ---
-        function init() {
-            renderQueue();
-            renderLibrary();
-            renderPlaylistsGrid();
-            
-            // Auto load first track ready but don't play
-            if (state.queue.length > 0) {
-                state.queueIndex = 0;
-                loadTrack(0, false);
-            }
-            // Open panel initially
-            setTimeout(() => els.sidePanel.classList.add('open'), 200);
-        }
-
-        // --- Core Audio Logic ---
-
-        function loadTrack(index, autoPlay = true) {
-            if (index < 0 || index >= state.queue.length) return;
-            
-            state.queueIndex = index;
-            const track = state.queue[index];
-            
-            video.src = track.url;
-            video.load();
-            
-            els.filename.textContent = track.name;
-            highlightActiveTrack();
-
-            // Detect audio/video type mostly for UI
-            const isAudio = track.name.match(/\.(mp3|m4a|wav|ogg|flac)$/i) || (track.url && track.url.match(/\.(mp3|m4a|wav|ogg|flac)$/i));
-            
-            if (isAudio) {
-                video.classList.add('is-audio');
-                els.playerContainer.classList.add('is-audio');
-            } else {
-                video.classList.remove('is-audio');
-                els.playerContainer.classList.remove('is-audio');
-            }
-
-            if (autoPlay) {
-                video.play().catch(e => console.log("Autoplay blocked", e));
-            }
-            updatePlayIcon();
-        }
-
-        function togglePlay() {
-            if (state.queue.length === 0) return;
-            if (video.paused || video.ended) {
-                video.play();
-            } else {
-                video.pause();
-            }
-            updatePlayIcon();
-        }
-
-        function nextTrack(auto = false) {
-            if (state.queue.length === 0) return;
-            
-            if (state.shuffle) {
-                let nextIndex;
-                if (state.queue.length > 1) {
-                    do { nextIndex = Math.floor(Math.random() * state.queue.length); } 
-                    while (nextIndex === state.queueIndex);
-                } else { nextIndex = 0; }
-                loadTrack(nextIndex, true);
-            } else {
-                let nextIndex = state.queueIndex + 1;
-                if (nextIndex >= state.queue.length) {
-                    if (state.loop === 'all' || (state.loop === 'one' && !auto)) {
-                        nextIndex = 0;
-                    } else {
-                        return; // Stop at end
-                    }
-                }
-                loadTrack(nextIndex, true);
-            }
-        }
-
-        function prevTrack() {
-            if (state.queue.length === 0) return;
-            if (video.currentTime > 3) {
-                video.currentTime = 0;
-            } else {
-                let prevIndex = state.queueIndex - 1;
-                if (prevIndex < 0) prevIndex = state.queue.length - 1;
-                loadTrack(prevIndex, true);
-            }
-        }
-
-        // --- Library & Playlist Management ---
-
-        function getTrackById(id) {
-            return state.library.find(t => t.id === id);
-        }
-
-        function toggleLike(id, event) {
-            if (event) event.stopPropagation();
-            
-            const likedList = state.playlists['Liked Songs'];
-            const idx = likedList.indexOf(id);
-            
-            if (idx === -1) {
-                likedList.push(id);
-                showToast("Added to Liked Songs");
-            } else {
-                likedList.splice(idx, 1);
-                showToast("Removed from Liked Songs");
-            }
-            
-            // Re-render views to update hearts
-            renderLibrary();
-            renderQueue(); 
-            if (state.activeTab === 'playlists') renderPlaylistsGrid(); // Refresh covers or details
-            if (!els.playlistDetails.classList.contains('hidden')) {
-                // If viewing a playlist, refresh it
-                const openTitle = els.detailTitle.textContent;
-                renderPlaylistDetails(openTitle);
-            }
-        }
-
-        function addToQueue(track) {
-            state.queue.push(track);
-            renderQueue();
-            showToast("Added to Queue");
-        }
-
-        function playFromLibrary(index) {
-            // Logic: Playing from Library replaces Queue with Library? 
-            // Or just plays that song and queues the rest of library?
-            // Let's go with: Replace Queue with Library starting from index
-            state.queue = [...state.library];
-            loadTrack(index, true);
-            switchTab('queue');
-        }
-
-        function playFullPlaylist() {
-            // Plays the currently open playlist in details view
-            const playlistName = els.detailTitle.textContent;
-            const ids = state.playlists[playlistName] || [];
-            if(ids.length === 0) return;
-
-            const tracks = ids.map(id => getTrackById(id)).filter(Boolean);
-            state.queue = tracks;
-            loadTrack(0, true);
-            switchTab('queue');
-        }
-
-        function openAddToPlaylistModal(trackId, event) {
-            if (event) event.stopPropagation();
-            state.tempSongIdToAdd = trackId;
-            
-            // Generate list
-            els.playlistSelectionList.innerHTML = '';
-            Object.keys(state.playlists).forEach(name => {
-                if (name === 'Liked Songs') return; // Handled by heart
-                
-                const btn = document.createElement('button');
-                btn.className = 'list-item';
-                btn.style.width = '100%';
-                btn.textContent = name;
-                btn.onclick = () => {
-                    if (!state.playlists[name].includes(trackId)) {
-                        state.playlists[name].push(trackId);
-                        showToast(`Added to ${name}`);
-                    } else {
-                        showToast("Already in playlist");
-                    }
-                    closeModal();
-                };
-                els.playlistSelectionList.appendChild(btn);
-            });
-
-            els.modalOverlay.style.display = 'flex';
-            els.createPlaylistModal.style.display = 'none';
-            els.addToPlaylistModal.style.display = 'block';
-        }
-
-        // --- Render Functions ---
-
-        function renderQueue() {
-            els.queueList.innerHTML = '';
-            state.queue.forEach((track, idx) => {
-                const isLiked = state.playlists['Liked Songs'].includes(track.id);
-                const el = document.createElement('div');
-                el.className = `list-item ${idx === state.queueIndex ? 'active' : ''}`;
-                el.innerHTML = `
-                    <div class="list-item-info">
-                        <div class="item-title">${track.name}</div>
-                    </div>
-                    <div class="item-actions">
-                        <button class="action-btn ${isLiked ? 'liked' : ''}" onclick="toggleLike(${track.id}, event)">
-                            <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                        </button>
-                    </div>
-                `;
-                el.onclick = () => loadTrack(idx, true);
-                els.queueList.appendChild(el);
-            });
-            
-            // Auto scroll to active
-            const active = els.queueList.querySelector('.active');
-            if (active) active.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-
-        function renderLibrary() {
-            els.libraryList.innerHTML = '';
-            els.libCount.textContent = `${state.library.length} songs`;
-            
-            state.library.forEach((track, idx) => {
-                const isLiked = state.playlists['Liked Songs'].includes(track.id);
-                const el = document.createElement('div');
-                el.className = 'list-item';
-                el.innerHTML = `
-                    <div class="list-item-info">
-                        <div class="item-title">${track.name}</div>
-                    </div>
-                    <div class="item-actions">
-                        <button class="action-btn ${isLiked ? 'liked' : ''}" onclick="toggleLike(${track.id}, event)" title="Like">
-                            <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                        </button>
-                        <button class="action-btn" onclick="openAddToPlaylistModal(${track.id}, event)" title="Add to Playlist">
-                            <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-                        </button>
-                    </div>
-                `;
-                el.onclick = () => playFromLibrary(idx);
-                els.libraryList.appendChild(el);
-            });
-        }
-
-        function renderPlaylistsGrid() {
-            els.playlistsList.innerHTML = '';
-            Object.keys(state.playlists).forEach(name => {
-                const count = state.playlists[name].length;
-                const card = document.createElement('div');
-                card.className = 'playlist-card';
-                card.innerHTML = `
-                    <svg viewBox="0 0 24 24"><path d="M12 3v9.28c-.47-.17-.97-.28-1.5-.28C8.01 12 6 14.01 6 16.5S8.01 21 10.5 21c2.31 0 4.2-1.75 4.45-4H15V6h4V3h-7z"/></svg>
-                    <div class="playlist-name">${name}</div>
-                    <div style="font-size:0.7rem; opacity:0.5;">${count} songs</div>
-                `;
-                card.onclick = () => openPlaylistDetails(name);
-                els.playlistsList.appendChild(card);
-            });
-        }
-
-        function openPlaylistDetails(name) {
-            renderPlaylistDetails(name);
-            els.playlistsList.classList.add('hidden');
-            els.playlistDetails.classList.remove('hidden');
-        }
-
-        function closePlaylistDetails() {
-            els.playlistsList.classList.remove('hidden');
-            els.playlistDetails.classList.add('hidden');
-        }
-
-        function renderPlaylistDetails(name) {
-            els.detailTitle.textContent = name;
-            els.detailList.innerHTML = '';
-            
-            const ids = state.playlists[name] || [];
-            if (ids.length === 0) {
-                els.detailList.innerHTML = '<div style="padding:2rem; text-align:center; opacity:0.5">No songs</div>';
-                return;
-            }
-
-            ids.forEach((id, idx) => {
-                const track = getTrackById(id);
-                if (!track) return;
-                
-                const div = document.createElement('div');
-                div.className = 'list-item';
-                div.innerHTML = `
-                    <span style="font-family:monospace; opacity:0.5; width:20px;">${idx+1}</span>
-                    <div class="list-item-info">
-                        <div class="item-title">${track.name}</div>
-                    </div>
-                `;
-                // Play just this song? Or load playlist?
-                // Clicking plays the playlist starting here
-                div.onclick = () => {
-                     const tracks = ids.map(tid => getTrackById(tid)).filter(Boolean);
-                     state.queue = tracks;
-                     loadTrack(idx, true);
-                     switchTab('queue');
-                };
-                els.detailList.appendChild(div);
-            });
-        }
-
-        // --- UI Logic ---
-
-        function switchTab(tabName) {
-            state.activeTab = tabName;
-            
-            // Buttons
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.querySelector(`.tab-btn[onclick="switchTab('${tabName}')"]`).classList.add('active');
-            
-            // Views
-            document.querySelectorAll('.panel-view').forEach(v => v.classList.remove('active'));
-            document.getElementById(`view-${tabName}`).classList.add('active');
-            
-            // Special handle for Playlists view reset
-            if (tabName === 'playlists') {
-                closePlaylistDetails();
-                renderPlaylistsGrid();
-            } else if (tabName === 'library') {
-                renderLibrary();
-            } else if (tabName === 'queue') {
-                renderQueue();
-            }
-        }
-
-        function highlightActiveTrack() {
-            const items = els.queueList.querySelectorAll('.list-item');
-            items.forEach((item, idx) => {
-                if (idx === state.queueIndex) {
-                    item.classList.add('active');
-                    if(state.activeTab === 'queue') item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                } else {
-                    item.classList.remove('active');
-                }
-            });
-        }
-
-        function updatePlayIcon() {
-            if (video.paused || video.ended) {
-                els.iconPlay.classList.remove('hidden');
-                els.iconPause.classList.add('hidden');
-            } else {
-                els.iconPlay.classList.add('hidden');
-                els.iconPause.classList.remove('hidden');
-            }
-        }
-
-        function formatTime(seconds) {
-            if (!seconds || isNaN(seconds)) return "00:00";
-            const m = Math.floor(seconds / 60);
-            const s = Math.floor(seconds % 60);
-            return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-        }
-
-        function showToast(msg) {
-            els.toast.textContent = msg;
-            els.toast.classList.add('show');
-            setTimeout(() => els.toast.classList.remove('show'), 2000);
-        }
-
-        // --- Modals ---
-        function openCreatePlaylistModal() {
-            els.modalOverlay.style.display = 'flex';
-            els.createPlaylistModal.style.display = 'block';
-            els.addToPlaylistModal.style.display = 'none';
-            els.newPlaylistInput.focus();
-        }
-
-        function confirmCreatePlaylist() {
-            const name = els.newPlaylistInput.value.trim();
-            if (name) {
-                if (!state.playlists[name]) {
-                    state.playlists[name] = [];
-                    renderPlaylistsGrid();
-                    closeModal();
-                    showToast(`Created "${name}"`);
-                    els.newPlaylistInput.value = '';
-                } else {
-                    showToast("Playlist already exists");
-                }
-            }
-        }
-
-        function closeModal() {
-            els.modalOverlay.style.display = 'none';
-        }
+        // --- AUTH & FIREBASE ---
+        let auth, db;
         
-        // --- Drag & Drop to Library ---
-        document.body.addEventListener('drop', (e) => {
-            e.preventDefault();
-            document.body.classList.remove('dragging');
-            if (e.dataTransfer.files.length > 0) {
-                let count = 0;
-                Array.from(e.dataTransfer.files).forEach(file => {
-                     if (file.type.startsWith('video/') || file.type.startsWith('audio/')) {
-                        const newTrack = {
-                            id: Date.now() + Math.random(),
-                            name: file.name,
-                            url: URL.createObjectURL(file),
-                            isLocal: true
-                        };
-                        state.library.push(newTrack);
-                        count++;
+        try {
+            if (typeof __firebase_config !== 'undefined') {
+                const config = JSON.parse(__firebase_config);
+                firebase.initializeApp(config);
+                auth = firebase.auth();
+                db = firebase.firestore();
+            } else {
+                throw new Error("No Config");
+            }
+        } catch (e) {
+            console.warn("Firebase Init Failed. Using Offline Mode.");
+            state.isOfflineMode = true;
+        }
+
+        const authManager = {
+            init: async () => {
+                if (state.isOfflineMode) return;
+
+                auth.onAuthStateChanged(user => {
+                    if (user) {
+                        state.user = user;
+                        ui.updateAuthUI(user);
+                        dataManager.sync();
+                    } else {
+                        state.user = null;
+                        ui.updateAuthUI(null);
+                        // If no user, we check for guest token or fallback
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            auth.signInWithCustomToken(__initial_auth_token).catch(e => console.log("Guest login failed"));
+                        } else {
+                            // In this specific preview env, we often need anonymous
+                            auth.signInAnonymously().catch(e => console.log("Anon login failed"));
+                        }
                     }
                 });
+            },
+
+            signIn: async () => {
+                if (state.isOfflineMode) {
+                    alert("App is in offline mode (No Firebase config).");
+                    return;
+                }
                 
-                if (count > 0) {
-                    showToast(`Added ${count} songs to Library`);
-                    renderLibrary();
-                    if(state.queue.length === 0) {
-                        state.queue.push(state.library[state.library.length-1]);
-                        loadTrack(0, false);
+                // --- GOOGLE SIGN IN CODE START ---
+                // To enable this in production:
+                // 1. Uncomment the lines below
+                // 2. Ensure Google Provider is enabled in Firebase Console
+                
+                /*
+                const provider = new firebase.auth.GoogleAuthProvider();
+                try {
+                    await auth.signInWithPopup(provider);
+                } catch (error) {
+                    console.error("Google Sign In Error", error);
+                    alert("Sign In Error: " + error.message);
+                }
+                */
+                // --- GOOGLE SIGN IN CODE END ---
+
+                // For THIS preview environment, we simulate a login visually
+                // because we cannot open popups in this iframe.
+                alert("In this preview, we simulate Google Sign-In. Check the 'Config Help' button for production code.");
+                const fakeUser = { displayName: "Demo User", email: "demo@gmail.com", uid: "demo123" };
+                state.user = fakeUser;
+                ui.updateAuthUI(fakeUser);
+            },
+
+            signOut: () => {
+                if (!state.isOfflineMode) auth.signOut();
+                state.user = null;
+                ui.updateAuthUI(null);
+                state.likedIds = []; // Clear user data
+                ui.renderViews();
+            }
+        };
+
+        // --- DATA MANAGER (Robust Fallbacks) ---
+        const dataManager = {
+            sync: () => {
+                if (state.isOfflineMode || !state.user || !db) return;
+                
+                // Using the prompt's mandated path structure
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app';
+                const docRef = db.collection('artifacts').doc(appId).collection('users').doc(state.user.uid).collection('data').doc('music');
+
+                docRef.onSnapshot((doc) => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        state.likedIds = data.likedIds || [];
+                        ui.renderViews(); // Re-render to show hearts
+                        ui.updateLikeBtn();
                     }
+                }, (err) => {
+                    console.log("Sync error (using local)", err);
+                });
+            },
+
+            toggleLike: (id) => {
+                const idx = state.likedIds.indexOf(id);
+                if (idx === -1) state.likedIds.push(id);
+                else state.likedIds.splice(idx, 1);
+
+                ui.updateLikeBtn();
+                ui.renderViews(); // Update lists
+
+                // Save
+                if (state.isOfflineMode || !state.user || !db) {
+                    // LocalStorage fallback could go here
+                } else {
+                    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app';
+                    const docRef = db.collection('artifacts').doc(appId).collection('users').doc(state.user.uid).collection('data').doc('music');
+                    docRef.set({ likedIds: state.likedIds }, { merge: true });
                 }
             }
-        });
+        };
 
-        // --- Event Listeners ---
+        // --- AUDIO PLAYER ---
+        const audio = document.getElementById('audio-el');
+        const player = {
+            playTrack: (index) => {
+                try {
+                    state.idx = index;
+                    const track = state.queue[index];
+                    audio.src = track.url;
+                    
+                    // Promise handling for robustness
+                    const playPromise = audio.play();
+                    if (playPromise !== undefined) {
+                        playPromise
+                            .then(() => {
+                                state.playing = true;
+                                ui.updatePlayerUI();
+                                ui.updateLikeBtn();
+                                viz.start(); // Start visualizer only on success
+                            })
+                            .catch(error => {
+                                console.error("Playback failed:", error);
+                                state.playing = false;
+                                ui.updatePlayerUI();
+                            });
+                    }
+                    
+                    document.getElementById('p-title').textContent = track.name;
+                    document.getElementById('p-artist').textContent = track.artist;
+                } catch (e) {
+                    console.error("Critical Player Error", e);
+                }
+            },
+
+            togglePlay: () => {
+                if (state.idx === -1) {
+                    player.playTrack(0);
+                    return;
+                }
+                if (state.playing) {
+                    audio.pause();
+                    state.playing = false;
+                } else {
+                    audio.play();
+                    state.playing = true;
+                    viz.start();
+                }
+                ui.updatePlayerUI();
+            },
+
+            next: () => {
+                let next = state.idx + 1;
+                if (next >= state.queue.length) next = 0;
+                player.playTrack(next);
+            },
+
+            prev: () => {
+                let prev = state.idx - 1;
+                if (prev < 0) prev = state.queue.length - 1;
+                player.playTrack(prev);
+            },
+
+            setVolume: (val) => {
+                audio.volume = val;
+            },
+            
+            toggleLike: () => {
+                if(state.idx === -1) return;
+                const track = state.queue[state.idx];
+                dataManager.toggleLike(track.id);
+            }
+        };
+
+        // --- UI ---
+        const ui = {
+            init: () => {
+                ui.renderViews();
+                
+                // Seek Bar Interaction
+                document.getElementById('seek-rail').addEventListener('click', (e) => {
+                    if(!audio.duration) return;
+                    const rect = e.target.getBoundingClientRect();
+                    const pct = (e.clientX - rect.left) / rect.width;
+                    audio.currentTime = pct * audio.duration;
+                });
+            },
+
+            updateAuthUI: (user) => {
+                const btn = document.getElementById('google-sign-in');
+                const disp = document.getElementById('user-display');
+                if (user) {
+                    btn.classList.add('hidden');
+                    disp.classList.remove('hidden');
+                    document.getElementById('user-name').textContent = user.displayName || "User";
+                } else {
+                    btn.classList.remove('hidden');
+                    disp.classList.add('hidden');
+                }
+            },
+
+            renderViews: () => {
+                // Home (Recommendations & Recent)
+                const recGrid = document.getElementById('rec-grid');
+                recGrid.innerHTML = LIBRARY.slice(0, 4).map(t => ui.createCard(t)).join('');
+                
+                // Full Library
+                const libList = document.getElementById('lib-list');
+                libList.innerHTML = LIBRARY.map((t, i) => ui.createRow(t, i)).join('');
+
+                // Liked
+                const likedList = document.getElementById('liked-list');
+                const likedTracks = LIBRARY.filter(t => state.likedIds.includes(t.id));
+                if(likedTracks.length === 0) likedList.innerHTML = "<div style='color:#666; padding:20px;'>No liked songs yet.</div>";
+                else likedList.innerHTML = likedTracks.map((t, i) => ui.createRow(t, i)).join('');
+            },
+
+            createCard: (t) => {
+                return `
+                <div class="music-card" onclick="player.playTrack(LIBRARY.findIndex(x=>x.id=='${t.id}'))">
+                    <div class="card-img-wrap">
+                        <div style="width:100%; height:100%; background:#222; display:flex; align-items:center; justify-content:center;">
+                            <svg viewBox="0 0 24 24" fill="#444" width="48"><path d="M12 3v9.28c-.47-.17-.97-.28-1.5-.28C8.01 12 6 14.01 6 16.5S8.01 21 10.5 21c2.31 0 4.2-1.75 4.45-4H15V6h4V3h-7z"/></svg>
+                        </div>
+                        <div class="play-overlay">▶</div>
+                    </div>
+                    <div class="card-title">${t.name}</div>
+                    <div class="card-sub">${t.artist}</div>
+                </div>`;
+            },
+
+            createRow: (t, i) => {
+                const isLiked = state.likedIds.includes(t.id);
+                return `
+                <div class="track-row" onclick="player.playTrack(LIBRARY.findIndex(x=>x.id=='${t.id}'))">
+                    <div>${i + 1}</div>
+                    <div class="track-info">
+                        <div class="track-title" style="${state.idx === LIBRARY.findIndex(x=>x.id===t.id) ? 'color:var(--accent-color)' : ''}">${t.name}</div>
+                        <div style="font-size:12px;">${t.artist}</div>
+                    </div>
+                    <div style="text-align:right;">
+                        ${isLiked ? '<span style="color:var(--accent-color)">❤</span>' : ''}
+                    </div>
+                </div>`;
+            },
+
+            updatePlayerUI: () => {
+                const play = document.getElementById('icon-play');
+                const pause = document.getElementById('icon-pause');
+                if (state.playing) {
+                    play.classList.add('hidden');
+                    pause.classList.remove('hidden');
+                } else {
+                    play.classList.remove('hidden');
+                    pause.classList.add('hidden');
+                }
+            },
+            
+            updateLikeBtn: () => {
+                if(state.idx === -1) return;
+                const t = state.queue[state.idx];
+                const btn = document.getElementById('p-like-btn');
+                if(state.likedIds.includes(t.id)) btn.style.color = 'var(--accent-color)';
+                else btn.style.color = '#b3b3b3';
+            }
+        };
+
+        const router = {
+            go: (view) => {
+                document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+                document.getElementById('view-'+view).classList.add('active');
+                
+                document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+                // Simple active state logic
+                const btns = document.querySelectorAll('.nav-btn');
+                if(view==='home') btns[0].classList.add('active');
+                if(view==='library') btns[1].classList.add('active');
+                if(view==='liked') btns[2].classList.add('active');
+            }
+        };
+
+        // --- VISUALIZER (Robust) ---
+        const viz = {
+            ctx: null, source: null, analyser: null,
+            init: () => {
+                if (viz.ctx) return;
+                try {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    viz.ctx = new AudioContext();
+                    viz.analyser = viz.ctx.createAnalyser();
+                    viz.source = viz.ctx.createMediaElementSource(audio);
+                    viz.source.connect(viz.analyser);
+                    viz.analyser.connect(viz.ctx.destination);
+                    viz.analyser.fftSize = 64; // Low for performance
+                    viz.draw();
+                } catch(e) {
+                    console.warn("Visualizer failed to init (CORS or browser restriction)", e);
+                }
+            },
+            start: () => {
+                if (!viz.ctx) viz.init();
+                if (viz.ctx && viz.ctx.state === 'suspended') viz.ctx.resume();
+            },
+            draw: () => {
+                requestAnimationFrame(viz.draw);
+                const buffer = viz.analyser.frequencyBinCount;
+                const data = new Uint8Array(buffer);
+                viz.analyser.getByteFrequencyData(data);
+                
+                const canvas = document.getElementById('visualizer');
+                const cCtx = canvas.getContext('2d');
+                canvas.width = window.innerWidth;
+                canvas.height = 200;
+                cCtx.clearRect(0,0,canvas.width,canvas.height);
+                
+                const barW = (canvas.width / buffer);
+                let x = 0;
+                for(let i=0; i<buffer; i++) {
+                    const barH = data[i] / 2; // Scale down
+                    cCtx.fillStyle = `rgba(29, 185, 84, ${barH/200})`; 
+                    cCtx.fillRect(x, canvas.height - barH, barW, barH);
+                    x += barW;
+                }
+            }
+        };
+
+        // --- LISTENERS ---
+        audio.addEventListener('timeupdate', () => {
+            if(!audio.duration) return;
+            const pct = (audio.currentTime / audio.duration) * 100;
+            document.getElementById('seek-fill').style.width = pct + '%';
+            
+            const m = Math.floor(audio.currentTime / 60);
+            const s = Math.floor(audio.currentTime % 60);
+            document.getElementById('curr-time').textContent = `${m}:${s.toString().padStart(2,'0')}`;
+        });
         
-        // Listeners for Video Events
-        video.addEventListener('timeupdate', () => {
-            if (video.duration) {
-                const percent = (video.currentTime / video.duration) * 100;
-                els.progressFill.style.width = `${percent}%`;
-                els.currTime.textContent = formatTime(video.currentTime);
-            }
+        audio.addEventListener('loadedmetadata', () => {
+            const m = Math.floor(audio.duration / 60);
+            const s = Math.floor(audio.duration % 60);
+            document.getElementById('dur-time').textContent = `${m}:${s.toString().padStart(2,'0')}`;
         });
         
-        video.addEventListener('loadedmetadata', () => {
-            els.durTime.textContent = formatTime(video.duration);
-        });
+        audio.addEventListener('ended', () => player.next());
 
-        video.addEventListener('ended', () => {
-            if (state.loop === 'one') {
-                video.currentTime = 0;
-                video.play();
-            } else {
-                nextTrack(true);
-            }
-        });
-
-        video.addEventListener('play', updatePlayIcon);
-        video.addEventListener('pause', updatePlayIcon);
-
-        // Control Buttons
-        els.playBtn.addEventListener('click', togglePlay);
-        els.nextBtn.addEventListener('click', () => nextTrack(false));
-        els.prevBtn.addEventListener('click', prevTrack);
+        // --- BOOT ---
+        authManager.init();
+        ui.init();
         
-        els.shuffleBtn.addEventListener('click', () => {
-            state.shuffle = !state.shuffle;
-            els.shuffleBtn.classList.toggle('active-mode', state.shuffle);
-        });
-
-        els.loopBtn.addEventListener('click', () => {
-            if (state.loop === 'all') {
-                state.loop = 'one';
-                els.loopBtn.classList.add('active-mode');
-                els.loopIconNone.classList.add('hidden');
-                els.loopIconOne.classList.remove('hidden');
-            } else if (state.loop === 'one') {
-                state.loop = 'none';
-                els.loopBtn.classList.remove('active-mode');
-                els.loopIconNone.classList.remove('hidden');
-                els.loopIconOne.classList.add('hidden');
-            } else {
-                state.loop = 'all';
-                els.loopBtn.classList.add('active-mode');
-                els.loopIconNone.classList.remove('hidden');
-                els.loopIconOne.classList.add('hidden');
-            }
-        });
-
-        els.panelToggle.addEventListener('click', () => {
-            els.sidePanel.classList.toggle('open');
-            els.panelToggle.classList.toggle('active-mode', els.sidePanel.classList.contains('open'));
-        });
-
-        // Volume
-        els.volSlider.addEventListener('input', (e) => {
-            video.volume = e.target.value;
-            video.muted = false;
-            updateVolumeUI();
-        });
-
-        els.muteBtn.addEventListener('click', () => {
-            if (video.muted) {
-                video.muted = false;
-                video.volume = state.lastVolume || 0.5;
-            } else {
-                state.lastVolume = video.volume;
-                video.muted = true;
-                video.volume = 0;
-            }
-            updateVolumeUI();
-        });
-
-        function updateVolumeUI() {
-            els.volSlider.value = video.volume;
-            if (video.muted || video.volume === 0) {
-                els.volHigh.classList.add('hidden');
-                els.volMute.classList.remove('hidden');
-            } else {
-                els.volHigh.classList.remove('hidden');
-                els.volMute.classList.add('hidden');
-            }
-        }
-        
-        // Seek
-        els.seekContainer.addEventListener('click', (e) => {
-            if (!video.duration) return;
-            const rect = els.progressBarWrapper.getBoundingClientRect();
-            const pos = (e.clientX - rect.left) / rect.width;
-            video.currentTime = pos * video.duration;
-        });
-
-        // Fullscreen
-        els.fullScreenBtn.addEventListener('click', () => {
-            if (!document.fullscreenElement) {
-                els.playerContainer.requestFullscreen().catch(err => console.log(err));
-            } else {
-                document.exitFullscreen();
-            }
-        });
-        
-        document.getElementById('clear-queue-btn').addEventListener('click', () => {
-            video.pause();
-            state.queue = [];
-            state.queueIndex = -1;
-            renderQueue();
-            video.src = '';
-            els.filename.textContent = 'No Media';
-            updatePlayIcon();
-        });
-
-        // Keydown
-        document.addEventListener('keydown', (e) => {
-            if (document.activeElement.tagName === 'INPUT') {
-                if(e.key === 'Enter') confirmCreatePlaylist();
-                return;
-            }
-
-            switch(e.code) {
-                case 'Space': e.preventDefault(); togglePlay(); break;
-                case 'ArrowRight': video.currentTime += 5; break;
-                case 'ArrowLeft': video.currentTime -= 5; break;
-                case 'KeyN': nextTrack(false); break;
-                case 'KeyP': prevTrack(); break;
-                case 'KeyM': els.muteBtn.click(); break;
-                case 'KeyF': els.fullScreenBtn.click(); break;
-            }
-        });
-        
-        // Drag Overlays
-        document.body.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            document.body.classList.add('dragging');
-        });
-        els.dragOverlay.addEventListener('dragleave', () => document.body.classList.remove('dragging'));
-
-        // Start
-        // Ensure loop is 'all' by default visually
-        els.loopBtn.classList.add('active-mode');
-        init();
-
     </script>
 </body>
 </html>
