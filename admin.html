@@ -72,12 +72,14 @@
             } 
             // 2. Check for Manual Config (Local File Usage)
             else {
-                // --- PASTE YOUR FIREBASE CONFIG HERE IF RUNNING LOCALLY ---
-                // const firebaseConfig = { apiKey: "...", ... };
-                // firebase.initializeApp(firebaseConfig);
-                // auth = firebase.auth();
-                // db = firebase.firestore();
-                // auth.signInAnonymously();
+                const firebaseConfig = {
+  apiKey: "AIzaSyCLQYTa2R9UYIE-jD5c6eG7Izg6CsUMpuw",
+  authDomain: "musicplayer-81ed9.firebaseapp.com",
+  projectId: "musicplayer-81ed9",
+  storageBucket: "musicplayer-81ed9.firebasestorage.app",
+  messagingSenderId: "740998918130",
+  appId: "1:740998918130:web:fc1c8614724b3217c5456b"
+};
                 
                 // If still undefined, warn user
                 if (!db) {
