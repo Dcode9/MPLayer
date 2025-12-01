@@ -20,11 +20,16 @@
         .success { color: #1db954; }
         .error { color: #e91e63; }
         hr { border: 0; border-top: 1px solid #333; margin: 1.5rem 0; }
+        .warning-banner { background: #ff9800; color: black; padding: 10px; margin-bottom: 15px; border-radius: 4px; font-size: 0.8rem; display: none; }
     </style>
 </head>
 <body>
 
 <div class="container">
+    <div id="config-warning" class="warning-banner">
+        <strong>Config Missing:</strong> You are running this file locally. You must paste your Firebase Config in the code to make it work.
+    </div>
+
     <h1>Add New Song</h1>
     
     <label>Song Title</label>
@@ -48,21 +53,42 @@
     let auth, db;
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app';
 
-    try {
-        if (typeof __firebase_config !== 'undefined') {
-            const config = JSON.parse(__firebase_config);
-            firebase.initializeApp(config);
-            auth = firebase.auth();
-            db = firebase.firestore();
-            
-            // Auto Login for Admin to write
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                 auth.signInWithCustomToken(__initial_auth_token);
-            } else {
-                 auth.signInAnonymously();
+    // Initialize Firebase
+    function initFirebase() {
+        try {
+            // 1. Check for Environment Variable (Chat Preview)
+            if (typeof __firebase_config !== 'undefined') {
+                const config = JSON.parse(__firebase_config);
+                if (!firebase.apps.length) firebase.initializeApp(config);
+                auth = firebase.auth();
+                db = firebase.firestore();
+                
+                // Auto Login
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                     auth.signInWithCustomToken(__initial_auth_token);
+                } else {
+                     auth.signInAnonymously();
+                }
+            } 
+            // 2. Check for Manual Config (Local File Usage)
+            else {
+                // --- PASTE YOUR FIREBASE CONFIG HERE IF RUNNING LOCALLY ---
+                // const firebaseConfig = { apiKey: "...", ... };
+                // firebase.initializeApp(firebaseConfig);
+                // auth = firebase.auth();
+                // db = firebase.firestore();
+                // auth.signInAnonymously();
+                
+                // If still undefined, warn user
+                if (!db) {
+                    document.getElementById('config-warning').style.display = 'block';
+                    console.warn("Firebase config not found. Please edit the file to add it.");
+                }
             }
-        }
-    } catch (e) { console.error(e); }
+        } catch (e) { console.error("Init Error:", e); }
+    }
+
+    initFirebase();
 
     async function addSong() {
         const name = document.getElementById('name').value.trim();
@@ -70,6 +96,14 @@
         const url = document.getElementById('url').value.trim();
         const img = document.getElementById('img').value.trim();
         const status = document.getElementById('status');
+
+        // Robust Check: Is DB initialized?
+        if (!db) {
+            status.textContent = "Error: Database not connected. Missing Config.";
+            status.className = "status error";
+            alert("You are running this file without a Firebase Configuration. Open the file in a text editor and look for the 'initFirebase' function to add your config.");
+            return;
+        }
 
         if (!name || !artist || !url) {
             status.textContent = "Please fill in Name, Artist, and Audio URL.";
