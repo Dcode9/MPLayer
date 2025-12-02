@@ -25,9 +25,13 @@
             color: white;
         }
 
-        /* --- Dynamic Backgrounds --- */
+        /* --- Dynamic Backgrounds (Optimized) --- */
         #background-container { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
-        .background-layer { position: absolute; inset: 0; transition: opacity 1.5s ease-in-out, background 1.5s ease; }
+        .background-layer { 
+            position: absolute; inset: 0; 
+            transition: opacity 1.5s ease-in-out, background 1.5s ease;
+            will-change: opacity, background; /* GPU Hint */
+        }
         #background-playing { opacity: 0; }
         
         #ripple-effect {
@@ -35,12 +39,10 @@
             width: 150vmax; height: 150vmax;
             border-radius: 50%;
             transform: translate(-50%, -50%) scale(0);
-            opacity: 0; filter: blur(80px);
-            transition: transform 1s cubic-bezier(0.25, 1, 0.5, 1), opacity 1s ease-out;
+            opacity: 0; filter: blur(80px); /* Heavy, but GPU accelerated via transform */
+            transition: transform 0.1s linear, opacity 0.2s ease;
             pointer-events: none;
-        }
-        #ripple-effect.active {
-            transform: translate(-50%, -50%) scale(1);
+            will-change: transform, opacity;
         }
 
         /* --- Layout --- */
@@ -56,17 +58,19 @@
             z-index: 10;
         }
 
-        /* --- Custom Seek Bar & Visualizer (From Snippet) --- */
+        /* --- Custom Seek Bar & Visualizer --- */
         #seek-bar-container {
             position: relative; width: 100%; height: 80px;
             display: flex; align-items: center; cursor: pointer;
             transition: opacity 0.3s;
+            /* Ensure container captures hover events nicely */
+            touch-action: none; 
         }
         #seek-bar-container.disabled { opacity: 0.3; pointer-events: none; }
 
         #seek-bar-track {
             position: absolute; height: 6px; width: 100%;
-            background-color: rgba(255, 255, 255, 0.2);
+            background-color: rgba(255, 255, 255, 0.1); /* Slightly more subtle track */
             border-radius: 3px; top: 50%; transform: translateY(-50%);
             clip-path: inset(0 0 0 0%);
         }
@@ -103,6 +107,26 @@
         }
         input[type="range"]#seek-bar::-webkit-slider-thumb:hover { transform: scale(1.1); }
 
+        /* Tooltip */
+        #seek-tooltip {
+            position: absolute;
+            top: -30px; 
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+            color: white;
+            font-size: 12px;
+            font-family: monospace;
+            padding: 4px 8px;
+            border-radius: 6px;
+            pointer-events: none;
+            opacity: 0;
+            transform: translateX(-50%);
+            transition: opacity 0.1s ease;
+            z-index: 10;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            white-space: nowrap;
+        }
+
         /* --- Album Art Effects --- */
         #album-art-wrapper { transition: transform 0.3s ease; position: relative; }
         #album-art-wrapper:hover { transform: scale(1.05); }
@@ -113,6 +137,7 @@
             filter: blur(20px); opacity: 0.8;
             animation: spin 8s linear infinite;
             border-radius: 50%;
+            will-change: transform; /* Optimized */
         }
         @keyframes spin { from { --angle: 0deg; } to { --angle: 360deg; } }
 
@@ -126,13 +151,11 @@
 
         #config-modal { position: fixed; inset:0; background: rgba(0,0,0,0.8); z-index: 100; display: none; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
         
-        /* Disabled State for Buttons */
         button:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
     </style>
 </head>
 <body class="paused">
 
-    <!-- Dynamic Backgrounds -->
     <div id="background-container">
         <div id="background-paused" class="background-layer" style="background: rgb(31, 41, 55);"></div>
         <div id="background-playing" class="background-layer" style="background: rgb(31, 41, 55);"></div>
@@ -226,9 +249,10 @@
                 </div>
 
                 <!-- Visualizer Seek Bar -->
-                <div class="w-full flex items-center gap-3">
+                <div class="w-full flex items-center gap-3 relative">
                     <span id="current-time" class="text-xs text-gray-400 font-mono w-10 text-right">0:00</span>
-                    <div id="seek-bar-container" class="flex-1 h-12 disabled">
+                    <div id="seek-bar-container" class="flex-1 h-12 disabled relative">
+                        <div id="seek-tooltip">0:00</div>
                         <div id="seek-bar-track"></div>
                         <canvas id="visualizer-canvas"></canvas>
                         <input type="range" id="seek-bar" value="0" step="0.1" disabled>
@@ -264,14 +288,14 @@
 
         let LIBRARY = [];
         let supabase;
-        // Robust State Machine
         const state = { 
             queue: [], 
             idx: -1, 
             playing: false, 
             loaded: false,
             likedIds: JSON.parse(localStorage.getItem('likedIds') || '[]'),
-            isDragging: false
+            isDragging: false,
+            hoverProgress: -1 // 0.0 to 1.0, -1 is inactive
         };
         
         // Visualizer State
@@ -280,19 +304,28 @@
         let currentProgress = 0;
         let time = 0;
         let visualizerCtx;
+        // Logic for smooth transition from flat to wave
+        let currentAmplitude = 0; 
         const colorThief = new ColorThief();
 
         // --- INIT ---
         async function init() {
-            // Setup Visualizer Canvas
+            // Setup Visualizer Canvas with Optimization
             const vCanvas = document.getElementById('visualizer-canvas');
             visualizerCtx = vCanvas.getContext('2d');
             resizeVisualizer();
-            window.addEventListener('resize', resizeVisualizer);
+            window.addEventListener('resize', () => {
+                // Throttle resize
+                if(!this.resizeTimeout) {
+                    this.resizeTimeout = setTimeout(() => {
+                        resizeVisualizer();
+                        this.resizeTimeout = null;
+                    }, 100);
+                }
+            });
 
             // Supabase Config Logic
             try {
-                // Try Vercel API Env
                 const response = await fetch('/api/config');
                 if (response.ok) {
                     const config = await response.json();
@@ -303,10 +336,8 @@
                 }
                 throw new Error("Env API failed");
             } catch(e) {
-                // Try Manual LocalStorage
                 const storedUrl = localStorage.getItem('sb_url');
                 const storedKey = localStorage.getItem('sb_key');
-                
                 if (!SUPABASE_URL.includes("YOUR_")) {
                     setupSupabase(SUPABASE_URL, SUPABASE_KEY);
                 } else if(storedUrl && storedKey) {
@@ -318,7 +349,7 @@
                 }
             }
             ui.initListeners();
-            // Start visualizer loop immediately (it handles idle state)
+            // Start visualizer loop immediately
             viz.startLoop();
         }
 
@@ -362,33 +393,26 @@
                 state.playing = false;
                 ui.updatePlayBtn();
             }
-            alert("Error playing audio. Song might be missing or restricted.");
+            // Alert recovery
+            setTimeout(() => alert("Error playing audio. Song might be missing or restricted."), 500);
         };
 
         const player = {
             playTrack: (index) => {
-                // Bounds Check
                 if (index < 0 || index >= LIBRARY.length) return;
 
                 state.idx = index;
                 const track = LIBRARY[index];
                 
                 audio.src = track.url;
-                
-                // Unlock controls
                 state.loaded = true;
                 ui.enableControls();
 
                 audio.play().then(() => {
                     state.playing = true;
                     ui.updatePlayBtn();
-                    
-                    // Robustness: Ensure Audio Context is running (browsers suspend it)
-                    if (audioContext && audioContext.state === 'suspended') {
-                        audioContext.resume();
-                    }
+                    if (audioContext && audioContext.state === 'suspended') audioContext.resume();
                     if (!isAudioContextInitialized) setupAudioContext();
-                    
                     mediaSessionManager.update(track);
                     pipManager.drawCanvas(track);
                     ui.updateMetadata(track);
@@ -414,10 +438,8 @@
                 } else { 
                     audio.play(); 
                     state.playing = true; 
-                    
                     if (audioContext && audioContext.state === 'suspended') audioContext.resume();
                     if (!isAudioContextInitialized) setupAudioContext();
-                    
                     document.body.classList.remove('paused');
                     document.body.classList.add('playing');
                 }
@@ -451,16 +473,15 @@
             }
         };
 
-        // --- VISUALIZER LOGIC (EXACT PORT) ---
+        // --- VISUALIZER LOGIC (ROBUST & MORPHING) ---
         function setupAudioContext() {
             try {
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 analyser = audioContext.createAnalyser();
-                // Connect
                 source = audioContext.createMediaElementSource(audio);
                 source.connect(analyser);
                 analyser.connect(audioContext.destination);
-                analyser.fftSize = 512;
+                analyser.fftSize = 256; 
                 isAudioContextInitialized = true;
             } catch(e) { console.warn("WebAudio API missing or failed", e); }
         }
@@ -468,7 +489,8 @@
         function resizeVisualizer() {
             const container = document.getElementById('seek-bar-container');
             const canvas = document.getElementById('visualizer-canvas');
-            const dpr = window.devicePixelRatio || 1;
+            // Optimization: Cap DPR at 2 for performance on high-density mobile screens
+            const dpr = Math.min(window.devicePixelRatio || 1, 2);
             canvas.width = container.offsetWidth * dpr;
             canvas.height = container.offsetHeight * dpr;
             visualizerCtx.scale(dpr, dpr);
@@ -481,97 +503,85 @@
             render: () => {
                 requestAnimationFrame(viz.render);
                 
-                // If not loaded, do nothing
                 if (!state.loaded && !isAudioContextInitialized) return;
 
                 const canvas = document.getElementById('visualizer-canvas');
-                const seekTrack = document.getElementById('seek-bar-track');
-                const dpr = window.devicePixelRatio || 1;
-                
-                // Canvas Dimensions (Virtual)
+                // Use limited DPR for reading dimensions
+                const dpr = Math.min(window.devicePixelRatio || 1, 2);
                 const width = canvas.width / dpr;
                 const height = canvas.height / dpr;
                 const centerY = height / 2;
                 
                 visualizerCtx.clearRect(0, 0, width, height);
                 
-                // Update Progress Clip Path
+                const seekTrack = document.getElementById('seek-bar-track');
                 const progressWidth = width * currentProgress;
+                
                 canvas.style.clipPath = `inset(0 ${width - progressWidth}px 0 0)`;
                 seekTrack.style.clipPath = `inset(0 0 0 ${currentProgress * 100}%)`;
 
-                if (progressWidth <= 1) return;
-
-                // Audio Data Processing
-                time += 0.05;
-                let targetLow = 0, targetMid = 0, targetHigh = 0;
-
+                // Audio Data
+                let targetAmp = 0;
                 if (state.playing && isAudioContextInitialized) {
+                    time += 0.1;
                     const bufferLength = analyser.frequencyBinCount;
                     const dataArray = new Uint8Array(bufferLength);
                     analyser.getByteFrequencyData(dataArray);
+
+                    // Get Bass (Low Freqs)
+                    const bassSum = dataArray.slice(0, 10).reduce((a, b) => a + b, 0);
+                    const bassEnergy = (bassSum / 10) / 255;
+                    targetAmp = bassEnergy * (height * 0.4); 
                     
-                    targetLow = dataArray.slice(0, 5).reduce((a, b) => a + b, 0) / 5 / 255;
-                    targetMid = dataArray.slice(10, 40).reduce((a, b) => a + b, 0) / 30 / 255;
-                    targetHigh = dataArray.slice(80, 150).reduce((a, b) => a + b, 0) / 70 / 255;
-                    
-                    // Ripple
-                    const rippleBassIntensity = dataArray.slice(0, 5).reduce((a, b) => a + b, 0) / 5;
-                    const rippleScale = 1 + (rippleBassIntensity / 255) * 0.5;
+                    // Simple smoothing for ripple
+                    smoothedLow += (bassEnergy - smoothedLow) * 0.1;
                     const ripple = document.getElementById('ripple-effect');
+                    const rippleScale = 1 + (smoothedLow * 0.5); 
                     ripple.style.transform = `translate(-50%, -50%) scale(${rippleScale})`;
-                    if(state.playing) ripple.classList.add('active');
+                    ripple.style.opacity = Math.max(0.1, smoothedLow);
+                } else {
+                    time += 0.02;
+                    targetAmp = 0; 
                 }
 
-                // Smoothing
-                const smoothingFactor = 0.1;
-                smoothedLow += (targetLow - smoothedLow) * smoothingFactor;
-                smoothedMid += (targetMid - smoothedMid) * smoothingFactor;
-                smoothedHigh += (targetHigh - smoothedHigh) * smoothingFactor;
+                currentAmplitude += (targetAmp - currentAmplitude) * 0.1; 
 
-                // Vertical Scale (Based on progress)
-                let verticalScale = 1.0;
-                if (audio.duration > 0) {
-                    const scaleProgress = Math.min(1, currentProgress / 0.4);
-                    verticalScale = 0.3 + 0.7 * scaleProgress;
-                }
-
-                // Draw Visualizer
+                // DRAW WAVE
                 visualizerCtx.beginPath();
                 visualizerCtx.moveTo(0, centerY);
 
-                const waveDensity = 0.03;
-                const maxWaves = 14;
-                const waveCount = Math.min(maxWaves, Math.max(2, progressWidth * waveDensity));
-                const intensity = audio.volume;
-                
-                const lowPower = Math.pow(smoothedLow, 2.0);
-                const midPower = Math.pow(smoothedMid, 1.5);
-                const highPower = Math.pow(smoothedHigh, 1.2);
+                const waveCount = 2 + (currentProgress * 20); 
 
-                for (let x = 0; x <= progressWidth; x++) {
-                    const localProgress = x / progressWidth;
-                    const taper = Math.sin(localProgress * Math.PI);
-                    
-                    const baseWave = Math.sin((x / width) * waveCount * Math.PI);
-                    const fastWave = Math.sin((x / width) * waveCount * 2.5 * Math.PI + time);
-                    const slowWave = Math.sin((x / width) * waveCount * 0.5 * Math.PI + time * 0.3);
+                for (let x = 0; x <= width; x++) {
+                    // Interaction: Flatten at hover
+                    let interactionFactor = 1.0;
+                    if (state.hoverProgress >= 0) {
+                        const hoverX = state.hoverProgress * width;
+                        const dist = Math.abs(x - hoverX);
+                        // Flatten radius ~ 60px
+                        const radius = 60; 
+                        if (dist < radius) {
+                            // Smooth step function (Hermite)
+                            let t = dist / radius;
+                            interactionFactor = t * t * (3 - 2 * t);
+                        }
+                    }
 
-                    const baseAmplitude = (centerY * 0.8) * lowPower * intensity * verticalScale;
-                    const detailAmplitude = (centerY * 0.2) * midPower * intensity * verticalScale;
-
-                    const y = centerY +
-                        (baseWave * baseAmplitude +
-                        fastWave * detailAmplitude +
-                        slowWave * detailAmplitude * 0.5) * taper;
+                    const sine = Math.sin((x / width) * waveCount * Math.PI * 2 + time);
+                    const y = centerY + sine * currentAmplitude * interactionFactor;
                     
                     visualizerCtx.lineTo(x, y);
                 }
 
-                visualizerCtx.lineWidth = 3;
+                visualizerCtx.lineWidth = 2;
                 visualizerCtx.strokeStyle = '#fff';
-                visualizerCtx.shadowColor = 'rgba(255, 255, 255, 0.7)';
-                visualizerCtx.shadowBlur = 4 + highPower * 10;
+                // Optimize Shadow: Only apply if amplitude is significant
+                if(currentAmplitude > 2) {
+                    visualizerCtx.shadowColor = 'rgba(255, 255, 255, 0.5)';
+                    visualizerCtx.shadowBlur = 10;
+                } else {
+                    visualizerCtx.shadowBlur = 0;
+                }
                 visualizerCtx.stroke();
                 visualizerCtx.shadowBlur = 0;
             }
@@ -594,26 +604,48 @@
             initListeners: () => {
                 const seekBar = document.getElementById('seek-bar');
                 const container = document.getElementById('seek-bar-container');
+                const tooltip = document.getElementById('seek-tooltip');
                 
-                // Mousedown/Mouseup for dragging state
+                // Mousedown/Mouseup for dragging
                 seekBar.addEventListener('mousedown', () => state.isDragging = true);
                 seekBar.addEventListener('mouseup', () => state.isDragging = false);
                 
-                // Seeking
+                // Input (Seeking)
                 seekBar.addEventListener('input', () => {
                     if(!audio.duration) return;
-                    audio.currentTime = seekBar.value;
+                    audio.currentTime = parseFloat(seekBar.value);
                     currentProgress = audio.currentTime / audio.duration;
                 });
-                
-                // Click on container (skip to pos) logic
-                // The snippet used complex logic here, but native range input handles clicks fine.
-                // We keep it simple for robustness.
 
+                // Hover Effects & Tooltip
+                container.addEventListener('mousemove', (e) => {
+                    if(!state.loaded || !audio.duration) return;
+                    
+                    const rect = container.getBoundingClientRect();
+                    const offsetX = e.clientX - rect.left;
+                    // Clamp 0 to 1
+                    const progress = Math.max(0, Math.min(1, offsetX / rect.width));
+                    
+                    state.hoverProgress = progress; // For Visualizer Flattening
+                    
+                    // Tooltip
+                    const hoverTime = progress * audio.duration;
+                    const m = Math.floor(hoverTime / 60);
+                    const s = Math.floor(hoverTime % 60);
+                    tooltip.textContent = `${m}:${s.toString().padStart(2, '0')}`;
+                    tooltip.style.left = `${offsetX}px`;
+                    tooltip.style.opacity = 1;
+                });
+
+                container.addEventListener('mouseleave', () => {
+                    state.hoverProgress = -1; // Reset flattening
+                    tooltip.style.opacity = 0;
+                });
+
+                // Audio Update
                 audio.addEventListener('timeupdate', () => {
                     if(!audio.duration || isNaN(audio.duration)) return;
                     
-                    // Only update visuals if not dragging to prevent glitching
                     if (!state.isDragging) {
                         seekBar.max = audio.duration;
                         seekBar.value = audio.currentTime;
