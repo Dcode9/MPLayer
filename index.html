@@ -31,7 +31,7 @@
         .background-layer { 
             position: absolute; inset: 0; 
             transition: opacity 1.5s ease-in-out, background 1.5s ease;
-            will-change: opacity, background; 
+            will-change: opacity; 
         }
         #background-playing { opacity: 0; }
         
@@ -41,7 +41,7 @@
             border-radius: 50%;
             transform: translate(-50%, -50%) scale(0);
             opacity: 0; filter: blur(80px);
-            transition: transform 1s cubic-bezier(0.25, 1, 0.5, 1), opacity 1s ease-out;
+            transition: transform 0.1s linear, opacity 0.2s ease;
             pointer-events: none;
             will-change: transform, opacity;
         }
@@ -72,7 +72,7 @@
         #seek-bar-container.disabled { opacity: 0.3; pointer-events: none; }
 
         #seek-bar-track {
-            position: absolute; height: 6px; width: 100%;
+            position: absolute; height: 4px; width: 100%;
             background-color: rgba(255, 255, 255, 0.2);
             border-radius: 3px; top: 50%; transform: translateY(-50%);
             clip-path: inset(0 0 0 0%);
@@ -89,33 +89,32 @@
             cursor: pointer;
         }
         
-        /* Custom Thumb (Playhead) */
+        /* --- Plain Dot Thumb --- */
         input[type="range"]#seek-bar::-webkit-slider-thumb {
             -webkit-appearance: none; appearance: none;
-            width: 24px; height: 24px; background: #fff;
-            border-radius: 4px; cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-            transition: all 0.2s ease, transform 0.1s;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23000'%3E%3Cpath d='M8 6.82v10.36c0 .79.87 1.27 1.54.84l8.14-5.18c.62-.39.62-1.29 0-1.68L9.54 5.98C8.87 5.55 8 6.03 8 6.82z'/%3E%3C/svg%3E");
-            background-size: 14px; background-position: center; background-repeat: no-repeat;
+            width: 16px; height: 16px; 
+            background: #fff;
+            border-radius: 50%; /* Perfect Circle */
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            transition: transform 0.1s;
+            margin-top: -6px; /* Center alignment adjustment if needed */
         }
+        
         input[type="range"]#seek-bar:disabled::-webkit-slider-thumb {
             display: none;
         }
-        body.playing input[type="range"]#seek-bar::-webkit-slider-thumb {
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23000'%3E%3Cpath d='M8 6.82v10.36c0 .79.87 1.27 1.54.84l8.14-5.18c.62-.39.62-1.29 0-1.68L9.54 5.98C8.87 5.55 8 6.03 8 6.82z'/%3E%3C/svg%3E");
+        
+        input[type="range"]#seek-bar::-webkit-slider-thumb:hover { 
+            transform: scale(1.3); 
         }
-        body.paused input[type="range"]#seek-bar::-webkit-slider-thumb {
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23000'%3E%3Cpath d='M6 4h4v16H6V4zm8 0h4v16h-4V4z'/%3E%3C/svg%3E");
-        }
-        input[type="range"]#seek-bar::-webkit-slider-thumb:hover { transform: scale(1.1); }
 
         /* Tooltip */
         #seek-tooltip {
             position: absolute;
             top: -35px; 
             background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(8px);
+            /* Removed blur for performance */
             color: white;
             font-size: 11px;
             font-family: monospace;
@@ -128,7 +127,6 @@
             z-index: 10;
             border: 1px solid rgba(255, 255, 255, 0.15);
             white-space: nowrap;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
         }
         #seek-tooltip.visible {
             opacity: 1;
@@ -265,7 +263,7 @@
                         <canvas id="visualizer-canvas"></canvas>
                         <input type="range" id="seek-bar" value="0" step="0.1" disabled>
                     </div>
-                    <span id="duration" class="text-xs text-gray-400 font-mono w-10">0:00</span>
+                    <span id="dur-time" class="text-xs text-gray-400 font-mono w-10">0:00</span>
                 </div>
             </div>
 
@@ -300,7 +298,7 @@
             queue: [], idx: -1, playing: false, loaded: false,
             likedIds: JSON.parse(localStorage.getItem('likedIds') || '[]'),
             isDragging: false,
-            hoverProgress: -1 // 0.0 to 1.0, -1 is inactive
+            hoverProgress: -1 
         };
         
         // Visualizer State
@@ -308,9 +306,13 @@
         let smoothedLow = 0, smoothedMid = 0, smoothedHigh = 0;
         let currentProgress = 0;
         let time = 0;
-        let hoverIntensity = 0; // For smoothing the hover flatten effect
+        let hoverIntensity = 0; 
         let visualizerCtx;
         const colorThief = new ColorThief();
+
+        // 30 FPS Cap Vars
+        let lastFrameTime = 0;
+        const FPS_INTERVAL = 1000 / 30; // 33.33ms
 
         // --- INIT ---
         async function init() {
@@ -466,8 +468,14 @@
 
         const viz = {
             startLoop: () => { requestAnimationFrame(viz.render); },
-            render: () => {
+            render: (timestamp) => {
                 requestAnimationFrame(viz.render);
+                
+                // 30 FPS Cap Logic
+                const elapsed = timestamp - lastFrameTime;
+                if (elapsed < FPS_INTERVAL) return;
+                lastFrameTime = timestamp - (elapsed % FPS_INTERVAL);
+
                 if (!state.loaded) return; 
 
                 const canvas = document.getElementById('visualizer-canvas');
@@ -484,7 +492,7 @@
                 canvas.style.clipPath = `inset(0 ${width - progressWidth}px 0 0)`;
                 seekTrack.style.clipPath = `inset(0 0 0 ${currentProgress * 100}%)`;
 
-                time += 0.05;
+                time += 0.05; // slower time for smooth wave
                 let targetLow = 0, targetMid = 0, targetHigh = 0;
 
                 if (state.playing && isAudioContextInitialized) {
@@ -499,8 +507,10 @@
                     const rippleBass = dataArray.slice(0, 5).reduce((a, b) => a + b, 0) / 5;
                     const rippleScale = 1 + (rippleBass / 255) * 0.5;
                     const ripple = document.getElementById('ripple-effect');
-                    ripple.style.transform = `translate(-50%, -50%) scale(${rippleScale})`;
-                    if(state.playing) ripple.classList.add('active');
+                    if(ripple) {
+                        ripple.style.transform = `translate(-50%, -50%) scale(${rippleScale})`;
+                        if(state.playing) ripple.classList.add('active');
+                    }
                 }
 
                 // Smoothing
@@ -509,7 +519,6 @@
                 smoothedMid += (targetMid - smoothedMid) * smoothingFactor;
                 smoothedHigh += (targetHigh - smoothedHigh) * smoothingFactor;
 
-                // Vertical Scale
                 let verticalScale = 1.0;
                 if (audio.duration > 0) {
                     const scaleProgress = Math.min(1, currentProgress / 0.4);
@@ -527,8 +536,7 @@
                 const lowPower = Math.pow(smoothedLow, 2.0);
                 const midPower = Math.pow(smoothedMid, 1.5);
                 
-                // --- HOVER LOGIC ---
-                // Smooth transition for flattening intensity
+                // --- HOVER LOGIC (Bottom Half Only) ---
                 const targetHoverInt = (state.hoverProgress >= 0) ? 1.0 : 0.0;
                 hoverIntensity += (targetHoverInt - hoverIntensity) * 0.1;
 
@@ -551,7 +559,7 @@
                         const radius = 60; 
                         if (dist < radius) {
                             let t = dist / radius;
-                            let dip = t * t * (3 - 2 * t); // Smooth Hermite step 0..1
+                            let dip = t * t * (3 - 2 * t); 
                             interactionFactor = 1.0 - (hoverIntensity * (1.0 - dip));
                         }
                     }
@@ -566,10 +574,14 @@
 
                 visualizerCtx.lineWidth = 3;
                 visualizerCtx.strokeStyle = '#fff';
-                visualizerCtx.shadowColor = 'rgba(255, 255, 255, 0.7)';
-                visualizerCtx.shadowBlur = 4 + smoothedHigh * 10; // Optimized blur
+                // Optimize Shadow
+                if(smoothedLow > 0.3) {
+                    visualizerCtx.shadowColor = 'rgba(255, 255, 255, 0.7)';
+                    visualizerCtx.shadowBlur = 4 + smoothedHigh * 5; 
+                } else {
+                    visualizerCtx.shadowBlur = 0;
+                }
                 visualizerCtx.stroke();
-                visualizerCtx.shadowBlur = 0;
             }
         };
 
@@ -603,6 +615,18 @@
                 container.addEventListener('mousemove', (e) => {
                     if(!state.loaded || !audio.duration || isNaN(audio.duration)) return;
                     const rect = container.getBoundingClientRect();
+                    
+                    // BOTTOM HALF ONLY CHECK
+                    const offsetY = e.clientY - rect.top;
+                    const height = rect.height;
+                    
+                    // Only active if hovering the bottom half (from center line down)
+                    if (offsetY < height / 2) {
+                        state.hoverProgress = -1;
+                        tooltip.classList.remove('visible');
+                        return;
+                    }
+
                     const progress = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
                     state.hoverProgress = progress; 
                     
@@ -633,7 +657,7 @@
                 audio.addEventListener('loadedmetadata', () => {
                     if(audio.duration && !isNaN(audio.duration)) {
                         const m = Math.floor(audio.duration / 60), s = Math.floor(audio.duration % 60);
-                        const el = document.getElementById('duration');
+                        const el = document.getElementById('dur-time');
                         if(el) el.textContent = `${m}:${s.toString().padStart(2,'0')}`;
                     }
                 });
@@ -666,30 +690,41 @@
                             const mainColor = `rgb(${main[0]}, ${main[1]}, ${main[2]})`;
                             const secColor = `rgb(${sec[0]}, ${sec[1]}, ${sec[2]})`;
                             const darkShade = `rgb(${main[0]*0.2}, ${main[1]*0.2}, ${main[2]*0.2})`;
-                            document.getElementById('background-playing').style.background = `radial-gradient(circle at top, ${mainColor}, ${darkShade})`;
-                            document.getElementById('ripple-effect').style.background = `radial-gradient(circle, ${secColor} 0%, transparent 70%)`;
-                            document.getElementById('album-art-glow').style.background = `conic-gradient(from 0deg, ${mainColor}, ${secColor}, ${mainColor})`;
+                            
+                            const bgPlaying = document.getElementById('background-playing');
+                            if(bgPlaying) bgPlaying.style.background = `radial-gradient(circle at top, ${mainColor}, ${darkShade})`;
+                            
+                            const ripple = document.getElementById('ripple-effect');
+                            if(ripple) ripple.style.background = `radial-gradient(circle, ${secColor} 0%, transparent 70%)`;
+                            
+                            const glow = document.getElementById('album-art-glow');
+                            if(glow) glow.style.background = `conic-gradient(from 0deg, ${mainColor}, ${secColor}, ${mainColor})`;
                         } catch(e) {}
                     };
                 }
             },
             render: () => {
                 const recGrid = document.getElementById('rec-grid');
-                recGrid.innerHTML = LIBRARY.slice(0,4).map(ui.createCard).join('');
+                if(recGrid) recGrid.innerHTML = LIBRARY.slice(0,4).map(ui.createCard).join('');
+                
                 const recentGrid = document.getElementById('recent-grid');
-                recentGrid.innerHTML = LIBRARY.slice(4,8).map(ui.createCard).join('');
+                if(recentGrid) recentGrid.innerHTML = LIBRARY.slice(4,8).map(ui.createCard).join('');
+                
                 const libList = document.getElementById('lib-list');
-                libList.innerHTML = LIBRARY.map(ui.createRow).join('');
+                if(libList) libList.innerHTML = LIBRARY.map(ui.createRow).join('');
+
                 const likedList = document.getElementById('liked-list');
-                const likedTracks = LIBRARY.filter(t => state.likedIds.includes(t.id));
-                if(likedTracks.length === 0) likedList.innerHTML = '<div class="text-gray-500">No liked songs yet.</div>';
-                else likedList.innerHTML = likedTracks.map(ui.createRow).join('');
+                if(likedList) {
+                    const likedTracks = LIBRARY.filter(t => state.likedIds.includes(t.id));
+                    if(likedTracks.length === 0) likedList.innerHTML = '<div class="text-gray-500">No liked songs yet.</div>';
+                    else likedList.innerHTML = likedTracks.map(ui.createRow).join('');
+                }
             },
             createCard: (t, i) => `
                 <div class="bg-white/5 hover:bg-white/10 p-4 rounded-xl cursor-pointer transition group" onclick="player.playTrack(${LIBRARY.indexOf(t)})">
                     <div class="relative aspect-square rounded-lg overflow-hidden mb-3 bg-gray-800 shadow-lg">
                         <img src="${t.img || 'https://placehold.co/300/333/fff?text=Music'}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
-                        <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition backdrop-blur-sm">
+                        <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
                             <span class="bg-green-500 text-black p-3 rounded-full shadow-xl transform scale-75 group-hover:scale-100 transition"><svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>
                         </div>
                     </div>
@@ -710,7 +745,8 @@
                 const isPlaying = state.playing;
                 document.getElementById('icon-play').className = isPlaying ? 'hidden' : 'flex ml-1';
                 document.getElementById('icon-pause').className = isPlaying ? 'flex' : 'hidden';
-                document.getElementById('background-playing').style.opacity = isPlaying ? 1 : 0;
+                const bgPlaying = document.getElementById('background-playing');
+                if(bgPlaying) bgPlaying.style.opacity = isPlaying ? 1 : 0;
             },
             updateLikeBtn: () => {
                 if(state.idx === -1) return;
