@@ -105,11 +105,13 @@
             cursor: pointer;
             box-shadow: 0 0 10px rgba(0,0,0,0.5);
             transition: transform 0.1s;
-            /* Positioning logic ensures it aligns with track middle visually */
-            transform: translateY(-50%); 
-            margin-top: 0px; 
+            
+            /* Positioning logic: 
+               Input is bottom 50% (30px high). Thumb needs to be centered at the top edge of this input (where the line is).
+               margin-top: -6px pulls it up 50% of its own height.
+               transform pulls it up further to align with the track line. */
+            transform: translateY(-100%); 
             position: relative;
-            top: 0; /* Input is bottom aligned, thumb sits at top edge of input */
         }
         
         input[type="range"]#seek-bar:disabled::-webkit-slider-thumb {
@@ -117,7 +119,7 @@
         }
         
         input[type="range"]#seek-bar::-webkit-slider-thumb:hover { 
-            transform: translateY(-50%) scale(1.5); 
+            transform: translateY(-100%) scale(1.5); 
         }
 
         /* Tooltip */
@@ -148,9 +150,11 @@
         #album-art-wrapper:hover { transform: scale(1.05); }
         
         #album-art-glow {
-            position: absolute; inset: -10px; z-index: -1;
+            position: absolute; 
+            inset: -6px; /* Reduced by ~30% from -10px */
+            z-index: -1;
             background: var(--album-art-gradient);
-            filter: blur(20px); opacity: 0.8;
+            filter: blur(15px); opacity: 0.8;
             animation: spin 8s linear infinite;
             border-radius: 50%;
             will-change: transform;
@@ -229,11 +233,12 @@
     </div>
 
     <!-- PLAYER FOOTER STACK -->
-    <div id="player-footer" class="fixed bottom-6 left-6 right-6 z-50 flex flex-col items-start gap-1">
+    <!-- pointer-events-none on container so clicks pass through empty spaces -->
+    <div id="player-footer" class="fixed bottom-6 left-6 right-6 z-50 flex flex-col items-start gap-1 pointer-events-none">
         
         <!-- NEW INFO ISLAND (Top Left) -->
-        <!-- Expressive: rounded-b-sm to connect visually to pill -->
-        <div class="bg-black/60 backdrop-blur-3xl border border-white/10 rounded-2xl rounded-b-sm p-3 pr-6 flex items-center gap-3 shadow-2xl transition-all duration-300" id="info-island" style="opacity:0; transform:translateY(10px);">
+        <!-- pointer-events-auto re-enables clicking on the island -->
+        <div class="bg-black/60 backdrop-blur-3xl border border-white/10 rounded-2xl rounded-b-sm p-3 pr-6 flex items-center gap-3 shadow-2xl transition-all duration-300 pointer-events-auto" id="info-island" style="opacity:0; transform:translateY(10px);">
             <div id="album-art-wrapper" class="relative w-12 h-12 flex-shrink-0 transition-opacity duration-300">
                 <div id="album-art-glow"></div>
                 <img id="curr-art-img" src="https://placehold.co/300/333/fff?text=Music" class="w-full h-full rounded-full object-cover border border-white/20" crossorigin="anonymous">
@@ -248,8 +253,9 @@
         </div>
 
         <!-- MAIN PLAYER PILL -->
-        <!-- Expressive: rounded-tr-sm to contrast with island -->
-        <div class="w-full bg-black/60 backdrop-blur-3xl border border-white/10 rounded-full rounded-tr-sm shadow-2xl p-2 px-4 flex items-center gap-4 transition-all duration-500 h-[72px]" id="player-card">
+        <!-- pointer-events-auto re-enables clicking on the player -->
+        <!-- Changed rounded-tr-sm to rounded-tl-sm as requested -->
+        <div class="w-full bg-black/60 backdrop-blur-3xl border border-white/10 rounded-full rounded-tl-sm shadow-2xl p-2 px-4 flex items-center gap-4 transition-all duration-500 h-[72px] pointer-events-auto" id="player-card">
             
             <!-- Left Controls: Play, Prev, Next -->
             <div class="flex items-center gap-4">
@@ -322,7 +328,6 @@
             repeat: 0 // 0: off, 1: all, 2: one
         };
         
-        // Visualizer State
         let audioContext, analyser, source, isAudioContextInitialized = false;
         let smoothedLow = 0, smoothedMid = 0, smoothedHigh = 0;
         let currentProgress = 0;
@@ -331,11 +336,9 @@
         let visualizerCtx;
         const colorThief = new ColorThief();
 
-        // 30 FPS Cap
         let lastFrameTime = 0;
         const FPS_INTERVAL = 1000 / 30;
 
-        // --- KEYBOARD CONTROLS ---
         document.addEventListener('keydown', (e) => {
             if(e.target.tagName === 'INPUT') return;
             switch(e.code) {
@@ -347,7 +350,6 @@
             }
         });
 
-        // --- INIT ---
         async function init() {
             const vCanvas = document.getElementById('visualizer-canvas');
             visualizerCtx = vCanvas.getContext('2d');
@@ -563,7 +565,6 @@
                     targetMid = dataArray.slice(10, 40).reduce((a, b) => a + b, 0) / 30 / 255;
                     targetHigh = dataArray.slice(80, 150).reduce((a, b) => a + b, 0) / 70 / 255;
                     
-                    // Ripple
                     const rippleBass = dataArray.slice(0, 5).reduce((a, b) => a + b, 0) / 5;
                     const rippleScale = 1 + (rippleBass / 255) * 0.5;
                     const ripple = document.getElementById('ripple-effect');
@@ -578,20 +579,11 @@
                 smoothedMid += (targetMid - smoothedMid) * 0.1;
                 smoothedHigh += (targetHigh - smoothedHigh) * 0.1;
 
-                // --- BEAT / DRUM REACTION ---
-                // Detect sudden spikes in High-Mids (Snares/Hats)
-                let beatScale = 1.0;
-                if (targetMid > 0.6) {
-                    // Add random jitter +/- 5%
-                    const jitter = 1.0 + (Math.random() * 0.1 - 0.05); 
-                    beatScale = jitter;
-                }
-
+                // --- REMOVED BEAT SCALE (Back to Smooth Morph) ---
                 let verticalScale = 1.0;
                 if (audio.duration > 0) {
                     const scaleProgress = Math.min(1, currentProgress / 0.4);
-                    // Reduced max height by 20%
-                    verticalScale = (0.3 + 0.7 * scaleProgress) * 0.8 * beatScale; 
+                    verticalScale = (0.3 + 0.7 * scaleProgress) * 0.8;
                 }
 
                 visualizerCtx.beginPath();
@@ -605,7 +597,6 @@
                 const lowPower = Math.pow(smoothedLow, 2.0);
                 const midPower = Math.pow(smoothedMid, 1.5);
                 
-                // --- HOVER LOGIC ---
                 const isHovering = state.hoverProgress >= 0;
                 const targetHoverInt = isHovering ? 1.0 : 0.0;
                 hoverIntensity += (targetHoverInt - hoverIntensity) * 0.1;
@@ -621,7 +612,6 @@
                     const baseAmplitude = (centerY * 0.8) * lowPower * intensity * verticalScale;
                     const detailAmplitude = (centerY * 0.2) * midPower * intensity * verticalScale;
 
-                    // Apply Hover Flattening
                     let interactionFactor = 1.0;
                     if (hoverIntensity > 0.01) {
                         const posToUse = isHovering ? state.hoverProgress : state.lastHoverProgress;
