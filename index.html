@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cloud Music Player</title>
+    <link rel="icon" href="data:,"> <!-- Fix Favicon 404 -->
     
     <!-- Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -30,7 +31,7 @@
         .background-layer { 
             position: absolute; inset: 0; 
             transition: opacity 1.5s ease-in-out, background 1.5s ease;
-            will-change: opacity, background; /* GPU Hint */
+            will-change: opacity, background; 
         }
         #background-playing { opacity: 0; }
         
@@ -39,7 +40,7 @@
             width: 150vmax; height: 150vmax;
             border-radius: 50%;
             transform: translate(-50%, -50%) scale(0);
-            opacity: 0; filter: blur(80px); /* Heavy, but GPU accelerated via transform */
+            opacity: 0; filter: blur(80px);
             transition: transform 0.1s linear, opacity 0.2s ease;
             pointer-events: none;
             will-change: transform, opacity;
@@ -63,22 +64,25 @@
             position: relative; width: 100%; height: 80px;
             display: flex; align-items: center; cursor: pointer;
             transition: opacity 0.3s;
-            /* Ensure container captures hover events nicely */
             touch-action: none; 
         }
         #seek-bar-container.disabled { opacity: 0.3; pointer-events: none; }
 
         #seek-bar-track {
-            position: absolute; height: 6px; width: 100%;
-            background-color: rgba(255, 255, 255, 0.1); /* Slightly more subtle track */
+            position: absolute; height: 4px; width: 100%;
+            background-color: rgba(255, 255, 255, 0.15); 
             border-radius: 3px; top: 50%; transform: translateY(-50%);
             clip-path: inset(0 0 0 0%);
+            transition: height 0.2s;
         }
+        
+        /* The visualizer draws ON TOP of the track */
         #visualizer-canvas {
             position: absolute; left: 0; top: 0; width: 100%; height: 100%;
             pointer-events: none; z-index: 1;
-            clip-path: inset(0 100% 0 0);
+            clip-path: inset(0 100% 0 0); /* Progress reveals this */
         }
+        
         input[type="range"]#seek-bar {
             -webkit-appearance: none; appearance: none;
             position: absolute; width: 100%; height: 100%;
@@ -97,7 +101,7 @@
             background-size: 14px; background-position: center; background-repeat: no-repeat;
         }
         input[type="range"]#seek-bar:disabled::-webkit-slider-thumb {
-            background: #555; cursor: not-allowed; display: none;
+            display: none;
         }
         body.playing input[type="range"]#seek-bar::-webkit-slider-thumb {
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23000'%3E%3Cpath d='M8 6.82v10.36c0 .79.87 1.27 1.54.84l8.14-5.18c.62-.39.62-1.29 0-1.68L9.54 5.98C8.87 5.55 8 6.03 8 6.82z'/%3E%3C/svg%3E");
@@ -110,21 +114,26 @@
         /* Tooltip */
         #seek-tooltip {
             position: absolute;
-            top: -30px; 
+            top: -35px; 
             background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(4px);
+            backdrop-filter: blur(8px);
             color: white;
-            font-size: 12px;
+            font-size: 11px;
             font-family: monospace;
             padding: 4px 8px;
             border-radius: 6px;
             pointer-events: none;
             opacity: 0;
-            transform: translateX(-50%);
-            transition: opacity 0.1s ease;
+            transform: translateX(-50%) translateY(10px);
+            transition: opacity 0.2s ease, transform 0.2s ease;
             z-index: 10;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.15);
             white-space: nowrap;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+        #seek-tooltip.visible {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
         }
 
         /* --- Album Art Effects --- */
@@ -137,7 +146,7 @@
             filter: blur(20px); opacity: 0.8;
             animation: spin 8s linear infinite;
             border-radius: 50%;
-            will-change: transform; /* Optimized */
+            will-change: transform;
         }
         @keyframes spin { from { --angle: 0deg; } to { --angle: 360deg; } }
 
@@ -186,7 +195,7 @@
                 <button class="nav-btn flex items-center gap-4 p-3 rounded-lg text-gray-300 hover:text-white hover:bg-white/5 transition" onclick="router.go('library')">Library</button>
                 <button class="nav-btn flex items-center gap-4 p-3 rounded-lg text-gray-300 hover:text-white hover:bg-white/5 transition" onclick="router.go('liked')">Liked Songs</button>
             </div>
-            <div class="mt-auto text-xs text-gray-500">Powered by Supabase & WebAudio</div>
+            <div class="mt-auto text-xs text-gray-500">Powered by Supabase</div>
         </div>
 
         <!-- Main Content -->
@@ -289,10 +298,7 @@
         let LIBRARY = [];
         let supabase;
         const state = { 
-            queue: [], 
-            idx: -1, 
-            playing: false, 
-            loaded: false,
+            queue: [], idx: -1, playing: false, loaded: false,
             likedIds: JSON.parse(localStorage.getItem('likedIds') || '[]'),
             isDragging: false,
             hoverProgress: -1 // 0.0 to 1.0, -1 is inactive
@@ -300,31 +306,23 @@
         
         // Visualizer State
         let audioContext, analyser, source, isAudioContextInitialized = false;
-        let smoothedLow = 0, smoothedMid = 0, smoothedHigh = 0;
-        let currentProgress = 0;
-        let time = 0;
-        let visualizerCtx;
-        // Logic for smooth transition from flat to wave
+        let smoothedLow = 0, currentProgress = 0, time = 0;
         let currentAmplitude = 0; 
+        let hoverIntensity = 0; // For smooth flattening
+        let visualizerCtx;
         const colorThief = new ColorThief();
 
         // --- INIT ---
         async function init() {
-            // Setup Visualizer Canvas with Optimization
             const vCanvas = document.getElementById('visualizer-canvas');
             visualizerCtx = vCanvas.getContext('2d');
             resizeVisualizer();
             window.addEventListener('resize', () => {
-                // Throttle resize
                 if(!this.resizeTimeout) {
-                    this.resizeTimeout = setTimeout(() => {
-                        resizeVisualizer();
-                        this.resizeTimeout = null;
-                    }, 100);
+                    this.resizeTimeout = setTimeout(() => { resizeVisualizer(); this.resizeTimeout = null; }, 100);
                 }
             });
 
-            // Supabase Config Logic
             try {
                 const response = await fetch('/api/config');
                 if (response.ok) {
@@ -338,6 +336,7 @@
             } catch(e) {
                 const storedUrl = localStorage.getItem('sb_url');
                 const storedKey = localStorage.getItem('sb_key');
+                
                 if (!SUPABASE_URL.includes("YOUR_")) {
                     setupSupabase(SUPABASE_URL, SUPABASE_KEY);
                 } else if(storedUrl && storedKey) {
@@ -349,7 +348,6 @@
                 }
             }
             ui.initListeners();
-            // Start visualizer loop immediately
             viz.startLoop();
         }
 
@@ -384,26 +382,21 @@
             ui.render();
         }
 
-        // --- PLAYER ---
         const audio = document.getElementById('audio-el');
-        
         audio.onerror = (e) => {
             console.error("Media Error", e);
             if(state.playing) {
                 state.playing = false;
                 ui.updatePlayBtn();
             }
-            // Alert recovery
             setTimeout(() => alert("Error playing audio. Song might be missing or restricted."), 500);
         };
 
         const player = {
             playTrack: (index) => {
                 if (index < 0 || index >= LIBRARY.length) return;
-
                 state.idx = index;
                 const track = LIBRARY[index];
-                
                 audio.src = track.url;
                 state.loaded = true;
                 ui.enableControls();
@@ -421,59 +414,36 @@
                     state.playing = false;
                     ui.updatePlayBtn();
                 });
-
                 ui.updateLikeBtn();
             },
             togglePlay: () => {
-                if(!state.loaded) {
-                    if(LIBRARY.length > 0) player.playTrack(0);
-                    return; 
-                }
-                
+                if(!state.loaded) { if(LIBRARY.length > 0) player.playTrack(0); return; }
                 if(state.playing) { 
-                    audio.pause(); 
-                    state.playing = false; 
-                    document.body.classList.remove('playing');
-                    document.body.classList.add('paused');
+                    audio.pause(); state.playing = false; 
+                    document.body.classList.remove('playing'); document.body.classList.add('paused');
                 } else { 
-                    audio.play(); 
-                    state.playing = true; 
+                    audio.play(); state.playing = true; 
                     if (audioContext && audioContext.state === 'suspended') audioContext.resume();
                     if (!isAudioContextInitialized) setupAudioContext();
-                    document.body.classList.remove('paused');
-                    document.body.classList.add('playing');
+                    document.body.classList.remove('paused'); document.body.classList.add('playing');
                 }
                 ui.updatePlayBtn();
                 if(navigator.mediaSession) navigator.mediaSession.playbackState = state.playing ? "playing" : "paused";
             },
-            next: () => {
-                if(LIBRARY.length === 0) return;
-                let next = state.idx + 1;
-                if(next >= LIBRARY.length) next = 0;
-                player.playTrack(next);
-            },
-            prev: () => {
-                if(LIBRARY.length === 0) return;
-                let prev = state.idx - 1;
-                if(prev < 0) prev = LIBRARY.length - 1;
-                player.playTrack(prev);
-            },
-            setVolume: (val) => {
-                audio.volume = val;
-            },
+            next: () => { if(LIBRARY.length > 0) player.playTrack(state.idx >= LIBRARY.length - 1 ? 0 : state.idx + 1); },
+            prev: () => { if(LIBRARY.length > 0) player.playTrack(state.idx <= 0 ? LIBRARY.length - 1 : state.idx - 1); },
+            setVolume: (val) => { audio.volume = val; },
             toggleLike: () => {
                 if(state.idx === -1) return;
                 const id = LIBRARY[state.idx].id;
                 const index = state.likedIds.indexOf(id);
-                if(index === -1) state.likedIds.push(id);
-                else state.likedIds.splice(index, 1);
+                if(index === -1) state.likedIds.push(id); else state.likedIds.splice(index, 1);
                 localStorage.setItem('likedIds', JSON.stringify(state.likedIds));
                 ui.updateLikeBtn();
                 ui.render();
             }
         };
 
-        // --- VISUALIZER LOGIC (ROBUST & MORPHING) ---
         function setupAudioContext() {
             try {
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -483,13 +453,12 @@
                 analyser.connect(audioContext.destination);
                 analyser.fftSize = 256; 
                 isAudioContextInitialized = true;
-            } catch(e) { console.warn("WebAudio API missing or failed", e); }
+            } catch(e) { console.warn("WebAudio API missing", e); }
         }
 
         function resizeVisualizer() {
             const container = document.getElementById('seek-bar-container');
             const canvas = document.getElementById('visualizer-canvas');
-            // Optimization: Cap DPR at 2 for performance on high-density mobile screens
             const dpr = Math.min(window.devicePixelRatio || 1, 2);
             canvas.width = container.offsetWidth * dpr;
             canvas.height = container.offsetHeight * dpr;
@@ -497,16 +466,12 @@
         }
 
         const viz = {
-            startLoop: () => {
-                requestAnimationFrame(viz.render);
-            },
+            startLoop: () => { requestAnimationFrame(viz.render); },
             render: () => {
                 requestAnimationFrame(viz.render);
-                
-                if (!state.loaded && !isAudioContextInitialized) return;
+                if (!state.loaded) return; // Wait for load
 
                 const canvas = document.getElementById('visualizer-canvas');
-                // Use limited DPR for reading dimensions
                 const dpr = Math.min(window.devicePixelRatio || 1, 2);
                 const width = canvas.width / dpr;
                 const height = canvas.height / dpr;
@@ -520,74 +485,67 @@
                 canvas.style.clipPath = `inset(0 ${width - progressWidth}px 0 0)`;
                 seekTrack.style.clipPath = `inset(0 0 0 ${currentProgress * 100}%)`;
 
-                // Audio Data
                 let targetAmp = 0;
                 if (state.playing && isAudioContextInitialized) {
                     time += 0.1;
                     const bufferLength = analyser.frequencyBinCount;
                     const dataArray = new Uint8Array(bufferLength);
                     analyser.getByteFrequencyData(dataArray);
-
-                    // Get Bass (Low Freqs)
                     const bassSum = dataArray.slice(0, 10).reduce((a, b) => a + b, 0);
                     const bassEnergy = (bassSum / 10) / 255;
-                    targetAmp = bassEnergy * (height * 0.4); 
+                    targetAmp = bassEnergy * (height * 0.45); 
                     
-                    // Simple smoothing for ripple
                     smoothedLow += (bassEnergy - smoothedLow) * 0.1;
                     const ripple = document.getElementById('ripple-effect');
                     const rippleScale = 1 + (smoothedLow * 0.5); 
                     ripple.style.transform = `translate(-50%, -50%) scale(${rippleScale})`;
                     ripple.style.opacity = Math.max(0.1, smoothedLow);
                 } else {
-                    time += 0.02;
-                    targetAmp = 0; 
+                    time += 0.02; targetAmp = 0; 
                 }
 
                 currentAmplitude += (targetAmp - currentAmplitude) * 0.1; 
 
-                // DRAW WAVE
+                // Smooth Hover Morphing
+                const targetHoverInt = (state.hoverProgress >= 0) ? 1.0 : 0.0;
+                hoverIntensity += (targetHoverInt - hoverIntensity) * 0.1;
+
                 visualizerCtx.beginPath();
                 visualizerCtx.moveTo(0, centerY);
-
                 const waveCount = 2 + (currentProgress * 20); 
 
                 for (let x = 0; x <= width; x++) {
-                    // Interaction: Flatten at hover
                     let interactionFactor = 1.0;
-                    if (state.hoverProgress >= 0) {
-                        const hoverX = state.hoverProgress * width;
+                    
+                    // Interaction: Flatten at hover (with smoothing)
+                    if (hoverIntensity > 0.01) {
+                        // Use active hover pos if available, otherwise just use last known for smooth exit
+                        const hoverX = (state.hoverProgress >= 0 ? state.hoverProgress : 0.5) * width; 
                         const dist = Math.abs(x - hoverX);
-                        // Flatten radius ~ 60px
                         const radius = 60; 
                         if (dist < radius) {
-                            // Smooth step function (Hermite)
                             let t = dist / radius;
-                            interactionFactor = t * t * (3 - 2 * t);
+                            let dip = t * t * (3 - 2 * t); // Smooth step 0..1
+                            // Mix between 1.0 (normal) and dip (flattened) based on intensity
+                            interactionFactor = 1.0 - (hoverIntensity * (1.0 - dip));
                         }
                     }
 
                     const sine = Math.sin((x / width) * waveCount * Math.PI * 2 + time);
                     const y = centerY + sine * currentAmplitude * interactionFactor;
-                    
                     visualizerCtx.lineTo(x, y);
                 }
 
                 visualizerCtx.lineWidth = 2;
                 visualizerCtx.strokeStyle = '#fff';
-                // Optimize Shadow: Only apply if amplitude is significant
                 if(currentAmplitude > 2) {
                     visualizerCtx.shadowColor = 'rgba(255, 255, 255, 0.5)';
                     visualizerCtx.shadowBlur = 10;
-                } else {
-                    visualizerCtx.shadowBlur = 0;
-                }
+                } else { visualizerCtx.shadowBlur = 0; }
                 visualizerCtx.stroke();
-                visualizerCtx.shadowBlur = 0;
             }
         };
 
-        // --- UI ---
         const router = {
             go: (view) => {
                 document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
@@ -606,65 +564,54 @@
                 const container = document.getElementById('seek-bar-container');
                 const tooltip = document.getElementById('seek-tooltip');
                 
-                // Mousedown/Mouseup for dragging
                 seekBar.addEventListener('mousedown', () => state.isDragging = true);
                 seekBar.addEventListener('mouseup', () => state.isDragging = false);
                 
-                // Input (Seeking)
                 seekBar.addEventListener('input', () => {
                     if(!audio.duration) return;
                     audio.currentTime = parseFloat(seekBar.value);
                     currentProgress = audio.currentTime / audio.duration;
                 });
 
-                // Hover Effects & Tooltip
                 container.addEventListener('mousemove', (e) => {
                     if(!state.loaded || !audio.duration) return;
-                    
                     const rect = container.getBoundingClientRect();
-                    const offsetX = e.clientX - rect.left;
-                    // Clamp 0 to 1
-                    const progress = Math.max(0, Math.min(1, offsetX / rect.width));
+                    const progress = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                    state.hoverProgress = progress; 
                     
-                    state.hoverProgress = progress; // For Visualizer Flattening
-                    
-                    // Tooltip
                     const hoverTime = progress * audio.duration;
-                    const m = Math.floor(hoverTime / 60);
-                    const s = Math.floor(hoverTime % 60);
+                    const m = Math.floor(hoverTime / 60), s = Math.floor(hoverTime % 60);
                     tooltip.textContent = `${m}:${s.toString().padStart(2, '0')}`;
-                    tooltip.style.left = `${offsetX}px`;
-                    tooltip.style.opacity = 1;
+                    tooltip.style.left = `${(e.clientX - rect.left)}px`;
+                    tooltip.classList.add('visible');
                 });
 
                 container.addEventListener('mouseleave', () => {
-                    state.hoverProgress = -1; // Reset flattening
-                    tooltip.style.opacity = 0;
+                    state.hoverProgress = -1;
+                    tooltip.classList.remove('visible');
                 });
 
-                // Audio Update
                 audio.addEventListener('timeupdate', () => {
                     if(!audio.duration || isNaN(audio.duration)) return;
-                    
                     if (!state.isDragging) {
                         seekBar.max = audio.duration;
                         seekBar.value = audio.currentTime;
                         currentProgress = audio.currentTime / audio.duration;
                     }
-                    
                     const m = Math.floor(audio.currentTime / 60), s = Math.floor(audio.currentTime % 60);
-                    document.getElementById('curr-time').textContent = `${m}:${s.toString().padStart(2,'0')}`;
+                    const el = document.getElementById('current-time');
+                    if(el) el.textContent = `${m}:${s.toString().padStart(2,'0')}`;
                 });
                 
                 audio.addEventListener('loadedmetadata', () => {
                     if(audio.duration && !isNaN(audio.duration)) {
                         const m = Math.floor(audio.duration / 60), s = Math.floor(audio.duration % 60);
-                        document.getElementById('dur-time').textContent = `${m}:${s.toString().padStart(2,'0')}`;
+                        const el = document.getElementById('dur-time');
+                        if(el) el.textContent = `${m}:${s.toString().padStart(2,'0')}`;
                     }
                 });
                 audio.addEventListener('ended', () => player.next());
             },
-            
             enableControls: () => {
                 document.getElementById('seek-bar-container').classList.remove('disabled');
                 document.getElementById('seek-bar').disabled = false;
@@ -675,14 +622,12 @@
                 document.getElementById('p-like-btn').disabled = false;
                 document.getElementById('album-art-wrapper').style.opacity = "1";
             },
-            
             updateMetadata: (track) => {
                 document.getElementById('p-title').textContent = track.name;
                 document.getElementById('p-artist').textContent = track.artist;
                 const artImg = document.getElementById('curr-art-img');
                 artImg.src = track.img || "https://placehold.co/300/333/fff?text=Music";
                 
-                // Color Thief
                 if (track.img) {
                     const img = new Image();
                     img.crossOrigin = "Anonymous";
@@ -694,7 +639,6 @@
                             const mainColor = `rgb(${main[0]}, ${main[1]}, ${main[2]})`;
                             const secColor = `rgb(${sec[0]}, ${sec[1]}, ${sec[2]})`;
                             const darkShade = `rgb(${main[0]*0.2}, ${main[1]*0.2}, ${main[2]*0.2})`;
-
                             document.getElementById('background-playing').style.background = `radial-gradient(circle at top, ${mainColor}, ${darkShade})`;
                             document.getElementById('ripple-effect').style.background = `radial-gradient(circle, ${secColor} 0%, transparent 70%)`;
                             document.getElementById('album-art-glow').style.background = `conic-gradient(from 0deg, ${mainColor}, ${secColor}, ${mainColor})`;
@@ -702,7 +646,6 @@
                     };
                 }
             },
-
             render: () => {
                 const recGrid = document.getElementById('rec-grid');
                 recGrid.innerHTML = LIBRARY.slice(0,4).map(ui.createCard).join('');
@@ -715,21 +658,17 @@
                 if(likedTracks.length === 0) likedList.innerHTML = '<div class="text-gray-500">No liked songs yet.</div>';
                 else likedList.innerHTML = likedTracks.map(ui.createRow).join('');
             },
-            
             createCard: (t, i) => `
                 <div class="bg-white/5 hover:bg-white/10 p-4 rounded-xl cursor-pointer transition group" onclick="player.playTrack(${LIBRARY.indexOf(t)})">
                     <div class="relative aspect-square rounded-lg overflow-hidden mb-3 bg-gray-800 shadow-lg">
                         <img src="${t.img || 'https://placehold.co/300/333/fff?text=Music'}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
                         <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition backdrop-blur-sm">
-                            <span class="bg-green-500 text-black p-3 rounded-full shadow-xl transform scale-75 group-hover:scale-100 transition">
-                                <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                            </span>
+                            <span class="bg-green-500 text-black p-3 rounded-full shadow-xl transform scale-75 group-hover:scale-100 transition"><svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>
                         </div>
                     </div>
                     <h3 class="font-bold text-white truncate">${t.name}</h3>
                     <p class="text-sm text-gray-400 truncate">${t.artist}</p>
                 </div>`,
-                
             createRow: (t, i) => `
                 <div class="flex items-center gap-4 p-3 rounded-lg hover:bg-white/5 cursor-pointer transition group" onclick="player.playTrack(${LIBRARY.indexOf(t)})">
                     <span class="text-gray-500 w-6 text-center font-mono text-sm">${i+1}</span>
@@ -740,14 +679,12 @@
                     </div>
                     <span class="text-gray-500 text-xs hidden sm:block">3:45</span>
                 </div>`,
-                
             updatePlayBtn: () => {
                 const isPlaying = state.playing;
                 document.getElementById('icon-play').className = isPlaying ? 'hidden' : 'flex ml-1';
                 document.getElementById('icon-pause').className = isPlaying ? 'flex' : 'hidden';
                 document.getElementById('background-playing').style.opacity = isPlaying ? 1 : 0;
             },
-            
             updateLikeBtn: () => {
                 if(state.idx === -1) return;
                 const id = LIBRARY[state.idx].id;
