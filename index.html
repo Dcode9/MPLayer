@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cloud Music Player</title>
-    <link rel="icon" href="data:,"> <!-- Fix Favicon 404 -->
+    <link rel="icon" href="data:,">
     
     <!-- Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -26,7 +26,7 @@
             color: white;
         }
 
-        /* --- Dynamic Backgrounds (Optimized) --- */
+        /* --- Dynamic Backgrounds --- */
         #background-container { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
         .background-layer { 
             position: absolute; inset: 0; 
@@ -41,9 +41,12 @@
             border-radius: 50%;
             transform: translate(-50%, -50%) scale(0);
             opacity: 0; filter: blur(80px);
-            transition: transform 0.1s linear, opacity 0.2s ease;
+            transition: transform 1s cubic-bezier(0.25, 1, 0.5, 1), opacity 1s ease-out;
             pointer-events: none;
             will-change: transform, opacity;
+        }
+        #ripple-effect.active {
+            transform: translate(-50%, -50%) scale(1);
         }
 
         /* --- Layout --- */
@@ -69,20 +72,16 @@
         #seek-bar-container.disabled { opacity: 0.3; pointer-events: none; }
 
         #seek-bar-track {
-            position: absolute; height: 4px; width: 100%;
-            background-color: rgba(255, 255, 255, 0.15); 
+            position: absolute; height: 6px; width: 100%;
+            background-color: rgba(255, 255, 255, 0.2);
             border-radius: 3px; top: 50%; transform: translateY(-50%);
             clip-path: inset(0 0 0 0%);
-            transition: height 0.2s;
         }
-        
-        /* The visualizer draws ON TOP of the track */
         #visualizer-canvas {
             position: absolute; left: 0; top: 0; width: 100%; height: 100%;
             pointer-events: none; z-index: 1;
-            clip-path: inset(0 100% 0 0); /* Progress reveals this */
+            clip-path: inset(0 100% 0 0);
         }
-        
         input[type="range"]#seek-bar {
             -webkit-appearance: none; appearance: none;
             position: absolute; width: 100%; height: 100%;
@@ -266,7 +265,7 @@
                         <canvas id="visualizer-canvas"></canvas>
                         <input type="range" id="seek-bar" value="0" step="0.1" disabled>
                     </div>
-                    <span id="dur-time" class="text-xs text-gray-400 font-mono w-10">0:00</span>
+                    <span id="duration" class="text-xs text-gray-400 font-mono w-10">0:00</span>
                 </div>
             </div>
 
@@ -306,9 +305,10 @@
         
         // Visualizer State
         let audioContext, analyser, source, isAudioContextInitialized = false;
-        let smoothedLow = 0, currentProgress = 0, time = 0;
-        let currentAmplitude = 0; 
-        let hoverIntensity = 0; // For smooth flattening
+        let smoothedLow = 0, smoothedMid = 0, smoothedHigh = 0;
+        let currentProgress = 0;
+        let time = 0;
+        let hoverIntensity = 0; // For smoothing the hover flatten effect
         let visualizerCtx;
         const colorThief = new ColorThief();
 
@@ -336,7 +336,6 @@
             } catch(e) {
                 const storedUrl = localStorage.getItem('sb_url');
                 const storedKey = localStorage.getItem('sb_key');
-                
                 if (!SUPABASE_URL.includes("YOUR_")) {
                     setupSupabase(SUPABASE_URL, SUPABASE_KEY);
                 } else if(storedUrl && storedKey) {
@@ -451,7 +450,7 @@
                 source = audioContext.createMediaElementSource(audio);
                 source.connect(analyser);
                 analyser.connect(audioContext.destination);
-                analyser.fftSize = 256; 
+                analyser.fftSize = 512; 
                 isAudioContextInitialized = true;
             } catch(e) { console.warn("WebAudio API missing", e); }
         }
@@ -469,7 +468,7 @@
             startLoop: () => { requestAnimationFrame(viz.render); },
             render: () => {
                 requestAnimationFrame(viz.render);
-                if (!state.loaded) return; // Wait for load
+                if (!state.loaded) return; 
 
                 const canvas = document.getElementById('visualizer-canvas');
                 const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -485,64 +484,92 @@
                 canvas.style.clipPath = `inset(0 ${width - progressWidth}px 0 0)`;
                 seekTrack.style.clipPath = `inset(0 0 0 ${currentProgress * 100}%)`;
 
-                let targetAmp = 0;
+                time += 0.05;
+                let targetLow = 0, targetMid = 0, targetHigh = 0;
+
                 if (state.playing && isAudioContextInitialized) {
-                    time += 0.1;
                     const bufferLength = analyser.frequencyBinCount;
                     const dataArray = new Uint8Array(bufferLength);
                     analyser.getByteFrequencyData(dataArray);
-                    const bassSum = dataArray.slice(0, 10).reduce((a, b) => a + b, 0);
-                    const bassEnergy = (bassSum / 10) / 255;
-                    targetAmp = bassEnergy * (height * 0.45); 
                     
-                    smoothedLow += (bassEnergy - smoothedLow) * 0.1;
+                    targetLow = dataArray.slice(0, 5).reduce((a, b) => a + b, 0) / 5 / 255;
+                    targetMid = dataArray.slice(10, 40).reduce((a, b) => a + b, 0) / 30 / 255;
+                    targetHigh = dataArray.slice(80, 150).reduce((a, b) => a + b, 0) / 70 / 255;
+                    
+                    const rippleBass = dataArray.slice(0, 5).reduce((a, b) => a + b, 0) / 5;
+                    const rippleScale = 1 + (rippleBass / 255) * 0.5;
                     const ripple = document.getElementById('ripple-effect');
-                    const rippleScale = 1 + (smoothedLow * 0.5); 
                     ripple.style.transform = `translate(-50%, -50%) scale(${rippleScale})`;
-                    ripple.style.opacity = Math.max(0.1, smoothedLow);
-                } else {
-                    time += 0.02; targetAmp = 0; 
+                    if(state.playing) ripple.classList.add('active');
                 }
 
-                currentAmplitude += (targetAmp - currentAmplitude) * 0.1; 
+                // Smoothing
+                const smoothingFactor = 0.1;
+                smoothedLow += (targetLow - smoothedLow) * smoothingFactor;
+                smoothedMid += (targetMid - smoothedMid) * smoothingFactor;
+                smoothedHigh += (targetHigh - smoothedHigh) * smoothingFactor;
 
-                // Smooth Hover Morphing
-                const targetHoverInt = (state.hoverProgress >= 0) ? 1.0 : 0.0;
-                hoverIntensity += (targetHoverInt - hoverIntensity) * 0.1;
+                // Vertical Scale
+                let verticalScale = 1.0;
+                if (audio.duration > 0) {
+                    const scaleProgress = Math.min(1, currentProgress / 0.4);
+                    verticalScale = 0.3 + 0.7 * scaleProgress;
+                }
 
                 visualizerCtx.beginPath();
                 visualizerCtx.moveTo(0, centerY);
-                const waveCount = 2 + (currentProgress * 20); 
+
+                const waveDensity = 0.03;
+                const maxWaves = 14;
+                const waveCount = Math.min(maxWaves, Math.max(2, progressWidth * waveDensity));
+                const intensity = audio.volume;
+                
+                const lowPower = Math.pow(smoothedLow, 2.0);
+                const midPower = Math.pow(smoothedMid, 1.5);
+                
+                // --- HOVER LOGIC ---
+                // Smooth transition for flattening intensity
+                const targetHoverInt = (state.hoverProgress >= 0) ? 1.0 : 0.0;
+                hoverIntensity += (targetHoverInt - hoverIntensity) * 0.1;
 
                 for (let x = 0; x <= width; x++) {
-                    let interactionFactor = 1.0;
+                    const localProgress = x / progressWidth;
+                    const taper = Math.sin(localProgress * Math.PI);
                     
-                    // Interaction: Flatten at hover (with smoothing)
+                    const baseWave = Math.sin((x / width) * waveCount * Math.PI);
+                    const fastWave = Math.sin((x / width) * waveCount * 2.5 * Math.PI + time);
+                    const slowWave = Math.sin((x / width) * waveCount * 0.5 * Math.PI + time * 0.3);
+
+                    const baseAmplitude = (centerY * 0.8) * lowPower * intensity * verticalScale;
+                    const detailAmplitude = (centerY * 0.2) * midPower * intensity * verticalScale;
+
+                    // Apply Hover Flattening
+                    let interactionFactor = 1.0;
                     if (hoverIntensity > 0.01) {
-                        // Use active hover pos if available, otherwise just use last known for smooth exit
-                        const hoverX = (state.hoverProgress >= 0 ? state.hoverProgress : 0.5) * width; 
+                        const hoverX = (state.hoverProgress >= 0 ? state.hoverProgress : 0.5) * width;
                         const dist = Math.abs(x - hoverX);
                         const radius = 60; 
                         if (dist < radius) {
                             let t = dist / radius;
-                            let dip = t * t * (3 - 2 * t); // Smooth step 0..1
-                            // Mix between 1.0 (normal) and dip (flattened) based on intensity
+                            let dip = t * t * (3 - 2 * t); // Smooth Hermite step 0..1
                             interactionFactor = 1.0 - (hoverIntensity * (1.0 - dip));
                         }
                     }
 
-                    const sine = Math.sin((x / width) * waveCount * Math.PI * 2 + time);
-                    const y = centerY + sine * currentAmplitude * interactionFactor;
+                    const y = centerY +
+                        (baseWave * baseAmplitude +
+                        fastWave * detailAmplitude +
+                        slowWave * detailAmplitude * 0.5) * taper * interactionFactor;
+                    
                     visualizerCtx.lineTo(x, y);
                 }
 
-                visualizerCtx.lineWidth = 2;
+                visualizerCtx.lineWidth = 3;
                 visualizerCtx.strokeStyle = '#fff';
-                if(currentAmplitude > 2) {
-                    visualizerCtx.shadowColor = 'rgba(255, 255, 255, 0.5)';
-                    visualizerCtx.shadowBlur = 10;
-                } else { visualizerCtx.shadowBlur = 0; }
+                visualizerCtx.shadowColor = 'rgba(255, 255, 255, 0.7)';
+                visualizerCtx.shadowBlur = 4 + smoothedHigh * 10; // Optimized blur
                 visualizerCtx.stroke();
+                visualizerCtx.shadowBlur = 0;
             }
         };
 
@@ -568,13 +595,13 @@
                 seekBar.addEventListener('mouseup', () => state.isDragging = false);
                 
                 seekBar.addEventListener('input', () => {
-                    if(!audio.duration) return;
+                    if(!audio.duration || isNaN(audio.duration)) return;
                     audio.currentTime = parseFloat(seekBar.value);
                     currentProgress = audio.currentTime / audio.duration;
                 });
 
                 container.addEventListener('mousemove', (e) => {
-                    if(!state.loaded || !audio.duration) return;
+                    if(!state.loaded || !audio.duration || isNaN(audio.duration)) return;
                     const rect = container.getBoundingClientRect();
                     const progress = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
                     state.hoverProgress = progress; 
@@ -606,7 +633,7 @@
                 audio.addEventListener('loadedmetadata', () => {
                     if(audio.duration && !isNaN(audio.duration)) {
                         const m = Math.floor(audio.duration / 60), s = Math.floor(audio.duration % 60);
-                        const el = document.getElementById('dur-time');
+                        const el = document.getElementById('duration');
                         if(el) el.textContent = `${m}:${s.toString().padStart(2,'0')}`;
                     }
                 });
