@@ -31,7 +31,7 @@
         .background-layer { 
             position: absolute; inset: 0; 
             transition: opacity 1.5s ease-in-out, background 1.5s ease;
-            will-change: opacity; 
+            will-change: opacity, background; 
         }
         #background-playing { opacity: 0; }
         
@@ -64,68 +64,83 @@
 
         /* --- Custom Seek Bar & Visualizer --- */
         #seek-bar-container {
-            position: relative; width: 100%; height: 80px;
-            display: flex; align-items: center; cursor: pointer;
+            position: relative; width: 100%; height: 60px; /* Reduced height */
+            display: flex; align-items: center; justify-content: center;
             transition: opacity 0.3s;
             touch-action: none; 
         }
         #seek-bar-container.disabled { opacity: 0.3; pointer-events: none; }
 
         #seek-bar-track {
-            position: absolute; height: 4px; width: 100%;
-            background-color: rgba(255, 255, 255, 0.2);
+            position: absolute; height: 2px; width: 100%;
+            background-color: rgba(255, 255, 255, 0.15); 
             border-radius: 3px; top: 50%; transform: translateY(-50%);
             clip-path: inset(0 0 0 0%);
+            transition: height 0.2s;
+            pointer-events: none;
         }
+        
         #visualizer-canvas {
             position: absolute; left: 0; top: 0; width: 100%; height: 100%;
             pointer-events: none; z-index: 1;
             clip-path: inset(0 100% 0 0);
         }
+        
+        /* Input Range: Only occupies bottom 50% for interaction */
         input[type="range"]#seek-bar {
             -webkit-appearance: none; appearance: none;
-            position: absolute; width: 100%; height: 100%;
+            position: absolute; 
+            bottom: 0; left: 0; 
+            width: 100%; height: 50%; /* Only bottom half interactive */
             background: transparent; outline: none; margin: 0; padding: 0; z-index: 2;
             cursor: pointer;
         }
         
-        /* --- Plain Dot Thumb --- */
+        /* Custom Thumb (Playhead) - Plain White Dot */
         input[type="range"]#seek-bar::-webkit-slider-thumb {
             -webkit-appearance: none; appearance: none;
-            width: 16px; height: 16px; 
+            width: 12px; height: 12px; 
             background: #fff;
-            border-radius: 50%; /* Perfect Circle */
+            border-radius: 50%;
             cursor: pointer;
             box-shadow: 0 0 10px rgba(0,0,0,0.5);
             transition: transform 0.1s;
-            margin-top: -6px; /* Center alignment adjustment if needed */
+            /* Positioning logic ensures it aligns with track middle visually */
+            transform: translateY(-50%); 
+            margin-top: 0px; 
+            position: relative;
+            top: 0; /* Input is bottom aligned, thumb sits at top edge of input */
         }
         
+        /* Align thumb to visualizer center (top of input box) */
+        input[type="range"]#seek-bar::-webkit-slider-thumb {
+             transform: translateY(-50%); /* Pull up to sit on the line */
+        }
+
         input[type="range"]#seek-bar:disabled::-webkit-slider-thumb {
             display: none;
         }
         
         input[type="range"]#seek-bar::-webkit-slider-thumb:hover { 
-            transform: scale(1.3); 
+            transform: translateY(-50%) scale(1.5); 
         }
 
         /* Tooltip */
         #seek-tooltip {
             position: absolute;
-            top: -35px; 
-            background: rgba(0, 0, 0, 0.8);
-            /* Removed blur for performance */
+            top: -40px; 
+            background: rgba(0, 0, 0, 0.9);
             color: white;
             font-size: 11px;
             font-family: monospace;
             padding: 4px 8px;
-            border-radius: 6px;
+            border-radius: 4px;
             pointer-events: none;
             opacity: 0;
             transform: translateX(-50%) translateY(10px);
             transition: opacity 0.2s ease, transform 0.2s ease;
-            z-index: 10;
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            z-index: 20;
+            border: 1px solid rgba(255, 255, 255, 0.1);
             white-space: nowrap;
         }
         #seek-tooltip.visible {
@@ -200,16 +215,13 @@
             <div id="view-home" class="view-section active space-y-8">
                 <h2 class="text-3xl font-bold text-white">Recommended</h2>
                 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" id="rec-grid">Loading...</div>
-                
                 <h2 class="text-3xl font-bold text-white">Recent</h2>
                 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" id="recent-grid"></div>
             </div>
-
             <div id="view-library" class="view-section space-y-4">
                 <h2 class="text-3xl font-bold text-white">Full Library</h2>
                 <div id="lib-list" class="space-y-2">Loading...</div>
             </div>
-
             <div id="view-liked" class="view-section space-y-4">
                 <h2 class="text-3xl font-bold text-white">Liked Songs</h2>
                 <div id="liked-list" class="space-y-2"></div>
@@ -217,64 +229,58 @@
         </div>
     </div>
 
-    <!-- PLAYER FOOTER -->
+    <!-- PLAYER FOOTER (Pill Design) -->
     <div id="player-footer" class="fixed bottom-6 left-6 right-6 z-50">
-        <div class="bg-black/40 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl p-4 flex flex-col md:flex-row items-center gap-6 transition-all duration-500" id="player-card">
+        <!-- Rounded Pill Container matching Album Art vibe -->
+        <div class="bg-black/60 backdrop-blur-3xl border border-white/10 rounded-full shadow-2xl p-3 pr-8 flex items-center gap-4 transition-all duration-500" id="player-card">
             
-            <!-- Album Art & Info -->
-            <div class="flex items-center gap-4 w-full md:w-1/4">
-                <div id="album-art-wrapper" class="relative w-16 h-16 flex-shrink-0 opacity-50 transition-opacity duration-300">
-                    <div id="album-art-glow"></div>
+            <!-- Play Button (Leftmost) -->
+            <button onclick="player.togglePlay()" id="btn-play" class="w-12 h-12 bg-white rounded-full flex-shrink-0 flex items-center justify-center text-black hover:scale-105 transition shadow-lg shadow-white/20 disabled:bg-gray-500 disabled:scale-100 disabled:cursor-not-allowed ml-1" disabled>
+                <span id="icon-play" class="flex ml-1"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>
+                <span id="icon-pause" class="hidden"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg></span>
+            </button>
+
+            <!-- Previous -->
+            <button class="text-gray-300 hover:text-white disabled:opacity-30 disabled:hover:text-gray-300 flex-shrink-0" onclick="player.prev()" id="btn-prev" disabled>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="19 20 9 12 19 4 19 20"></polygon><line x1="5" y1="19" x2="5" y2="5"></line></svg>
+            </button>
+
+            <!-- Visualizer & Seek Bar (Center) -->
+            <div class="flex-1 h-full relative flex items-center group">
+                <div id="seek-bar-container" class="w-full h-[60px] disabled relative">
+                    <div id="seek-tooltip">0:00</div>
+                    <div id="seek-bar-track"></div>
+                    <canvas id="visualizer-canvas"></canvas>
+                    <input type="range" id="seek-bar" value="0" step="0.1" disabled>
+                </div>
+            </div>
+
+            <!-- Next -->
+            <button class="text-gray-300 hover:text-white disabled:opacity-30 disabled:hover:text-gray-300 flex-shrink-0" onclick="player.next()" id="btn-next" disabled>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19"></line></svg>
+            </button>
+
+            <!-- Album Art & Info (Right Side now, for balance, or stick to left? Request implied re-ordering) -->
+            <!-- Let's keep Album Art slightly separate but integrated -->
+            <div class="flex items-center gap-3 pl-4 border-l border-white/10">
+                <div id="album-art-wrapper" class="relative w-10 h-10 flex-shrink-0 opacity-50 transition-opacity duration-300">
                     <img id="curr-art-img" src="https://placehold.co/300/333/fff?text=Music" class="w-full h-full rounded-full object-cover border border-white/20" crossorigin="anonymous">
                 </div>
-                <div class="overflow-hidden">
-                    <h3 id="p-title" class="font-bold text-white truncate text-lg">Not Playing</h3>
-                    <p id="p-artist" class="text-sm text-gray-400 truncate">Select a song</p>
+                <div class="overflow-hidden w-24 md:w-32 hidden sm:block">
+                    <h3 id="p-title" class="font-bold text-white truncate text-sm">Not Playing</h3>
+                    <p id="p-artist" class="text-xs text-gray-400 truncate">Select song</p>
                 </div>
-                <button onclick="player.toggleLike()" id="p-like-btn" class="text-gray-400 hover:text-red-500 transition disabled:opacity-30" disabled>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                </button>
-            </div>
-
-            <!-- Controls & Visualizer -->
-            <div class="flex flex-col w-full md:w-1/2 gap-2">
-                <!-- Buttons -->
-                <div class="flex items-center justify-center gap-6">
-                    <button class="text-gray-300 hover:text-white disabled:opacity-30 disabled:hover:text-gray-300" onclick="player.prev()" id="btn-prev" disabled>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="19 20 9 12 19 4 19 20"></polygon><line x1="5" y1="19" x2="5" y2="5"></line></svg>
+                
+                <div class="flex gap-2">
+                    <button onclick="player.toggleLike()" id="p-like-btn" class="text-gray-400 hover:text-red-500 transition disabled:opacity-30" disabled>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                     </button>
-                    
-                    <button onclick="player.togglePlay()" id="btn-play" class="w-12 h-12 bg-white rounded-full flex items-center justify-center text-black hover:scale-105 transition shadow-lg shadow-white/20 disabled:bg-gray-500 disabled:scale-100 disabled:cursor-not-allowed" disabled>
-                        <span id="icon-play" class="flex ml-1"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>
-                        <span id="icon-pause" class="hidden"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg></span>
+                    <button class="pip-btn text-gray-400 hover:text-white disabled:opacity-30" onclick="pipManager.toggle()" id="btn-pip" disabled>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><rect x="12" y="12" width="6" height="5"></rect></svg>
                     </button>
-                    
-                    <button class="text-gray-300 hover:text-white disabled:opacity-30 disabled:hover:text-gray-300" onclick="player.next()" id="btn-next" disabled>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19"></line></svg>
-                    </button>
-                </div>
-
-                <!-- Visualizer Seek Bar -->
-                <div class="w-full flex items-center gap-3 relative">
-                    <span id="current-time" class="text-xs text-gray-400 font-mono w-10 text-right">0:00</span>
-                    <div id="seek-bar-container" class="flex-1 h-12 disabled relative">
-                        <div id="seek-tooltip">0:00</div>
-                        <div id="seek-bar-track"></div>
-                        <canvas id="visualizer-canvas"></canvas>
-                        <input type="range" id="seek-bar" value="0" step="0.1" disabled>
-                    </div>
-                    <span id="dur-time" class="text-xs text-gray-400 font-mono w-10">0:00</span>
                 </div>
             </div>
 
-            <!-- Volume & Pip -->
-            <div class="flex items-center justify-end gap-4 w-full md:w-1/4">
-                <button class="text-xs border border-gray-600 rounded px-2 py-1 hover:border-white text-gray-400 hover:text-white transition disabled:opacity-30" onclick="pipManager.toggle()" id="btn-pip" disabled>Mini Player</button>
-                <div class="flex items-center gap-2 w-24">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-gray-400"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon></svg>
-                    <input type="range" min="0" max="1" step="0.05" oninput="player.setVolume(this.value)" class="w-full h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer">
-                </div>
-            </div>
         </div>
     </div>
 
@@ -298,7 +304,8 @@
             queue: [], idx: -1, playing: false, loaded: false,
             likedIds: JSON.parse(localStorage.getItem('likedIds') || '[]'),
             isDragging: false,
-            hoverProgress: -1 
+            hoverProgress: -1,
+            lastHoverProgress: 0.5 // For smooth exit
         };
         
         // Visualizer State
@@ -310,9 +317,38 @@
         let visualizerCtx;
         const colorThief = new ColorThief();
 
-        // 30 FPS Cap Vars
+        // 30 FPS Cap
         let lastFrameTime = 0;
-        const FPS_INTERVAL = 1000 / 30; // 33.33ms
+        const FPS_INTERVAL = 1000 / 30;
+
+        // --- KEYBOARD CONTROLS ---
+        document.addEventListener('keydown', (e) => {
+            // Ignore if typing in an input
+            if(e.target.tagName === 'INPUT') return;
+
+            switch(e.code) {
+                case 'Space': 
+                    e.preventDefault(); 
+                    player.togglePlay(); 
+                    break;
+                case 'ArrowRight': 
+                case 'KeyD':
+                    if(audio.duration) audio.currentTime = Math.min(audio.duration, audio.currentTime + 5);
+                    break;
+                case 'ArrowLeft': 
+                case 'KeyA':
+                    if(audio.duration) audio.currentTime = Math.max(0, audio.currentTime - 5);
+                    break;
+                case 'ArrowUp': 
+                case 'KeyW':
+                    player.setVolume(Math.min(1, audio.volume + 0.1));
+                    break;
+                case 'ArrowDown': 
+                case 'KeyS':
+                    player.setVolume(Math.max(0, audio.volume - 0.1));
+                    break;
+            }
+        });
 
         // --- INIT ---
         async function init() {
@@ -385,12 +421,12 @@
 
         const audio = document.getElementById('audio-el');
         audio.onerror = (e) => {
-            console.error("Media Error", e);
             if(state.playing) {
                 state.playing = false;
                 ui.updatePlayBtn();
             }
-            setTimeout(() => alert("Error playing audio. Song might be missing or restricted."), 500);
+            // Silent fail or toast preferred over alert loop
+            console.error("Playback error", e);
         };
 
         const player = {
@@ -433,7 +469,7 @@
             },
             next: () => { if(LIBRARY.length > 0) player.playTrack(state.idx >= LIBRARY.length - 1 ? 0 : state.idx + 1); },
             prev: () => { if(LIBRARY.length > 0) player.playTrack(state.idx <= 0 ? LIBRARY.length - 1 : state.idx - 1); },
-            setVolume: (val) => { audio.volume = val; },
+            setVolume: (val) => { audio.volume = Math.max(0, Math.min(1, val)); },
             toggleLike: () => {
                 if(state.idx === -1) return;
                 const id = LIBRARY[state.idx].id;
@@ -452,7 +488,7 @@
                 source = audioContext.createMediaElementSource(audio);
                 source.connect(analyser);
                 analyser.connect(audioContext.destination);
-                analyser.fftSize = 512; 
+                analyser.fftSize = 256; 
                 isAudioContextInitialized = true;
             } catch(e) { console.warn("WebAudio API missing", e); }
         }
@@ -471,7 +507,6 @@
             render: (timestamp) => {
                 requestAnimationFrame(viz.render);
                 
-                // 30 FPS Cap Logic
                 const elapsed = timestamp - lastFrameTime;
                 if (elapsed < FPS_INTERVAL) return;
                 lastFrameTime = timestamp - (elapsed % FPS_INTERVAL);
@@ -487,12 +522,13 @@
                 visualizerCtx.clearRect(0, 0, width, height);
                 
                 const seekTrack = document.getElementById('seek-bar-track');
-                const progressWidth = width * currentProgress;
-                
-                canvas.style.clipPath = `inset(0 ${width - progressWidth}px 0 0)`;
-                seekTrack.style.clipPath = `inset(0 0 0 ${currentProgress * 100}%)`;
+                if(seekTrack) {
+                    const progressWidth = width * currentProgress;
+                    canvas.style.clipPath = `inset(0 ${width - progressWidth}px 0 0)`;
+                    seekTrack.style.clipPath = `inset(0 0 0 ${currentProgress * 100}%)`;
+                }
 
-                time += 0.05; // slower time for smooth wave
+                time += 0.05; 
                 let targetLow = 0, targetMid = 0, targetHigh = 0;
 
                 if (state.playing && isAudioContextInitialized) {
@@ -514,15 +550,15 @@
                 }
 
                 // Smoothing
-                const smoothingFactor = 0.1;
-                smoothedLow += (targetLow - smoothedLow) * smoothingFactor;
-                smoothedMid += (targetMid - smoothedMid) * smoothingFactor;
-                smoothedHigh += (targetHigh - smoothedHigh) * smoothingFactor;
+                smoothedLow += (targetLow - smoothedLow) * 0.1;
+                smoothedMid += (targetMid - smoothedMid) * 0.1;
+                smoothedHigh += (targetHigh - smoothedHigh) * 0.1;
 
                 let verticalScale = 1.0;
                 if (audio.duration > 0) {
                     const scaleProgress = Math.min(1, currentProgress / 0.4);
-                    verticalScale = 0.3 + 0.7 * scaleProgress;
+                    // Reduced max height by 20%
+                    verticalScale = (0.3 + 0.7 * scaleProgress) * 0.8;
                 }
 
                 visualizerCtx.beginPath();
@@ -530,19 +566,23 @@
 
                 const waveDensity = 0.03;
                 const maxWaves = 14;
-                const waveCount = Math.min(maxWaves, Math.max(2, progressWidth * waveDensity));
+                const waveCount = Math.min(maxWaves, Math.max(2, (width * currentProgress) * waveDensity));
                 const intensity = audio.volume;
                 
                 const lowPower = Math.pow(smoothedLow, 2.0);
                 const midPower = Math.pow(smoothedMid, 1.5);
                 
-                // --- HOVER LOGIC (Bottom Half Only) ---
-                const targetHoverInt = (state.hoverProgress >= 0) ? 1.0 : 0.0;
+                // --- HOVER LOGIC ---
+                // If hovering, target is 1. If active but not hovering, hold value for smoothing.
+                const isHovering = state.hoverProgress >= 0;
+                const targetHoverInt = isHovering ? 1.0 : 0.0;
+                
+                // Smooth transition in AND out
                 hoverIntensity += (targetHoverInt - hoverIntensity) * 0.1;
 
                 for (let x = 0; x <= width; x++) {
-                    const localProgress = x / progressWidth;
-                    const taper = Math.sin(localProgress * Math.PI);
+                    const localProgress = x / (width * currentProgress || 1);
+                    const taper = Math.sin(localProgress * Math.PI); // Taper ends
                     
                     const baseWave = Math.sin((x / width) * waveCount * Math.PI);
                     const fastWave = Math.sin((x / width) * waveCount * 2.5 * Math.PI + time);
@@ -554,12 +594,15 @@
                     // Apply Hover Flattening
                     let interactionFactor = 1.0;
                     if (hoverIntensity > 0.01) {
-                        const hoverX = (state.hoverProgress >= 0 ? state.hoverProgress : 0.5) * width;
+                        // Use active hover position OR last known position for smooth exit
+                        const posToUse = isHovering ? state.hoverProgress : state.lastHoverProgress;
+                        const hoverX = posToUse * width;
                         const dist = Math.abs(x - hoverX);
                         const radius = 60; 
                         if (dist < radius) {
                             let t = dist / radius;
-                            let dip = t * t * (3 - 2 * t); 
+                            let dip = t * t * (3 - 2 * t); // Smooth step 0..1
+                            // Mix between 1.0 (normal) and dip (flattened) based on hoverIntensity
                             interactionFactor = 1.0 - (hoverIntensity * (1.0 - dip));
                         }
                     }
@@ -572,9 +615,9 @@
                     visualizerCtx.lineTo(x, y);
                 }
 
-                visualizerCtx.lineWidth = 3;
+                visualizerCtx.lineWidth = 2;
                 visualizerCtx.strokeStyle = '#fff';
-                // Optimize Shadow
+                // Dynamic glow based on loudness
                 if(smoothedLow > 0.3) {
                     visualizerCtx.shadowColor = 'rgba(255, 255, 255, 0.7)';
                     visualizerCtx.shadowBlur = 4 + smoothedHigh * 5; 
@@ -588,12 +631,16 @@
         const router = {
             go: (view) => {
                 document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
-                document.getElementById('view-'+view).classList.add('active');
+                const target = document.getElementById('view-'+view);
+                if(target) target.classList.add('active');
+                
                 document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
                 const btns = document.querySelectorAll('.nav-btn');
-                if(view==='home') btns[0].classList.add('active');
-                if(view==='library') btns[1].classList.add('active');
-                if(view==='liked') btns[2].classList.add('active');
+                if(btns.length >= 3) {
+                    if(view==='home') btns[0].classList.add('active');
+                    if(view==='library') btns[1].classList.add('active');
+                    if(view==='liked') btns[2].classList.add('active');
+                }
             }
         };
 
@@ -603,8 +650,13 @@
                 const container = document.getElementById('seek-bar-container');
                 const tooltip = document.getElementById('seek-tooltip');
                 
+                if(!seekBar || !container) return;
+
                 seekBar.addEventListener('mousedown', () => state.isDragging = true);
                 seekBar.addEventListener('mouseup', () => state.isDragging = false);
+                // Also handle touch for dragging
+                seekBar.addEventListener('touchstart', () => state.isDragging = true);
+                seekBar.addEventListener('touchend', () => state.isDragging = false);
                 
                 seekBar.addEventListener('input', () => {
                     if(!audio.duration || isNaN(audio.duration)) return;
@@ -615,31 +667,34 @@
                 container.addEventListener('mousemove', (e) => {
                     if(!state.loaded || !audio.duration || isNaN(audio.duration)) return;
                     const rect = container.getBoundingClientRect();
-                    
-                    // BOTTOM HALF ONLY CHECK
-                    const offsetY = e.clientY - rect.top;
                     const height = rect.height;
-                    
-                    // Only active if hovering the bottom half (from center line down)
+                    const offsetY = e.clientY - rect.top;
+
+                    // INTERACTION ONLY BOTTOM 50%
+                    // rect.height = 60px. Center is 30px.
+                    // If Y < 30px (Top half), ignore
                     if (offsetY < height / 2) {
                         state.hoverProgress = -1;
-                        tooltip.classList.remove('visible');
+                        if(tooltip) tooltip.classList.remove('visible');
                         return;
                     }
 
                     const progress = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-                    state.hoverProgress = progress; 
+                    state.hoverProgress = progress;
+                    state.lastHoverProgress = progress; // Save for exit anim
                     
-                    const hoverTime = progress * audio.duration;
-                    const m = Math.floor(hoverTime / 60), s = Math.floor(hoverTime % 60);
-                    tooltip.textContent = `${m}:${s.toString().padStart(2, '0')}`;
-                    tooltip.style.left = `${(e.clientX - rect.left)}px`;
-                    tooltip.classList.add('visible');
+                    if(tooltip) {
+                        const hoverTime = progress * audio.duration;
+                        const m = Math.floor(hoverTime / 60), s = Math.floor(hoverTime % 60);
+                        tooltip.textContent = `${m}:${s.toString().padStart(2, '0')}`;
+                        tooltip.style.left = `${(e.clientX - rect.left)}px`;
+                        tooltip.classList.add('visible');
+                    }
                 });
 
                 container.addEventListener('mouseleave', () => {
-                    state.hoverProgress = -1;
-                    tooltip.classList.remove('visible');
+                    state.hoverProgress = -1; // Trigger exit anim
+                    if(tooltip) tooltip.classList.remove('visible');
                 });
 
                 audio.addEventListener('timeupdate', () => {
@@ -649,35 +704,30 @@
                         seekBar.value = audio.currentTime;
                         currentProgress = audio.currentTime / audio.duration;
                     }
-                    const m = Math.floor(audio.currentTime / 60), s = Math.floor(audio.currentTime % 60);
-                    const el = document.getElementById('current-time');
-                    if(el) el.textContent = `${m}:${s.toString().padStart(2,'0')}`;
                 });
                 
-                audio.addEventListener('loadedmetadata', () => {
-                    if(audio.duration && !isNaN(audio.duration)) {
-                        const m = Math.floor(audio.duration / 60), s = Math.floor(audio.duration % 60);
-                        const el = document.getElementById('dur-time');
-                        if(el) el.textContent = `${m}:${s.toString().padStart(2,'0')}`;
-                    }
-                });
                 audio.addEventListener('ended', () => player.next());
             },
             enableControls: () => {
-                document.getElementById('seek-bar-container').classList.remove('disabled');
-                document.getElementById('seek-bar').disabled = false;
-                document.getElementById('btn-play').disabled = false;
-                document.getElementById('btn-prev').disabled = false;
-                document.getElementById('btn-next').disabled = false;
-                document.getElementById('btn-pip').disabled = false;
-                document.getElementById('p-like-btn').disabled = false;
-                document.getElementById('album-art-wrapper').style.opacity = "1";
+                const els = ['seek-bar-container', 'seek-bar', 'btn-play', 'btn-prev', 'btn-next', 'btn-pip', 'p-like-btn'];
+                els.forEach(id => {
+                    const el = document.getElementById(id);
+                    if(el) {
+                        el.classList.remove('disabled');
+                        el.disabled = false;
+                    }
+                });
+                const art = document.getElementById('album-art-wrapper');
+                if(art) art.style.opacity = "1";
             },
             updateMetadata: (track) => {
-                document.getElementById('p-title').textContent = track.name;
-                document.getElementById('p-artist').textContent = track.artist;
+                const title = document.getElementById('p-title');
+                const artist = document.getElementById('p-artist');
+                if(title) title.textContent = track.name;
+                if(artist) artist.textContent = track.artist;
+                
                 const artImg = document.getElementById('curr-art-img');
-                artImg.src = track.img || "https://placehold.co/300/333/fff?text=Music";
+                if(artImg) artImg.src = track.img || "https://placehold.co/300/333/fff?text=Music";
                 
                 if (track.img) {
                     const img = new Image();
@@ -691,12 +741,10 @@
                             const secColor = `rgb(${sec[0]}, ${sec[1]}, ${sec[2]})`;
                             const darkShade = `rgb(${main[0]*0.2}, ${main[1]*0.2}, ${main[2]*0.2})`;
                             
-                            const bgPlaying = document.getElementById('background-playing');
-                            if(bgPlaying) bgPlaying.style.background = `radial-gradient(circle at top, ${mainColor}, ${darkShade})`;
-                            
-                            const ripple = document.getElementById('ripple-effect');
-                            if(ripple) ripple.style.background = `radial-gradient(circle, ${secColor} 0%, transparent 70%)`;
-                            
+                            const bg = document.getElementById('background-playing');
+                            if(bg) bg.style.background = `radial-gradient(circle at top, ${mainColor}, ${darkShade})`;
+                            const rip = document.getElementById('ripple-effect');
+                            if(rip) rip.style.background = `radial-gradient(circle, ${secColor} 0%, transparent 70%)`;
                             const glow = document.getElementById('album-art-glow');
                             if(glow) glow.style.background = `conic-gradient(from 0deg, ${mainColor}, ${secColor}, ${mainColor})`;
                         } catch(e) {}
@@ -743,15 +791,18 @@
                 </div>`,
             updatePlayBtn: () => {
                 const isPlaying = state.playing;
-                document.getElementById('icon-play').className = isPlaying ? 'hidden' : 'flex ml-1';
-                document.getElementById('icon-pause').className = isPlaying ? 'flex' : 'hidden';
+                const playIcon = document.getElementById('icon-play');
+                const pauseIcon = document.getElementById('icon-pause');
+                if(playIcon) playIcon.className = isPlaying ? 'hidden' : 'flex ml-1';
+                if(pauseIcon) pauseIcon.className = isPlaying ? 'flex' : 'hidden';
                 const bgPlaying = document.getElementById('background-playing');
                 if(bgPlaying) bgPlaying.style.opacity = isPlaying ? 1 : 0;
             },
             updateLikeBtn: () => {
                 if(state.idx === -1) return;
                 const id = LIBRARY[state.idx].id;
-                document.getElementById('p-like-btn').className = state.likedIds.includes(id) ? 'text-red-500 transition' : 'text-gray-400 hover:text-red-500 transition';
+                const btn = document.getElementById('p-like-btn');
+                if(btn) btn.className = state.likedIds.includes(id) ? 'text-red-500 transition' : 'text-gray-400 hover:text-red-500 transition';
             }
         };
 
