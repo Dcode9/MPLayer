@@ -112,11 +112,6 @@
             top: 0; /* Input is bottom aligned, thumb sits at top edge of input */
         }
         
-        /* Align thumb to visualizer center (top of input box) */
-        input[type="range"]#seek-bar::-webkit-slider-thumb {
-             transform: translateY(-50%); /* Pull up to sit on the line */
-        }
-
         input[type="range"]#seek-bar:disabled::-webkit-slider-thumb {
             display: none;
         }
@@ -173,6 +168,10 @@
         #config-modal { position: fixed; inset:0; background: rgba(0,0,0,0.8); z-index: 100; display: none; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
         
         button:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+        
+        /* New Active State for Shuffle/Repeat */
+        button.active-state { color: var(--accent-color); }
+        button.active-state svg { fill: rgba(62, 207, 142, 0.2); }
     </style>
 </head>
 <body class="paused">
@@ -211,7 +210,7 @@
         </div>
 
         <!-- Main Content -->
-        <div id="main-view" class="flex-1 overflow-y-auto p-8 pb-40">
+        <div id="main-view" class="flex-1 overflow-y-auto p-8 pb-48">
             <div id="view-home" class="view-section active space-y-8">
                 <h2 class="text-3xl font-bold text-white">Recommended</h2>
                 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" id="rec-grid">Loading...</div>
@@ -229,24 +228,47 @@
         </div>
     </div>
 
-    <!-- PLAYER FOOTER (Pill Design) -->
-    <div id="player-footer" class="fixed bottom-6 left-6 right-6 z-50">
-        <!-- Rounded Pill Container matching Album Art vibe -->
-        <div class="bg-black/60 backdrop-blur-3xl border border-white/10 rounded-full shadow-2xl p-3 pr-8 flex items-center gap-4 transition-all duration-500" id="player-card">
+    <!-- PLAYER FOOTER STACK -->
+    <div id="player-footer" class="fixed bottom-6 left-6 right-6 z-50 flex flex-col items-start gap-1">
+        
+        <!-- NEW INFO ISLAND (Top Left) -->
+        <!-- Expressive: rounded-b-sm to connect visually to pill -->
+        <div class="bg-black/60 backdrop-blur-3xl border border-white/10 rounded-2xl rounded-b-sm p-3 pr-6 flex items-center gap-3 shadow-2xl transition-all duration-300" id="info-island" style="opacity:0; transform:translateY(10px);">
+            <div id="album-art-wrapper" class="relative w-12 h-12 flex-shrink-0 transition-opacity duration-300">
+                <div id="album-art-glow"></div>
+                <img id="curr-art-img" src="https://placehold.co/300/333/fff?text=Music" class="w-full h-full rounded-full object-cover border border-white/20" crossorigin="anonymous">
+            </div>
+            <div class="overflow-hidden min-w-[100px]">
+                <h3 id="p-title" class="font-bold text-white truncate text-sm">Not Playing</h3>
+                <p id="p-artist" class="text-xs text-gray-400 truncate">Select song</p>
+            </div>
+            <button onclick="player.toggleLike()" id="p-like-btn" class="text-gray-400 hover:text-red-500 transition disabled:opacity-30 ml-2" disabled>
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+            </button>
+        </div>
+
+        <!-- MAIN PLAYER PILL -->
+        <!-- Expressive: rounded-tr-sm to contrast with island -->
+        <div class="w-full bg-black/60 backdrop-blur-3xl border border-white/10 rounded-full rounded-tr-sm shadow-2xl p-2 px-4 flex items-center gap-4 transition-all duration-500 h-[72px]" id="player-card">
             
-            <!-- Play Button (Leftmost) -->
-            <button onclick="player.togglePlay()" id="btn-play" class="w-12 h-12 bg-white rounded-full flex-shrink-0 flex items-center justify-center text-black hover:scale-105 transition shadow-lg shadow-white/20 disabled:bg-gray-500 disabled:scale-100 disabled:cursor-not-allowed ml-1" disabled>
-                <span id="icon-play" class="flex ml-1"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>
-                <span id="icon-pause" class="hidden"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg></span>
-            </button>
+            <!-- Left Controls: Play, Prev, Next -->
+            <div class="flex items-center gap-4">
+                <button onclick="player.togglePlay()" id="btn-play" class="w-10 h-10 bg-white rounded-full flex-shrink-0 flex items-center justify-center text-black hover:scale-105 transition shadow-lg shadow-white/20 disabled:bg-gray-500 disabled:scale-100 disabled:cursor-not-allowed" disabled>
+                    <span id="icon-play" class="flex ml-1"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>
+                    <span id="icon-pause" class="hidden"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg></span>
+                </button>
 
-            <!-- Previous -->
-            <button class="text-gray-300 hover:text-white disabled:opacity-30 disabled:hover:text-gray-300 flex-shrink-0" onclick="player.prev()" id="btn-prev" disabled>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="19 20 9 12 19 4 19 20"></polygon><line x1="5" y1="19" x2="5" y2="5"></line></svg>
-            </button>
+                <button class="text-gray-300 hover:text-white disabled:opacity-30 disabled:hover:text-gray-300 flex-shrink-0" onclick="player.prev()" id="btn-prev" disabled>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="19 20 9 12 19 4 19 20"></polygon><line x1="5" y1="19" x2="5" y2="5"></line></svg>
+                </button>
 
-            <!-- Visualizer & Seek Bar (Center) -->
-            <div class="flex-1 h-full relative flex items-center group">
+                <button class="text-gray-300 hover:text-white disabled:opacity-30 disabled:hover:text-gray-300 flex-shrink-0" onclick="player.next()" id="btn-next" disabled>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19"></line></svg>
+                </button>
+            </div>
+
+            <!-- Center: Waveform -->
+            <div class="flex-1 h-full relative flex items-center group px-4 border-l border-r border-white/5">
                 <div id="seek-bar-container" class="w-full h-[60px] disabled relative">
                     <div id="seek-tooltip">0:00</div>
                     <div id="seek-bar-track"></div>
@@ -255,29 +277,19 @@
                 </div>
             </div>
 
-            <!-- Next -->
-            <button class="text-gray-300 hover:text-white disabled:opacity-30 disabled:hover:text-gray-300 flex-shrink-0" onclick="player.next()" id="btn-next" disabled>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19"></line></svg>
-            </button>
-
-            <!-- Album Art & Info (Right Side now, for balance, or stick to left? Request implied re-ordering) -->
-            <!-- Let's keep Album Art slightly separate but integrated -->
-            <div class="flex items-center gap-3 pl-4 border-l border-white/10">
-                <div id="album-art-wrapper" class="relative w-10 h-10 flex-shrink-0 opacity-50 transition-opacity duration-300">
-                    <img id="curr-art-img" src="https://placehold.co/300/333/fff?text=Music" class="w-full h-full rounded-full object-cover border border-white/20" crossorigin="anonymous">
-                </div>
-                <div class="overflow-hidden w-24 md:w-32 hidden sm:block">
-                    <h3 id="p-title" class="font-bold text-white truncate text-sm">Not Playing</h3>
-                    <p id="p-artist" class="text-xs text-gray-400 truncate">Select song</p>
-                </div>
-                
-                <div class="flex gap-2">
-                    <button onclick="player.toggleLike()" id="p-like-btn" class="text-gray-400 hover:text-red-500 transition disabled:opacity-30" disabled>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                    </button>
-                    <button class="pip-btn text-gray-400 hover:text-white disabled:opacity-30" onclick="pipManager.toggle()" id="btn-pip" disabled>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><rect x="12" y="12" width="6" height="5"></rect></svg>
-                    </button>
+            <!-- Right Controls: Shuffle, Repeat, PiP, Vol -->
+            <div class="flex items-center gap-3">
+                <button class="text-gray-400 hover:text-white disabled:opacity-30 transition" onclick="player.toggleShuffle()" id="btn-shuffle" disabled title="Shuffle">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>
+                </button>
+                <button class="text-gray-400 hover:text-white disabled:opacity-30 transition" onclick="player.toggleRepeat()" id="btn-repeat" disabled title="Repeat">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+                </button>
+                <button class="pip-btn text-gray-400 hover:text-white disabled:opacity-30" onclick="pipManager.toggle()" id="btn-pip" disabled title="Mini Player">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><rect x="12" y="12" width="6" height="5"></rect></svg>
+                </button>
+                <div class="w-20 hidden md:block">
+                    <input type="range" min="0" max="1" step="0.05" oninput="player.setVolume(this.value)" class="w-full h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer">
                 </div>
             </div>
 
@@ -305,7 +317,9 @@
             likedIds: JSON.parse(localStorage.getItem('likedIds') || '[]'),
             isDragging: false,
             hoverProgress: -1,
-            lastHoverProgress: 0.5 // For smooth exit
+            lastHoverProgress: 0.5,
+            shuffle: false,
+            repeat: 0 // 0: off, 1: all, 2: one
         };
         
         // Visualizer State
@@ -323,30 +337,13 @@
 
         // --- KEYBOARD CONTROLS ---
         document.addEventListener('keydown', (e) => {
-            // Ignore if typing in an input
             if(e.target.tagName === 'INPUT') return;
-
             switch(e.code) {
-                case 'Space': 
-                    e.preventDefault(); 
-                    player.togglePlay(); 
-                    break;
-                case 'ArrowRight': 
-                case 'KeyD':
-                    if(audio.duration) audio.currentTime = Math.min(audio.duration, audio.currentTime + 5);
-                    break;
-                case 'ArrowLeft': 
-                case 'KeyA':
-                    if(audio.duration) audio.currentTime = Math.max(0, audio.currentTime - 5);
-                    break;
-                case 'ArrowUp': 
-                case 'KeyW':
-                    player.setVolume(Math.min(1, audio.volume + 0.1));
-                    break;
-                case 'ArrowDown': 
-                case 'KeyS':
-                    player.setVolume(Math.max(0, audio.volume - 0.1));
-                    break;
+                case 'Space': e.preventDefault(); player.togglePlay(); break;
+                case 'ArrowRight': case 'KeyD': if(audio.duration) audio.currentTime = Math.min(audio.duration, audio.currentTime + 5); break;
+                case 'ArrowLeft': case 'KeyA': if(audio.duration) audio.currentTime = Math.max(0, audio.currentTime - 5); break;
+                case 'ArrowUp': case 'KeyW': player.setVolume(Math.min(1, audio.volume + 0.1)); break;
+                case 'ArrowDown': case 'KeyS': player.setVolume(Math.max(0, audio.volume - 0.1)); break;
             }
         });
 
@@ -421,11 +418,7 @@
 
         const audio = document.getElementById('audio-el');
         audio.onerror = (e) => {
-            if(state.playing) {
-                state.playing = false;
-                ui.updatePlayBtn();
-            }
-            // Silent fail or toast preferred over alert loop
+            if(state.playing) { state.playing = false; ui.updatePlayBtn(); }
             console.error("Playback error", e);
         };
 
@@ -467,8 +460,23 @@
                 ui.updatePlayBtn();
                 if(navigator.mediaSession) navigator.mediaSession.playbackState = state.playing ? "playing" : "paused";
             },
-            next: () => { if(LIBRARY.length > 0) player.playTrack(state.idx >= LIBRARY.length - 1 ? 0 : state.idx + 1); },
-            prev: () => { if(LIBRARY.length > 0) player.playTrack(state.idx <= 0 ? LIBRARY.length - 1 : state.idx - 1); },
+            next: () => { 
+                if(LIBRARY.length === 0) return;
+                let nextIdx;
+                if(state.shuffle) {
+                    nextIdx = Math.floor(Math.random() * LIBRARY.length);
+                } else {
+                    nextIdx = state.idx + 1;
+                    if(nextIdx >= LIBRARY.length) nextIdx = 0;
+                }
+                player.playTrack(nextIdx); 
+            },
+            prev: () => { 
+                if(LIBRARY.length === 0) return;
+                let prevIdx = state.idx - 1;
+                if(prevIdx < 0) prevIdx = LIBRARY.length - 1;
+                player.playTrack(prevIdx); 
+            },
             setVolume: (val) => { audio.volume = Math.max(0, Math.min(1, val)); },
             toggleLike: () => {
                 if(state.idx === -1) return;
@@ -478,6 +486,21 @@
                 localStorage.setItem('likedIds', JSON.stringify(state.likedIds));
                 ui.updateLikeBtn();
                 ui.render();
+            },
+            toggleShuffle: () => {
+                state.shuffle = !state.shuffle;
+                const btn = document.getElementById('btn-shuffle');
+                if(state.shuffle) btn.classList.add('active-state'); else btn.classList.remove('active-state');
+            },
+            toggleRepeat: () => {
+                // 0: none, 1: all, 2: one
+                state.repeat = (state.repeat + 1) % 3;
+                const btn = document.getElementById('btn-repeat');
+                // Simple indicator logic
+                if(state.repeat === 0) btn.classList.remove('active-state');
+                else btn.classList.add('active-state');
+                // You can swap icons here if desired for 'one' vs 'all'
+                audio.loop = (state.repeat === 2);
             }
         };
 
@@ -540,6 +563,7 @@
                     targetMid = dataArray.slice(10, 40).reduce((a, b) => a + b, 0) / 30 / 255;
                     targetHigh = dataArray.slice(80, 150).reduce((a, b) => a + b, 0) / 70 / 255;
                     
+                    // Ripple
                     const rippleBass = dataArray.slice(0, 5).reduce((a, b) => a + b, 0) / 5;
                     const rippleScale = 1 + (rippleBass / 255) * 0.5;
                     const ripple = document.getElementById('ripple-effect');
@@ -554,11 +578,20 @@
                 smoothedMid += (targetMid - smoothedMid) * 0.1;
                 smoothedHigh += (targetHigh - smoothedHigh) * 0.1;
 
+                // --- BEAT / DRUM REACTION ---
+                // Detect sudden spikes in High-Mids (Snares/Hats)
+                let beatScale = 1.0;
+                if (targetMid > 0.6) {
+                    // Add random jitter +/- 5%
+                    const jitter = 1.0 + (Math.random() * 0.1 - 0.05); 
+                    beatScale = jitter;
+                }
+
                 let verticalScale = 1.0;
                 if (audio.duration > 0) {
                     const scaleProgress = Math.min(1, currentProgress / 0.4);
                     // Reduced max height by 20%
-                    verticalScale = (0.3 + 0.7 * scaleProgress) * 0.8;
+                    verticalScale = (0.3 + 0.7 * scaleProgress) * 0.8 * beatScale; 
                 }
 
                 visualizerCtx.beginPath();
@@ -573,16 +606,13 @@
                 const midPower = Math.pow(smoothedMid, 1.5);
                 
                 // --- HOVER LOGIC ---
-                // If hovering, target is 1. If active but not hovering, hold value for smoothing.
                 const isHovering = state.hoverProgress >= 0;
                 const targetHoverInt = isHovering ? 1.0 : 0.0;
-                
-                // Smooth transition in AND out
                 hoverIntensity += (targetHoverInt - hoverIntensity) * 0.1;
 
                 for (let x = 0; x <= width; x++) {
                     const localProgress = x / (width * currentProgress || 1);
-                    const taper = Math.sin(localProgress * Math.PI); // Taper ends
+                    const taper = Math.sin(localProgress * Math.PI);
                     
                     const baseWave = Math.sin((x / width) * waveCount * Math.PI);
                     const fastWave = Math.sin((x / width) * waveCount * 2.5 * Math.PI + time);
@@ -594,15 +624,13 @@
                     // Apply Hover Flattening
                     let interactionFactor = 1.0;
                     if (hoverIntensity > 0.01) {
-                        // Use active hover position OR last known position for smooth exit
                         const posToUse = isHovering ? state.hoverProgress : state.lastHoverProgress;
                         const hoverX = posToUse * width;
                         const dist = Math.abs(x - hoverX);
                         const radius = 60; 
                         if (dist < radius) {
                             let t = dist / radius;
-                            let dip = t * t * (3 - 2 * t); // Smooth step 0..1
-                            // Mix between 1.0 (normal) and dip (flattened) based on hoverIntensity
+                            let dip = t * t * (3 - 2 * t);
                             interactionFactor = 1.0 - (hoverIntensity * (1.0 - dip));
                         }
                     }
@@ -617,7 +645,6 @@
 
                 visualizerCtx.lineWidth = 2;
                 visualizerCtx.strokeStyle = '#fff';
-                // Dynamic glow based on loudness
                 if(smoothedLow > 0.3) {
                     visualizerCtx.shadowColor = 'rgba(255, 255, 255, 0.7)';
                     visualizerCtx.shadowBlur = 4 + smoothedHigh * 5; 
@@ -654,7 +681,6 @@
 
                 seekBar.addEventListener('mousedown', () => state.isDragging = true);
                 seekBar.addEventListener('mouseup', () => state.isDragging = false);
-                // Also handle touch for dragging
                 seekBar.addEventListener('touchstart', () => state.isDragging = true);
                 seekBar.addEventListener('touchend', () => state.isDragging = false);
                 
@@ -671,8 +697,6 @@
                     const offsetY = e.clientY - rect.top;
 
                     // INTERACTION ONLY BOTTOM 50%
-                    // rect.height = 60px. Center is 30px.
-                    // If Y < 30px (Top half), ignore
                     if (offsetY < height / 2) {
                         state.hoverProgress = -1;
                         if(tooltip) tooltip.classList.remove('visible');
@@ -681,7 +705,7 @@
 
                     const progress = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
                     state.hoverProgress = progress;
-                    state.lastHoverProgress = progress; // Save for exit anim
+                    state.lastHoverProgress = progress;
                     
                     if(tooltip) {
                         const hoverTime = progress * audio.duration;
@@ -693,7 +717,7 @@
                 });
 
                 container.addEventListener('mouseleave', () => {
-                    state.hoverProgress = -1; // Trigger exit anim
+                    state.hoverProgress = -1;
                     if(tooltip) tooltip.classList.remove('visible');
                 });
 
@@ -706,10 +730,17 @@
                     }
                 });
                 
-                audio.addEventListener('ended', () => player.next());
+                audio.addEventListener('ended', () => {
+                    if(state.repeat === 2) { // Loop One
+                        audio.currentTime = 0;
+                        audio.play();
+                    } else {
+                        player.next();
+                    }
+                });
             },
             enableControls: () => {
-                const els = ['seek-bar-container', 'seek-bar', 'btn-play', 'btn-prev', 'btn-next', 'btn-pip', 'p-like-btn'];
+                const els = ['seek-bar-container', 'seek-bar', 'btn-play', 'btn-prev', 'btn-next', 'btn-pip', 'p-like-btn', 'btn-shuffle', 'btn-repeat'];
                 els.forEach(id => {
                     const el = document.getElementById(id);
                     if(el) {
@@ -717,8 +748,11 @@
                         el.disabled = false;
                     }
                 });
-                const art = document.getElementById('album-art-wrapper');
-                if(art) art.style.opacity = "1";
+                const island = document.getElementById('info-island');
+                if(island) {
+                    island.style.opacity = "1";
+                    island.style.transform = "translateY(0)";
+                }
             },
             updateMetadata: (track) => {
                 const title = document.getElementById('p-title');
@@ -802,7 +836,7 @@
                 if(state.idx === -1) return;
                 const id = LIBRARY[state.idx].id;
                 const btn = document.getElementById('p-like-btn');
-                if(btn) btn.className = state.likedIds.includes(id) ? 'text-red-500 transition' : 'text-gray-400 hover:text-red-500 transition';
+                if(btn) btn.className = state.likedIds.includes(id) ? 'text-red-500 transition ml-2' : 'text-gray-400 hover:text-red-500 transition ml-2';
             }
         };
 
