@@ -36,8 +36,11 @@
             border-radius: 50%;
             transform: translate(-50%, -50%) scale(0);
             opacity: 0; filter: blur(80px);
-            transition: transform 0.1s linear, opacity 0.2s ease;
+            transition: transform 1s cubic-bezier(0.25, 1, 0.5, 1), opacity 1s ease-out;
             pointer-events: none;
+        }
+        #ripple-effect.active {
+            transform: translate(-50%, -50%) scale(1);
         }
 
         /* --- Layout --- */
@@ -53,24 +56,24 @@
             z-index: 10;
         }
 
-        /* --- Custom Seek Bar & Visualizer --- */
+        /* --- Custom Seek Bar & Visualizer (From Snippet) --- */
         #seek-bar-container {
-            position: relative; width: 100%; height: 60px;
+            position: relative; width: 100%; height: 80px;
             display: flex; align-items: center; cursor: pointer;
             transition: opacity 0.3s;
         }
         #seek-bar-container.disabled { opacity: 0.3; pointer-events: none; }
 
         #seek-bar-track {
-            position: absolute; height: 2px; width: 100%;
-            background-color: rgba(255, 255, 255, 0.1);
+            position: absolute; height: 6px; width: 100%;
+            background-color: rgba(255, 255, 255, 0.2);
             border-radius: 3px; top: 50%; transform: translateY(-50%);
-            /* Default flat line when inactive */
+            clip-path: inset(0 0 0 0%);
         }
         #visualizer-canvas {
             position: absolute; left: 0; top: 0; width: 100%; height: 100%;
             pointer-events: none; z-index: 1;
-            /* We handle clipping in JS for the 'filled' effect */
+            clip-path: inset(0 100% 0 0);
         }
         input[type="range"]#seek-bar {
             -webkit-appearance: none; appearance: none;
@@ -98,6 +101,7 @@
         body.paused input[type="range"]#seek-bar::-webkit-slider-thumb {
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23000'%3E%3Cpath d='M6 4h4v16H6V4zm8 0h4v16h-4V4z'/%3E%3C/svg%3E");
         }
+        input[type="range"]#seek-bar::-webkit-slider-thumb:hover { transform: scale(1.1); }
 
         /* --- Album Art Effects --- */
         #album-art-wrapper { transition: transform 0.3s ease; position: relative; }
@@ -266,17 +270,16 @@
             idx: -1, 
             playing: false, 
             loaded: false,
-            likedIds: JSON.parse(localStorage.getItem('likedIds') || '[]') 
+            likedIds: JSON.parse(localStorage.getItem('likedIds') || '[]'),
+            isDragging: false
         };
         
         // Visualizer State
         let audioContext, analyser, source, isAudioContextInitialized = false;
-        let smoothedLow = 0;
+        let smoothedLow = 0, smoothedMid = 0, smoothedHigh = 0;
         let currentProgress = 0;
         let time = 0;
         let visualizerCtx;
-        // Logic for smooth transition from flat to wave
-        let currentAmplitude = 0; 
         const colorThief = new ColorThief();
 
         // --- INIT ---
@@ -448,7 +451,7 @@
             }
         };
 
-        // --- VISUALIZER LOGIC (ROBUST & MORPHING) ---
+        // --- VISUALIZER LOGIC (EXACT PORT) ---
         function setupAudioContext() {
             try {
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -457,7 +460,7 @@
                 source = audioContext.createMediaElementSource(audio);
                 source.connect(analyser);
                 analyser.connect(audioContext.destination);
-                analyser.fftSize = 256; // Smaller FFT for more responsive bass
+                analyser.fftSize = 512;
                 isAudioContextInitialized = true;
             } catch(e) { console.warn("WebAudio API missing or failed", e); }
         }
@@ -478,90 +481,97 @@
             render: () => {
                 requestAnimationFrame(viz.render);
                 
-                // If not loaded, do nothing or just clear
+                // If not loaded, do nothing
                 if (!state.loaded && !isAudioContextInitialized) return;
 
                 const canvas = document.getElementById('visualizer-canvas');
-                const width = canvas.width / (window.devicePixelRatio || 1);
-                const height = canvas.height / (window.devicePixelRatio || 1);
+                const seekTrack = document.getElementById('seek-bar-track');
+                const dpr = window.devicePixelRatio || 1;
+                
+                // Canvas Dimensions (Virtual)
+                const width = canvas.width / dpr;
+                const height = canvas.height / dpr;
                 const centerY = height / 2;
                 
                 visualizerCtx.clearRect(0, 0, width, height);
                 
                 // Update Progress Clip Path
-                const seekTrack = document.getElementById('seek-bar-track');
                 const progressWidth = width * currentProgress;
-                
-                // Only show canvas where there is progress (left side)
                 canvas.style.clipPath = `inset(0 ${width - progressWidth}px 0 0)`;
-                // Track shows everywhere, but we want wave on top.
-                // Actually, design wants wave TO BE the filled track.
                 seekTrack.style.clipPath = `inset(0 0 0 ${currentProgress * 100}%)`;
 
-                // Logic:
-                // Target Amplitude: 0 if paused, Bass Energy if playing
-                let targetAmp = 0;
-                let bassEnergy = 0;
+                if (progressWidth <= 1) return;
+
+                // Audio Data Processing
+                time += 0.05;
+                let targetLow = 0, targetMid = 0, targetHigh = 0;
 
                 if (state.playing && isAudioContextInitialized) {
-                    time += 0.1; // Speed of wave movement
-                    
                     const bufferLength = analyser.frequencyBinCount;
                     const dataArray = new Uint8Array(bufferLength);
                     analyser.getByteFrequencyData(dataArray);
-
-                    // Bass is usually bottom 10-20% of bins
-                    // FFT 256 -> 128 bins. 0-10 is Sub-bass/Bass
-                    const bassSum = dataArray.slice(0, 10).reduce((a, b) => a + b, 0);
-                    bassEnergy = (bassSum / 10) / 255; // Normalize 0-1
                     
-                    // Bass Boost calculation for Wave Height
-                    // Map 0-1 to reasonable pixel height
-                    targetAmp = bassEnergy * (height * 0.4); 
-                } else {
-                    time += 0.02; // Slow idle drift
-                    targetAmp = 0; // Flatten out
+                    targetLow = dataArray.slice(0, 5).reduce((a, b) => a + b, 0) / 5 / 255;
+                    targetMid = dataArray.slice(10, 40).reduce((a, b) => a + b, 0) / 30 / 255;
+                    targetHigh = dataArray.slice(80, 150).reduce((a, b) => a + b, 0) / 70 / 255;
+                    
+                    // Ripple
+                    const rippleBassIntensity = dataArray.slice(0, 5).reduce((a, b) => a + b, 0) / 5;
+                    const rippleScale = 1 + (rippleBassIntensity / 255) * 0.5;
+                    const ripple = document.getElementById('ripple-effect');
+                    ripple.style.transform = `translate(-50%, -50%) scale(${rippleScale})`;
+                    if(state.playing) ripple.classList.add('active');
                 }
 
-                // Smooth morphing of amplitude (Linear Interpolation)
-                // If paused, currentAmplitude -> 0. If bass hits, currentAmplitude -> targetAmp
-                currentAmplitude += (targetAmp - currentAmplitude) * 0.1; 
-                
-                // Update Ripple based on smoothed bass
-                const ripple = document.getElementById('ripple-effect');
-                const rippleScale = 1 + (currentAmplitude / height) * 2; 
-                ripple.style.transform = `translate(-50%, -50%) scale(${rippleScale})`;
-                ripple.style.opacity = state.playing ? Math.max(0.1, (currentAmplitude/height)) : 0;
+                // Smoothing
+                const smoothingFactor = 0.1;
+                smoothedLow += (targetLow - smoothedLow) * smoothingFactor;
+                smoothedMid += (targetMid - smoothedMid) * smoothingFactor;
+                smoothedHigh += (targetHigh - smoothedHigh) * smoothingFactor;
 
-                // DRAW WAVE
+                // Vertical Scale (Based on progress)
+                let verticalScale = 1.0;
+                if (audio.duration > 0) {
+                    const scaleProgress = Math.min(1, currentProgress / 0.4);
+                    verticalScale = 0.3 + 0.7 * scaleProgress;
+                }
+
+                // Draw Visualizer
                 visualizerCtx.beginPath();
                 visualizerCtx.moveTo(0, centerY);
 
-                // Wave Frequency increases as song progresses
-                // Base 2 waves + up to 20 more based on progress
-                const waveCount = 2 + (currentProgress * 20); 
+                const waveDensity = 0.03;
+                const maxWaves = 14;
+                const waveCount = Math.min(maxWaves, Math.max(2, progressWidth * waveDensity));
+                const intensity = audio.volume;
+                
+                const lowPower = Math.pow(smoothedLow, 2.0);
+                const midPower = Math.pow(smoothedMid, 1.5);
+                const highPower = Math.pow(smoothedHigh, 1.2);
 
-                for (let x = 0; x <= width; x++) {
-                    const localProgress = x / width;
+                for (let x = 0; x <= progressWidth; x++) {
+                    const localProgress = x / progressWidth;
+                    const taper = Math.sin(localProgress * Math.PI);
                     
-                    // Taper ends so it connects to center line smoothly at 0 and current pos
-                    // But we only care about x <= progressWidth really due to clipPath
-                    
-                    // Main Sine Wave
-                    const sine = Math.sin((x / width) * waveCount * Math.PI * 2 + time);
-                    
-                    // Calculate Y
-                    // If flat (paused), currentAmplitude is ~0, so it draws a flat line
-                    const y = centerY + sine * currentAmplitude;
+                    const baseWave = Math.sin((x / width) * waveCount * Math.PI);
+                    const fastWave = Math.sin((x / width) * waveCount * 2.5 * Math.PI + time);
+                    const slowWave = Math.sin((x / width) * waveCount * 0.5 * Math.PI + time * 0.3);
+
+                    const baseAmplitude = (centerY * 0.8) * lowPower * intensity * verticalScale;
+                    const detailAmplitude = (centerY * 0.2) * midPower * intensity * verticalScale;
+
+                    const y = centerY +
+                        (baseWave * baseAmplitude +
+                        fastWave * detailAmplitude +
+                        slowWave * detailAmplitude * 0.5) * taper;
                     
                     visualizerCtx.lineTo(x, y);
                 }
 
-                visualizerCtx.lineWidth = 2;
+                visualizerCtx.lineWidth = 3;
                 visualizerCtx.strokeStyle = '#fff';
-                // Add glow if loud
-                visualizerCtx.shadowColor = 'rgba(255, 255, 255, 0.5)';
-                visualizerCtx.shadowBlur = currentAmplitude > 5 ? 10 : 0;
+                visualizerCtx.shadowColor = 'rgba(255, 255, 255, 0.7)';
+                visualizerCtx.shadowBlur = 4 + highPower * 10;
                 visualizerCtx.stroke();
                 visualizerCtx.shadowBlur = 0;
             }
@@ -583,24 +593,32 @@
         const ui = {
             initListeners: () => {
                 const seekBar = document.getElementById('seek-bar');
+                const container = document.getElementById('seek-bar-container');
                 
+                // Mousedown/Mouseup for dragging state
+                seekBar.addEventListener('mousedown', () => state.isDragging = true);
+                seekBar.addEventListener('mouseup', () => state.isDragging = false);
+                
+                // Seeking
                 seekBar.addEventListener('input', () => {
                     if(!audio.duration) return;
-                    // Robustness check
-                    const val = parseFloat(seekBar.value);
-                    if(isFinite(val)) {
-                        audio.currentTime = val;
-                        currentProgress = audio.currentTime / audio.duration;
-                    }
+                    audio.currentTime = seekBar.value;
+                    currentProgress = audio.currentTime / audio.duration;
                 });
+                
+                // Click on container (skip to pos) logic
+                // The snippet used complex logic here, but native range input handles clicks fine.
+                // We keep it simple for robustness.
 
                 audio.addEventListener('timeupdate', () => {
                     if(!audio.duration || isNaN(audio.duration)) return;
                     
-                    // Update Slider (only if not user dragging? Input event handles drag, this handles tick)
-                    seekBar.max = audio.duration;
-                    seekBar.value = audio.currentTime;
-                    currentProgress = audio.currentTime / audio.duration;
+                    // Only update visuals if not dragging to prevent glitching
+                    if (!state.isDragging) {
+                        seekBar.max = audio.duration;
+                        seekBar.value = audio.currentTime;
+                        currentProgress = audio.currentTime / audio.duration;
+                    }
                     
                     const m = Math.floor(audio.currentTime / 60), s = Math.floor(audio.currentTime % 60);
                     document.getElementById('curr-time').textContent = `${m}:${s.toString().padStart(2,'0')}`;
