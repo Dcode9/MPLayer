@@ -95,6 +95,179 @@
             background: transparent; outline: none; margin: 0; padding: 0; z-index: 2;
             cursor: pointer;
         }
+
+        /* --- Search Bar --- */
+        .search-container {
+            position: relative;
+        }
+        .search-input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 9999px;
+            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            width: 100%;
+            color: white;
+            transition: all 0.3s;
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            background: rgba(255, 255, 255, 0.15);
+        }
+        .search-icon {
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+        }
+        .search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0.75rem;
+            margin-top: 0.5rem;
+            max-height: 60vh;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+        }
+        .search-results.active {
+            display: block;
+        }
+        .search-result-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .search-result-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .search-result-item img {
+            width: 48px;
+            height: 48px;
+            border-radius: 0.5rem;
+            object-fit: cover;
+        }
+        .search-section-title {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #9ca3af;
+            text-transform: uppercase;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* --- Quality Selector --- */
+        .quality-selector {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 0.5rem;
+            padding: 0.25rem 0.5rem;
+            color: white;
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+        .quality-selector:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        /* --- Loading & Error States --- */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--accent-color);
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .error-toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            z-index: 200;
+            animation: slideUp 0.3s ease;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+
+        /* --- Tab Pills --- */
+        .tab-pills {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        .tab-pill {
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #9ca3af;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+        .tab-pill:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+        .tab-pill.active {
+            background: var(--accent-color);
+            color: black;
+        }
+
+        /* --- Album/Artist Cards --- */
+        .content-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .content-card:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+        .content-card img {
+            width: 100%;
+            aspect-ratio: 1;
+            object-fit: cover;
+            border-radius: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .content-card.artist img {
+            border-radius: 50%;
+        }
+
+        /* --- Skeleton Loading --- */
+        .skeleton {
+            background: linear-gradient(90deg, rgba(255,255,255,0.1) 25%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.1) 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite;
+            border-radius: 0.5rem;
+        }
+        @keyframes skeleton-loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
         
         /* Custom Thumb (Playhead) - Plain White Dot */
         input[type="range"]#seek-bar::-webkit-slider-thumb {
@@ -176,6 +349,41 @@
         /* New Active State for Shuffle/Repeat */
         button.active-state { color: var(--accent-color); }
         button.active-state svg { fill: rgba(62, 207, 142, 0.2); }
+
+        /* --- Scrollbar Styling --- */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
+
+        /* --- Source Badge --- */
+        .source-badge {
+            font-size: 0.625rem;
+            padding: 0.125rem 0.375rem;
+            border-radius: 9999px;
+            background: rgba(62, 207, 142, 0.2);
+            color: var(--accent-color);
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        .source-badge.jiosaavn {
+            background: rgba(139, 92, 246, 0.2);
+            color: #a78bfa;
+        }
+
+        /* --- Horizontal scroll sections --- */
+        .horizontal-scroll {
+            display: flex;
+            gap: 1rem;
+            overflow-x: auto;
+            padding-bottom: 1rem;
+            scroll-snap-type: x mandatory;
+        }
+        .horizontal-scroll > * {
+            scroll-snap-align: start;
+            flex-shrink: 0;
+        }
+        .horizontal-scroll::-webkit-scrollbar { height: 4px; }
     </style>
 </head>
 <body class="paused">
@@ -205,26 +413,122 @@
                 <span>SpatialPlay</span>
             </div>
             
-            <div class="flex flex-col gap-2">
-                <button class="nav-btn active flex items-center gap-4 p-3 rounded-lg text-gray-300 hover:text-white hover:bg-white/5 transition" onclick="router.go('home')">Home</button>
-                <button class="nav-btn flex items-center gap-4 p-3 rounded-lg text-gray-300 hover:text-white hover:bg-white/5 transition" onclick="router.go('library')">Library</button>
-                <button class="nav-btn flex items-center gap-4 p-3 rounded-lg text-gray-300 hover:text-white hover:bg-white/5 transition" onclick="router.go('liked')">Liked Songs</button>
+            <!-- Search Bar -->
+            <div class="search-container">
+                <svg class="search-icon w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <input type="text" class="search-input" id="search-input" placeholder="Search JioSaavn..." autocomplete="off">
+                <div class="search-results" id="search-results"></div>
             </div>
-            <div class="mt-auto text-xs text-gray-500">Powered by Supabase</div>
+            
+            <div class="flex flex-col gap-2">
+                <button class="nav-btn active flex items-center gap-4 p-3 rounded-lg text-gray-300 hover:text-white hover:bg-white/5 transition" onclick="router.go('home')">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                    Home
+                </button>
+                <button class="nav-btn flex items-center gap-4 p-3 rounded-lg text-gray-300 hover:text-white hover:bg-white/5 transition" onclick="router.go('trending')">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                    Trending
+                </button>
+                <button class="nav-btn flex items-center gap-4 p-3 rounded-lg text-gray-300 hover:text-white hover:bg-white/5 transition" onclick="router.go('albums')">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                    Albums
+                </button>
+                <button class="nav-btn flex items-center gap-4 p-3 rounded-lg text-gray-300 hover:text-white hover:bg-white/5 transition" onclick="router.go('library')">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/></svg>
+                    My Library
+                </button>
+                <button class="nav-btn flex items-center gap-4 p-3 rounded-lg text-gray-300 hover:text-white hover:bg-white/5 transition" onclick="router.go('liked')">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                    Liked Songs
+                </button>
+            </div>
+            
+            <!-- Quality Selector -->
+            <div class="mt-auto">
+                <label class="text-xs text-gray-500 block mb-1">Audio Quality</label>
+                <select class="quality-selector w-full" id="quality-selector" onchange="preferences.setQuality(this.value)">
+                    <option value="12kbps">12kbps (Low)</option>
+                    <option value="48kbps">48kbps (Medium)</option>
+                    <option value="96kbps">96kbps (Good)</option>
+                    <option value="160kbps" selected>160kbps (High)</option>
+                    <option value="320kbps">320kbps (Best)</option>
+                </select>
+                <div class="text-xs text-gray-500 mt-4">Powered by JioSaavn + Supabase</div>
+            </div>
         </div>
 
         <!-- Main Content -->
         <div id="main-view" class="flex-1 overflow-y-auto p-8 pb-48">
+            <!-- Error Toast Container -->
+            <div id="error-toast-container"></div>
+            
+            <!-- Home View -->
             <div id="view-home" class="view-section active space-y-8">
-                <h2 class="text-3xl font-bold text-white">Recommended</h2>
-                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" id="rec-grid">Loading...</div>
-                <h2 class="text-3xl font-bold text-white">Recent</h2>
-                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" id="recent-grid"></div>
+                <h2 class="text-3xl font-bold text-white">For You</h2>
+                <div id="home-content">
+                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                        <div class="skeleton h-48 w-full"></div>
+                        <div class="skeleton h-48 w-full"></div>
+                        <div class="skeleton h-48 w-full"></div>
+                        <div class="skeleton h-48 w-full"></div>
+                    </div>
+                </div>
+                
+                <h2 class="text-2xl font-bold text-white mt-8">Quick Picks</h2>
+                <div id="quick-picks-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"></div>
+                
+                <h2 class="text-2xl font-bold text-white mt-8">Recently Played</h2>
+                <div id="recent-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"></div>
             </div>
+            
+            <!-- Trending View -->
+            <div id="view-trending" class="view-section space-y-6">
+                <h2 class="text-3xl font-bold text-white">Trending</h2>
+                <div class="tab-pills" id="trending-tabs">
+                    <button class="tab-pill active" onclick="trendingView.switchTab('songs')">Songs</button>
+                    <button class="tab-pill" onclick="trendingView.switchTab('albums')">Albums</button>
+                    <button class="tab-pill" onclick="trendingView.switchTab('artists')">Artists</button>
+                </div>
+                <div id="trending-content">
+                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                        <div class="skeleton h-48 w-full"></div>
+                        <div class="skeleton h-48 w-full"></div>
+                        <div class="skeleton h-48 w-full"></div>
+                        <div class="skeleton h-48 w-full"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Albums View -->
+            <div id="view-albums" class="view-section space-y-6">
+                <h2 class="text-3xl font-bold text-white">Top Albums</h2>
+                <div id="albums-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                    <div class="skeleton h-48 w-full"></div>
+                    <div class="skeleton h-48 w-full"></div>
+                    <div class="skeleton h-48 w-full"></div>
+                    <div class="skeleton h-48 w-full"></div>
+                </div>
+            </div>
+            
+            <!-- Album Detail View -->
+            <div id="view-album-detail" class="view-section space-y-6">
+                <button onclick="history.back()" class="text-gray-400 hover:text-white transition mb-4">
+                    ← Back
+                </button>
+                <div id="album-detail-header" class="flex gap-6 items-end mb-8"></div>
+                <div id="album-detail-tracks" class="space-y-2"></div>
+            </div>
+            
+            <!-- Library View (Local Supabase songs) -->
             <div id="view-library" class="view-section space-y-4">
-                <h2 class="text-3xl font-bold text-white">Full Library</h2>
+                <h2 class="text-3xl font-bold text-white">My Library</h2>
+                <p class="text-gray-400 text-sm">Songs from your personal Supabase database</p>
                 <div id="lib-list" class="space-y-2">Loading...</div>
             </div>
+            
+            <!-- Liked Songs View -->
             <div id="view-liked" class="view-section space-y-4">
                 <h2 class="text-3xl font-bold text-white">Liked Songs</h2>
                 <div id="liked-list" class="space-y-2"></div>
@@ -308,26 +612,467 @@
     <video id="pip-video" muted class="fixed top-[-1000px] w-px h-px"></video>
 
     <script>
-        // --- CONFIGURATION ---
+        // ============================================
+        // CONFIGURATION & CONSTANTS
+        // ============================================
         let SUPABASE_URL = "YOUR_SUPABASE_URL_HERE"; 
         let SUPABASE_KEY = "YOUR_SUPABASE_ANON_KEY_HERE";
+        
+        // JioSaavn API Configuration
+        const JIOSAAVN_API = 'https://saavn.dev/api';
+        const API_RETRY_COUNT = 3;
+        const API_RETRY_DELAY = 1000;
 
         const FALLBACK_LIB = [
-            { id: 901, name: "APT.", artist: "Rosé & Bruno Mars", img: "https://placehold.co/300/ff69b4/fff?text=APT", url: "https://raw.githubusercontent.com/Dcode9/MPLayer/58e6474295f9ea49d0ea3f3f911cc157988b39b0/APT..m4a" }
+            { id: 901, name: "APT.", artist: "Rosé & Bruno Mars", img: "https://placehold.co/300/ff69b4/fff?text=APT", url: "https://raw.githubusercontent.com/Dcode9/MPLayer/58e6474295f9ea49d0ea3f3f911cc157988b39b0/APT..m4a", source: 'local' }
         ];
 
         let LIBRARY = [];
         let supabase;
+        
+        // ============================================
+        // STATE MANAGEMENT
+        // ============================================
         const state = { 
-            queue: [], idx: -1, playing: false, loaded: false,
+            queue: [], 
+            idx: -1, 
+            playing: false, 
+            loaded: false,
             likedIds: JSON.parse(localStorage.getItem('likedIds') || '[]'),
             isDragging: false,
             hoverProgress: -1,
             lastHoverProgress: 0.5,
             shuffle: false,
-            repeat: 0 // 0: off, 1: all, 2: one
+            repeat: 0, // 0: off, 1: all, 2: one
+            currentTrack: null,
+            playHistory: JSON.parse(localStorage.getItem('playHistory') || '[]'),
+            artistPlayCounts: JSON.parse(localStorage.getItem('artistPlayCounts') || '{}'),
+            isLoading: false,
+            searchDebounce: null,
+            audioReady: false
         };
-        
+
+        // ============================================
+        // PREFERENCES MANAGER
+        // ============================================
+        const preferences = {
+            quality: localStorage.getItem('audioQuality') || '160kbps',
+            
+            setQuality: (quality) => {
+                preferences.quality = quality;
+                localStorage.setItem('audioQuality', quality);
+                debugLog('Quality set to:', quality);
+            },
+            
+            getQualityUrl: (downloadUrls) => {
+                if (!downloadUrls || !Array.isArray(downloadUrls)) return null;
+                // Find the URL that matches preferred quality, or get best available
+                const qualityMap = {
+                    '12kbps': 0,
+                    '48kbps': 1,
+                    '96kbps': 2,
+                    '160kbps': 3,
+                    '320kbps': 4
+                };
+                const preferredIdx = qualityMap[preferences.quality] || 3;
+                // Try to get preferred quality, otherwise get closest lower quality
+                for (let i = preferredIdx; i >= 0; i--) {
+                    if (downloadUrls[i] && downloadUrls[i].url) {
+                        return downloadUrls[i].url;
+                    }
+                }
+                // Fallback to any available URL
+                for (let i = 0; i < downloadUrls.length; i++) {
+                    if (downloadUrls[i] && downloadUrls[i].url) {
+                        return downloadUrls[i].url;
+                    }
+                }
+                return null;
+            },
+            
+            load: () => {
+                const selector = document.getElementById('quality-selector');
+                if (selector) selector.value = preferences.quality;
+            }
+        };
+
+        // ============================================
+        // DEBUG LOGGING
+        // ============================================
+        const DEBUG = true;
+        function debugLog(...args) {
+            if (DEBUG) console.log('[SpatialPlay]', ...args);
+        }
+        function debugError(...args) {
+            console.error('[SpatialPlay Error]', ...args);
+        }
+
+        // ============================================
+        // ERROR HANDLING
+        // ============================================
+        const errorHandler = {
+            show: (message, duration = 4000) => {
+                const container = document.getElementById('error-toast-container');
+                if (!container) return;
+                
+                const toast = document.createElement('div');
+                toast.className = 'error-toast';
+                toast.textContent = message;
+                container.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    setTimeout(() => toast.remove(), 300);
+                }, duration);
+            },
+            
+            handleApiError: (error, context = '') => {
+                debugError(`API Error (${context}):`, error);
+                let message = 'Something went wrong. Please try again.';
+                
+                if (error.message) {
+                    if (error.message.includes('network') || error.message.includes('fetch')) {
+                        message = 'Network error. Check your connection.';
+                    } else if (error.message.includes('404')) {
+                        message = 'Content not found.';
+                    } else if (error.message.includes('429')) {
+                        message = 'Too many requests. Please wait a moment.';
+                    }
+                }
+                
+                errorHandler.show(message);
+            }
+        };
+
+        // ============================================
+        // JIOSAAVN API SERVICE
+        // ============================================
+        const jiosaavnAPI = {
+            // Retry wrapper for API calls
+            fetchWithRetry: async (url, retries = API_RETRY_COUNT) => {
+                for (let i = 0; i < retries; i++) {
+                    try {
+                        debugLog(`Fetching: ${url} (attempt ${i + 1})`);
+                        const response = await fetch(url);
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}`);
+                        }
+                        const data = await response.json();
+                        if (data.success === false) {
+                            throw new Error(data.message || 'API returned error');
+                        }
+                        return data;
+                    } catch (error) {
+                        debugLog(`Attempt ${i + 1} failed:`, error.message);
+                        if (i === retries - 1) throw error;
+                        await new Promise(r => setTimeout(r, API_RETRY_DELAY * (i + 1)));
+                    }
+                }
+            },
+
+            // Search songs
+            searchSongs: async (query, limit = 20) => {
+                if (!query || query.trim().length < 2) return [];
+                try {
+                    const data = await jiosaavnAPI.fetchWithRetry(
+                        `${JIOSAAVN_API}/search/songs?query=${encodeURIComponent(query)}&limit=${limit}`
+                    );
+                    return (data.data?.results || []).map(jiosaavnAPI.normalizeSong);
+                } catch (error) {
+                    errorHandler.handleApiError(error, 'searchSongs');
+                    return [];
+                }
+            },
+
+            // Search albums
+            searchAlbums: async (query, limit = 10) => {
+                if (!query || query.trim().length < 2) return [];
+                try {
+                    const data = await jiosaavnAPI.fetchWithRetry(
+                        `${JIOSAAVN_API}/search/albums?query=${encodeURIComponent(query)}&limit=${limit}`
+                    );
+                    return (data.data?.results || []).map(jiosaavnAPI.normalizeAlbum);
+                } catch (error) {
+                    errorHandler.handleApiError(error, 'searchAlbums');
+                    return [];
+                }
+            },
+
+            // Search artists
+            searchArtists: async (query, limit = 10) => {
+                if (!query || query.trim().length < 2) return [];
+                try {
+                    const data = await jiosaavnAPI.fetchWithRetry(
+                        `${JIOSAAVN_API}/search/artists?query=${encodeURIComponent(query)}&limit=${limit}`
+                    );
+                    return (data.data?.results || []).map(jiosaavnAPI.normalizeArtist);
+                } catch (error) {
+                    errorHandler.handleApiError(error, 'searchArtists');
+                    return [];
+                }
+            },
+
+            // Combined search
+            search: async (query) => {
+                if (!query || query.trim().length < 2) return { songs: [], albums: [], artists: [] };
+                try {
+                    const data = await jiosaavnAPI.fetchWithRetry(
+                        `${JIOSAAVN_API}/search?query=${encodeURIComponent(query)}`
+                    );
+                    return {
+                        songs: (data.data?.songs?.results || []).map(jiosaavnAPI.normalizeSong),
+                        albums: (data.data?.albums?.results || []).map(jiosaavnAPI.normalizeAlbum),
+                        artists: (data.data?.artists?.results || []).map(jiosaavnAPI.normalizeArtist)
+                    };
+                } catch (error) {
+                    errorHandler.handleApiError(error, 'search');
+                    return { songs: [], albums: [], artists: [] };
+                }
+            },
+
+            // Get song by ID
+            getSong: async (id) => {
+                try {
+                    const data = await jiosaavnAPI.fetchWithRetry(
+                        `${JIOSAAVN_API}/songs/${id}`
+                    );
+                    if (data.data && data.data.length > 0) {
+                        return jiosaavnAPI.normalizeSong(data.data[0]);
+                    }
+                    return null;
+                } catch (error) {
+                    errorHandler.handleApiError(error, 'getSong');
+                    return null;
+                }
+            },
+
+            // Get album by ID
+            getAlbum: async (id) => {
+                try {
+                    const data = await jiosaavnAPI.fetchWithRetry(
+                        `${JIOSAAVN_API}/albums?id=${id}`
+                    );
+                    const album = data.data;
+                    if (!album) return null;
+                    
+                    return {
+                        id: album.id,
+                        name: album.name,
+                        artist: album.artists?.primary?.map(a => a.name).join(', ') || 'Unknown',
+                        img: album.image?.[2]?.url || album.image?.[1]?.url || album.image?.[0]?.url,
+                        year: album.year,
+                        songCount: album.songCount,
+                        songs: (album.songs || []).map(jiosaavnAPI.normalizeSong),
+                        source: 'jiosaavn'
+                    };
+                } catch (error) {
+                    errorHandler.handleApiError(error, 'getAlbum');
+                    return null;
+                }
+            },
+
+            // Get trending/home modules
+            getHomepage: async () => {
+                try {
+                    const data = await jiosaavnAPI.fetchWithRetry(
+                        `${JIOSAAVN_API}/modules?language=hindi,english`
+                    );
+                    return data.data || {};
+                } catch (error) {
+                    errorHandler.handleApiError(error, 'getHomepage');
+                    return {};
+                }
+            },
+
+            // Get trending songs
+            getTrending: async () => {
+                try {
+                    const data = await jiosaavnAPI.fetchWithRetry(
+                        `${JIOSAAVN_API}/playlists?id=110858205` // Trending playlist ID
+                    );
+                    if (data.data?.songs) {
+                        return data.data.songs.map(jiosaavnAPI.normalizeSong);
+                    }
+                    return [];
+                } catch (error) {
+                    // Fallback to search for trending
+                    debugLog('Trending fallback to search');
+                    return jiosaavnAPI.searchSongs('trending hindi songs', 20);
+                }
+            },
+
+            // Get top albums
+            getTopAlbums: async () => {
+                try {
+                    const data = await jiosaavnAPI.fetchWithRetry(
+                        `${JIOSAAVN_API}/search/albums?query=new releases&limit=20`
+                    );
+                    return (data.data?.results || []).map(jiosaavnAPI.normalizeAlbum);
+                } catch (error) {
+                    errorHandler.handleApiError(error, 'getTopAlbums');
+                    return [];
+                }
+            },
+
+            // Get artist details
+            getArtist: async (id) => {
+                try {
+                    const data = await jiosaavnAPI.fetchWithRetry(
+                        `${JIOSAAVN_API}/artists/${id}`
+                    );
+                    return data.data;
+                } catch (error) {
+                    errorHandler.handleApiError(error, 'getArtist');
+                    return null;
+                }
+            },
+
+            // Normalize song object from API response
+            normalizeSong: (song) => {
+                if (!song) return null;
+                const downloadUrls = song.downloadUrl || [];
+                return {
+                    id: song.id,
+                    name: song.name || song.title || 'Unknown',
+                    artist: song.artists?.primary?.map(a => a.name).join(', ') || 
+                            song.primaryArtists || 
+                            song.artist || 'Unknown Artist',
+                    artistIds: song.artists?.primary?.map(a => a.id) || [],
+                    album: song.album?.name || '',
+                    albumId: song.album?.id || '',
+                    img: song.image?.[2]?.url || song.image?.[1]?.url || song.image?.[0]?.url || 
+                         'https://placehold.co/300/333/fff?text=Music',
+                    url: preferences.getQualityUrl(downloadUrls),
+                    downloadUrls: downloadUrls,
+                    duration: song.duration || 0,
+                    year: song.year || '',
+                    language: song.language || '',
+                    source: 'jiosaavn',
+                    hasLyrics: song.hasLyrics || false
+                };
+            },
+
+            // Normalize album object
+            normalizeAlbum: (album) => {
+                if (!album) return null;
+                return {
+                    id: album.id,
+                    name: album.name || album.title || 'Unknown Album',
+                    artist: album.artists?.primary?.map(a => a.name).join(', ') || 
+                            album.artist || 'Various Artists',
+                    img: album.image?.[2]?.url || album.image?.[1]?.url || album.image?.[0]?.url ||
+                         'https://placehold.co/300/333/fff?text=Album',
+                    year: album.year || '',
+                    songCount: album.songCount || 0,
+                    source: 'jiosaavn'
+                };
+            },
+
+            // Normalize artist object
+            normalizeArtist: (artist) => {
+                if (!artist) return null;
+                return {
+                    id: artist.id,
+                    name: artist.name || artist.title || 'Unknown Artist',
+                    img: artist.image?.[2]?.url || artist.image?.[1]?.url || artist.image?.[0]?.url ||
+                         'https://placehold.co/300/333/fff?text=Artist',
+                    followerCount: artist.followerCount || 0,
+                    source: 'jiosaavn'
+                };
+            },
+
+            // Check if URL is a page URL vs streaming URL
+            isStreamingUrl: (url) => {
+                if (!url) return false;
+                // Streaming URLs typically have these patterns
+                return url.includes('.mp3') || 
+                       url.includes('.m4a') || 
+                       url.includes('.aac') ||
+                       url.includes('aac.saavncdn.com') ||
+                       url.includes('mp3.saavncdn.com') ||
+                       url.includes('raw.githubusercontent.com');
+            }
+        };
+
+        // ============================================
+        // ADVANCED SHUFFLE & RECOMMENDATIONS
+        // ============================================
+        const recommendations = {
+            // Update play counts for artists
+            recordPlay: (track) => {
+                if (!track) return;
+                
+                // Update play history
+                const historyEntry = {
+                    id: track.id,
+                    name: track.name,
+                    artist: track.artist,
+                    artistIds: track.artistIds || [],
+                    timestamp: Date.now()
+                };
+                state.playHistory.unshift(historyEntry);
+                state.playHistory = state.playHistory.slice(0, 100); // Keep last 100
+                localStorage.setItem('playHistory', JSON.stringify(state.playHistory));
+                
+                // Update artist play counts
+                const artists = track.artist ? track.artist.split(',').map(a => a.trim()) : [];
+                artists.forEach(artist => {
+                    state.artistPlayCounts[artist] = (state.artistPlayCounts[artist] || 0) + 1;
+                });
+                localStorage.setItem('artistPlayCounts', JSON.stringify(state.artistPlayCounts));
+            },
+
+            // Get weighted random index based on artist preferences
+            getWeightedShuffleIndex: (queue) => {
+                if (!queue || queue.length === 0) return -1;
+                if (queue.length === 1) return 0;
+                
+                // Calculate weights based on artist play history
+                const weights = queue.map((track, idx) => {
+                    let weight = 1;
+                    
+                    // Boost tracks from frequently played artists
+                    const artists = track.artist ? track.artist.split(',').map(a => a.trim()) : [];
+                    artists.forEach(artist => {
+                        weight += (state.artistPlayCounts[artist] || 0) * 0.5;
+                    });
+                    
+                    // Reduce weight for recently played tracks
+                    const recentlyPlayed = state.playHistory.slice(0, 10).map(h => h.id);
+                    if (recentlyPlayed.includes(track.id)) {
+                        weight *= 0.2;
+                    }
+                    
+                    // Slight randomness factor
+                    weight *= (0.8 + Math.random() * 0.4);
+                    
+                    return { idx, weight };
+                });
+                
+                // Sort by weight and pick from top candidates with some randomness
+                weights.sort((a, b) => b.weight - a.weight);
+                const topCandidates = weights.slice(0, Math.min(5, weights.length));
+                const selected = topCandidates[Math.floor(Math.random() * topCandidates.length)];
+                
+                return selected.idx;
+            },
+
+            // Get recommendations based on current track
+            getRelatedTracks: async (track) => {
+                if (!track) return [];
+                
+                // Search for similar tracks by artist
+                const artistQuery = track.artist.split(',')[0].trim();
+                const related = await jiosaavnAPI.searchSongs(artistQuery, 10);
+                
+                // Filter out current track
+                return related.filter(t => t.id !== track.id);
+            }
+        };
+
+        // ============================================
+        // AUDIO CONTEXT & VISUALIZER SETUP
+        // ============================================
         let audioContext, analyser, source, isAudioContextInitialized = false;
         let smoothedLow = 0, smoothedMid = 0, smoothedHigh = 0;
         let currentProgress = 0;
@@ -339,6 +1084,9 @@
         let lastFrameTime = 0;
         const FPS_INTERVAL = 1000 / 30;
 
+        // ============================================
+        // KEYBOARD SHORTCUTS
+        // ============================================
         document.addEventListener('keydown', (e) => {
             if(e.target.tagName === 'INPUT') return;
             switch(e.code) {
@@ -350,7 +1098,12 @@
             }
         });
 
+        // ============================================
+        // INITIALIZATION
+        // ============================================
         async function init() {
+            debugLog('Initializing SpatialPlay...');
+            
             const vCanvas = document.getElementById('visualizer-canvas');
             visualizerCtx = vCanvas.getContext('2d');
             resizeVisualizer();
@@ -359,6 +1112,15 @@
                     this.resizeTimeout = setTimeout(() => { resizeVisualizer(); this.resizeTimeout = null; }, 100);
                 }
             });
+
+            // Load preferences
+            preferences.load();
+
+            // Initialize search
+            searchManager.init();
+
+            // Load homepage content
+            homeView.load();
 
             try {
                 const response = await fetch('/api/config');
@@ -371,6 +1133,7 @@
                 }
                 throw new Error("Env API failed");
             } catch(e) {
+                debugLog('Supabase env not found, checking localStorage...');
                 const storedUrl = localStorage.getItem('sb_url');
                 const storedKey = localStorage.getItem('sb_key');
                 if (!SUPABASE_URL.includes("YOUR_")) {
@@ -378,7 +1141,8 @@
                 } else if(storedUrl && storedKey) {
                     setupSupabase(storedUrl, storedKey);
                 } else {
-                    document.getElementById('config-modal').style.display = 'flex';
+                    // Don't show modal - JioSaavn works without Supabase
+                    debugLog('No Supabase config, using JioSaavn only mode');
                     LIBRARY = FALLBACK_LIB;
                     ui.render();
                 }
@@ -404,12 +1168,23 @@
         }
 
         async function fetchSongs() {
+            if (!supabase) {
+                debugLog('Supabase not configured, using fallback');
+                LIBRARY = FALLBACK_LIB.map(s => ({ ...s, source: 'local' }));
+                state.queue = [...LIBRARY];
+                ui.render();
+                return;
+            }
+            
             const { data, error } = await supabase.from('songs').select('*').order('id', {ascending: false});
-            if (data && data.length > 0) LIBRARY = data;
-            else LIBRARY = FALLBACK_LIB;
+            if (data && data.length > 0) {
+                LIBRARY = data.map(s => ({ ...s, source: 'local' }));
+            } else {
+                LIBRARY = FALLBACK_LIB.map(s => ({ ...s, source: 'local' }));
+            }
             
             LIBRARY = LIBRARY.map(s => {
-                if(s.url.includes('github.com') && !s.url.includes('raw.githubusercontent.com')) {
+                if(s.url && s.url.includes('github.com') && !s.url.includes('raw.githubusercontent.com')) {
                    s.url = s.url.replace('github.com', 'raw.githubusercontent.com').replace('/blob/', '/').replace('/raw/', '/');
                 }
                 return s;
@@ -419,90 +1194,215 @@
         }
 
         const audio = document.getElementById('audio-el');
+        let isPlaybackPending = false; // Prevent multiple simultaneous playbacks
+        
         audio.onerror = (e) => {
-            if(state.playing) { state.playing = false; ui.updatePlayBtn(); }
-            console.error("Playback error", e);
+            debugError("Playback error", e);
+            errorHandler.show('Failed to play track. Trying next...');
+            if(state.playing) { 
+                state.playing = false; 
+                ui.updatePlayBtn(); 
+            }
+            isPlaybackPending = false;
+            // Auto-skip to next on error
+            setTimeout(() => player.next(), 1000);
         };
 
+        // ============================================
+        // PLAYER
+        // ============================================
         const player = {
+            // Play track from LIBRARY by index
             playTrack: (index) => {
                 if (index < 0 || index >= LIBRARY.length) return;
                 state.idx = index;
                 const track = LIBRARY[index];
-                audio.src = track.url;
-                state.loaded = true;
-                ui.enableControls();
-
-                audio.play().then(() => {
+                player.playDirect(track);
+            },
+            
+            // Play any track object directly (JioSaavn or local)
+            playDirect: async (track) => {
+                if (!track) return;
+                if (isPlaybackPending) {
+                    debugLog('Playback already pending, skipping');
+                    return;
+                }
+                
+                isPlaybackPending = true;
+                state.isLoading = true;
+                ui.showLoading(true);
+                
+                try {
+                    let playUrl = track.url;
+                    
+                    // For JioSaavn tracks, ensure we have a streaming URL
+                    if (track.source === 'jiosaavn' && !jiosaavnAPI.isStreamingUrl(playUrl)) {
+                        debugLog('Fetching streaming URL for:', track.name);
+                        const songDetails = await jiosaavnAPI.getSong(track.id);
+                        if (songDetails && songDetails.url) {
+                            playUrl = songDetails.url;
+                            track.url = playUrl;
+                            track.downloadUrls = songDetails.downloadUrls;
+                        }
+                    }
+                    
+                    if (!playUrl) {
+                        throw new Error('No streaming URL available');
+                    }
+                    
+                    // Stop current playback
+                    audio.pause();
+                    audio.currentTime = 0;
+                    
+                    // Set new source
+                    audio.src = playUrl;
+                    state.currentTrack = track;
+                    state.loaded = true;
+                    ui.enableControls();
+                    
+                    // Update idx if track is in LIBRARY
+                    const libIdx = LIBRARY.findIndex(t => t.id === track.id);
+                    if (libIdx !== -1) state.idx = libIdx;
+                    
+                    await audio.play();
+                    
                     state.playing = true;
+                    state.audioReady = true;
                     ui.updatePlayBtn();
-                    if (audioContext && audioContext.state === 'suspended') audioContext.resume();
+                    
+                    if (audioContext && audioContext.state === 'suspended') {
+                        audioContext.resume();
+                    }
                     if (!isAudioContextInitialized) setupAudioContext();
+                    
                     mediaSessionManager.update(track);
                     pipManager.drawCanvas(track);
                     ui.updateMetadata(track);
-                }).catch(e => {
-                    console.error("Play prevented", e);
+                    ui.updateLikeBtn();
+                    
+                    // Record play for recommendations
+                    recommendations.recordPlay(track);
+                    
+                    debugLog('Now playing:', track.name);
+                    
+                } catch (error) {
+                    debugError('Play failed:', error);
+                    errorHandler.show('Unable to play this track');
                     state.playing = false;
                     ui.updatePlayBtn();
-                });
-                ui.updateLikeBtn();
+                } finally {
+                    isPlaybackPending = false;
+                    state.isLoading = false;
+                    ui.showLoading(false);
+                }
             },
+            
+            // Play a JioSaavn track by ID
+            playJioSaavnTrack: async (songId) => {
+                const track = await jiosaavnAPI.getSong(songId);
+                if (track) {
+                    player.playDirect(track);
+                } else {
+                    errorHandler.show('Could not load track');
+                }
+            },
+            
             togglePlay: () => {
-                if(!state.loaded) { if(LIBRARY.length > 0) player.playTrack(0); return; }
+                if(!state.loaded) { 
+                    if(LIBRARY.length > 0) player.playTrack(0); 
+                    return; 
+                }
                 if(state.playing) { 
-                    audio.pause(); state.playing = false; 
-                    document.body.classList.remove('playing'); document.body.classList.add('paused');
+                    audio.pause(); 
+                    state.playing = false; 
+                    document.body.classList.remove('playing'); 
+                    document.body.classList.add('paused');
                 } else { 
-                    audio.play(); state.playing = true; 
+                    audio.play().catch(e => {
+                        debugError('Resume play failed:', e);
+                    }); 
+                    state.playing = true; 
                     if (audioContext && audioContext.state === 'suspended') audioContext.resume();
                     if (!isAudioContextInitialized) setupAudioContext();
-                    document.body.classList.remove('paused'); document.body.classList.add('playing');
+                    document.body.classList.remove('paused'); 
+                    document.body.classList.add('playing');
                 }
                 ui.updatePlayBtn();
                 if(navigator.mediaSession) navigator.mediaSession.playbackState = state.playing ? "playing" : "paused";
             },
+            
             next: () => { 
-                if(LIBRARY.length === 0) return;
+                if(state.queue.length === 0 && LIBRARY.length === 0) return;
+                
+                const queue = state.queue.length > 0 ? state.queue : LIBRARY;
                 let nextIdx;
+                
                 if(state.shuffle) {
-                    nextIdx = Math.floor(Math.random() * LIBRARY.length);
+                    // Use weighted shuffle for better recommendations
+                    nextIdx = recommendations.getWeightedShuffleIndex(queue);
                 } else {
                     nextIdx = state.idx + 1;
-                    if(nextIdx >= LIBRARY.length) nextIdx = 0;
+                    if(nextIdx >= queue.length) nextIdx = 0;
                 }
-                player.playTrack(nextIdx); 
+                
+                const nextTrack = queue[nextIdx];
+                if (nextTrack) {
+                    state.idx = nextIdx;
+                    player.playDirect(nextTrack);
+                }
             },
+            
             prev: () => { 
-                if(LIBRARY.length === 0) return;
+                if(state.queue.length === 0 && LIBRARY.length === 0) return;
+                
+                const queue = state.queue.length > 0 ? state.queue : LIBRARY;
                 let prevIdx = state.idx - 1;
-                if(prevIdx < 0) prevIdx = LIBRARY.length - 1;
-                player.playTrack(prevIdx); 
+                if(prevIdx < 0) prevIdx = queue.length - 1;
+                
+                const prevTrack = queue[prevIdx];
+                if (prevTrack) {
+                    state.idx = prevIdx;
+                    player.playDirect(prevTrack);
+                }
             },
+            
             setVolume: (val) => { audio.volume = Math.max(0, Math.min(1, val)); },
+            
             toggleLike: () => {
-                if(state.idx === -1) return;
-                const id = LIBRARY[state.idx].id;
+                if(!state.currentTrack) return;
+                const id = state.currentTrack.id;
                 const index = state.likedIds.indexOf(id);
-                if(index === -1) state.likedIds.push(id); else state.likedIds.splice(index, 1);
+                if(index === -1) state.likedIds.push(id); 
+                else state.likedIds.splice(index, 1);
                 localStorage.setItem('likedIds', JSON.stringify(state.likedIds));
                 ui.updateLikeBtn();
                 ui.render();
             },
+            
             toggleShuffle: () => {
                 state.shuffle = !state.shuffle;
                 const btn = document.getElementById('btn-shuffle');
-                if(state.shuffle) btn.classList.add('active-state'); else btn.classList.remove('active-state');
+                if(state.shuffle) btn.classList.add('active-state'); 
+                else btn.classList.remove('active-state');
+                debugLog('Shuffle:', state.shuffle ? 'ON (weighted)' : 'OFF');
             },
+            
             toggleRepeat: () => {
                 // 0: none, 1: all, 2: one
                 state.repeat = (state.repeat + 1) % 3;
                 const btn = document.getElementById('btn-repeat');
-                // Simple indicator logic
                 if(state.repeat === 0) btn.classList.remove('active-state');
                 else btn.classList.add('active-state');
-                // You can swap icons here if desired for 'one' vs 'all'
                 audio.loop = (state.repeat === 2);
+                debugLog('Repeat mode:', state.repeat);
+            },
+            
+            // Set queue from any source
+            setQueue: (tracks, startIndex = 0) => {
+                state.queue = [...tracks];
+                if (startIndex >= 0 && startIndex < tracks.length) {
+                    player.playDirect(tracks[startIndex]);
+                }
             }
         };
 
@@ -653,10 +1553,347 @@
                 
                 document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
                 const btns = document.querySelectorAll('.nav-btn');
-                if(btns.length >= 3) {
-                    if(view==='home') btns[0].classList.add('active');
-                    if(view==='library') btns[1].classList.add('active');
-                    if(view==='liked') btns[2].classList.add('active');
+                
+                // Map views to button indices
+                const viewMap = { 'home': 0, 'trending': 1, 'albums': 2, 'library': 3, 'liked': 4, 'album-detail': 2 };
+                const btnIdx = viewMap[view];
+                if (btnIdx !== undefined && btns[btnIdx]) {
+                    btns[btnIdx].classList.add('active');
+                }
+                
+                // Load data for specific views
+                if (view === 'trending' && !trendingView.loaded) {
+                    trendingView.load();
+                }
+                if (view === 'albums' && !albumsView.loaded) {
+                    albumsView.load();
+                }
+            }
+        };
+
+        // ============================================
+        // SEARCH MANAGER
+        // ============================================
+        const searchManager = {
+            init: () => {
+                const input = document.getElementById('search-input');
+                const results = document.getElementById('search-results');
+                
+                if (!input || !results) return;
+                
+                input.addEventListener('input', (e) => {
+                    clearTimeout(state.searchDebounce);
+                    const query = e.target.value.trim();
+                    
+                    if (query.length < 2) {
+                        results.classList.remove('active');
+                        return;
+                    }
+                    
+                    state.searchDebounce = setTimeout(() => {
+                        searchManager.search(query);
+                    }, 300);
+                });
+                
+                input.addEventListener('focus', () => {
+                    if (input.value.trim().length >= 2) {
+                        results.classList.add('active');
+                    }
+                });
+                
+                // Close on click outside
+                document.addEventListener('click', (e) => {
+                    if (!e.target.closest('.search-container')) {
+                        results.classList.remove('active');
+                    }
+                });
+            },
+            
+            search: async (query) => {
+                const results = document.getElementById('search-results');
+                results.innerHTML = '<div class="p-4 text-center"><div class="loading-spinner"></div></div>';
+                results.classList.add('active');
+                
+                const data = await jiosaavnAPI.search(query);
+                
+                let html = '';
+                
+                if (data.songs.length > 0) {
+                    html += '<div class="search-section-title">Songs</div>';
+                    html += data.songs.slice(0, 5).map(song => `
+                        <div class="search-result-item" onclick="player.playDirect(${JSON.stringify(song).replace(/"/g, '&quot;')})">
+                            <img src="${song.img}" alt="" onerror="this.src='https://placehold.co/48/333/fff?text=M'">
+                            <div class="flex-1 min-w-0">
+                                <div class="text-white font-medium truncate">${searchManager.escapeHtml(song.name)}</div>
+                                <div class="text-gray-400 text-sm truncate">${searchManager.escapeHtml(song.artist)}</div>
+                            </div>
+                            <span class="source-badge jiosaavn">JioSaavn</span>
+                        </div>
+                    `).join('');
+                }
+                
+                if (data.albums.length > 0) {
+                    html += '<div class="search-section-title">Albums</div>';
+                    html += data.albums.slice(0, 3).map(album => `
+                        <div class="search-result-item" onclick="albumsView.openAlbum('${album.id}')">
+                            <img src="${album.img}" alt="" onerror="this.src='https://placehold.co/48/333/fff?text=A'">
+                            <div class="flex-1 min-w-0">
+                                <div class="text-white font-medium truncate">${searchManager.escapeHtml(album.name)}</div>
+                                <div class="text-gray-400 text-sm truncate">${searchManager.escapeHtml(album.artist)}</div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+                
+                if (data.artists.length > 0) {
+                    html += '<div class="search-section-title">Artists</div>';
+                    html += data.artists.slice(0, 3).map(artist => `
+                        <div class="search-result-item" onclick="searchManager.searchByArtist('${searchManager.escapeHtml(artist.name)}')">
+                            <img src="${artist.img}" alt="" style="border-radius: 50%;" onerror="this.src='https://placehold.co/48/333/fff?text=A'">
+                            <div class="flex-1 min-w-0">
+                                <div class="text-white font-medium truncate">${searchManager.escapeHtml(artist.name)}</div>
+                                <div class="text-gray-400 text-sm truncate">Artist</div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+                
+                if (!html) {
+                    html = '<div class="p-4 text-center text-gray-400">No results found</div>';
+                }
+                
+                results.innerHTML = html;
+            },
+            
+            searchByArtist: async (artistName) => {
+                document.getElementById('search-results').classList.remove('active');
+                document.getElementById('search-input').value = artistName;
+                
+                const songs = await jiosaavnAPI.searchSongs(artistName, 20);
+                if (songs.length > 0) {
+                    player.setQueue(songs, 0);
+                }
+            },
+            
+            escapeHtml: (text) => {
+                if (!text) return '';
+                return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+            }
+        };
+
+        // ============================================
+        // HOME VIEW
+        // ============================================
+        const homeView = {
+            loaded: false,
+            
+            load: async () => {
+                debugLog('Loading home view...');
+                
+                const homeContent = document.getElementById('home-content');
+                const quickPicks = document.getElementById('quick-picks-grid');
+                const recentGrid = document.getElementById('recent-grid');
+                
+                // Show skeleton loading
+                if (homeContent) {
+                    homeContent.innerHTML = `
+                        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                            ${Array(8).fill('<div class="skeleton h-48 w-full rounded-xl"></div>').join('')}
+                        </div>
+                    `;
+                }
+                
+                try {
+                    // Fetch trending songs
+                    const trending = await jiosaavnAPI.getTrending();
+                    
+                    if (homeContent && trending.length > 0) {
+                        homeContent.innerHTML = trending.slice(0, 8).map((song, i) => ui.createJioSaavnCard(song, i)).join('');
+                    }
+                    
+                    // Quick picks based on play history
+                    if (quickPicks) {
+                        if (state.playHistory.length > 0) {
+                            const artistQuery = state.playHistory[0].artist.split(',')[0].trim();
+                            const related = await jiosaavnAPI.searchSongs(artistQuery, 4);
+                            quickPicks.innerHTML = related.map((song, i) => ui.createJioSaavnCard(song, i)).join('');
+                        } else {
+                            const popular = await jiosaavnAPI.searchSongs('bollywood hits', 4);
+                            quickPicks.innerHTML = popular.map((song, i) => ui.createJioSaavnCard(song, i)).join('');
+                        }
+                    }
+                    
+                    // Recent plays
+                    if (recentGrid && state.playHistory.length > 0) {
+                        const recentTracks = state.playHistory.slice(0, 4);
+                        recentGrid.innerHTML = recentTracks.map((track, i) => `
+                            <div class="content-card" onclick="player.playJioSaavnTrack('${track.id}')">
+                                <div class="aspect-square bg-gray-800 rounded-lg mb-3 flex items-center justify-center">
+                                    <svg class="w-12 h-12 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                                    </svg>
+                                </div>
+                                <h3 class="font-bold text-white truncate">${searchManager.escapeHtml(track.name)}</h3>
+                                <p class="text-sm text-gray-400 truncate">${searchManager.escapeHtml(track.artist)}</p>
+                            </div>
+                        `).join('');
+                    } else if (recentGrid) {
+                        recentGrid.innerHTML = '<p class="text-gray-500 col-span-full">No recent plays yet. Start exploring!</p>';
+                    }
+                    
+                    homeView.loaded = true;
+                } catch (error) {
+                    debugError('Home view load error:', error);
+                    if (homeContent) {
+                        homeContent.innerHTML = '<p class="text-gray-400">Unable to load content. Please try again.</p>';
+                    }
+                }
+            }
+        };
+
+        // ============================================
+        // TRENDING VIEW
+        // ============================================
+        const trendingView = {
+            loaded: false,
+            currentTab: 'songs',
+            data: { songs: [], albums: [], artists: [] },
+            
+            load: async () => {
+                debugLog('Loading trending view...');
+                await trendingView.switchTab('songs');
+                trendingView.loaded = true;
+            },
+            
+            switchTab: async (tab) => {
+                trendingView.currentTab = tab;
+                
+                // Update tab pills
+                document.querySelectorAll('#trending-tabs .tab-pill').forEach(pill => {
+                    pill.classList.remove('active');
+                    if (pill.textContent.toLowerCase() === tab) {
+                        pill.classList.add('active');
+                    }
+                });
+                
+                const content = document.getElementById('trending-content');
+                content.innerHTML = `
+                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                        ${Array(8).fill('<div class="skeleton h-48 w-full rounded-xl"></div>').join('')}
+                    </div>
+                `;
+                
+                try {
+                    let items = [];
+                    
+                    if (tab === 'songs') {
+                        items = await jiosaavnAPI.getTrending();
+                        content.innerHTML = items.length > 0 
+                            ? `<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">${items.map((s, i) => ui.createJioSaavnCard(s, i)).join('')}</div>`
+                            : '<p class="text-gray-400">No trending songs available</p>';
+                    } else if (tab === 'albums') {
+                        items = await jiosaavnAPI.getTopAlbums();
+                        content.innerHTML = items.length > 0
+                            ? `<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">${items.map(a => ui.createAlbumCard(a)).join('')}</div>`
+                            : '<p class="text-gray-400">No albums available</p>';
+                    } else if (tab === 'artists') {
+                        // Search for popular artists
+                        items = await jiosaavnAPI.searchArtists('popular indian artists', 20);
+                        content.innerHTML = items.length > 0
+                            ? `<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">${items.map(a => ui.createArtistCard(a)).join('')}</div>`
+                            : '<p class="text-gray-400">No artists available</p>';
+                    }
+                } catch (error) {
+                    debugError('Trending view error:', error);
+                    content.innerHTML = '<p class="text-gray-400">Unable to load content</p>';
+                }
+            }
+        };
+
+        // ============================================
+        // ALBUMS VIEW
+        // ============================================
+        const albumsView = {
+            loaded: false,
+            
+            load: async () => {
+                debugLog('Loading albums view...');
+                const grid = document.getElementById('albums-grid');
+                
+                grid.innerHTML = Array(8).fill('<div class="skeleton h-48 w-full rounded-xl"></div>').join('');
+                
+                try {
+                    const albums = await jiosaavnAPI.getTopAlbums();
+                    grid.innerHTML = albums.length > 0
+                        ? albums.map(a => ui.createAlbumCard(a)).join('')
+                        : '<p class="text-gray-400 col-span-full">No albums available</p>';
+                    albumsView.loaded = true;
+                } catch (error) {
+                    debugError('Albums view error:', error);
+                    grid.innerHTML = '<p class="text-gray-400 col-span-full">Unable to load albums</p>';
+                }
+            },
+            
+            openAlbum: async (albumId) => {
+                debugLog('Opening album:', albumId);
+                router.go('album-detail');
+                
+                const header = document.getElementById('album-detail-header');
+                const tracks = document.getElementById('album-detail-tracks');
+                
+                header.innerHTML = '<div class="skeleton h-48 w-48 rounded-xl"></div>';
+                tracks.innerHTML = Array(5).fill('<div class="skeleton h-16 w-full rounded-lg"></div>').join('');
+                
+                try {
+                    const album = await jiosaavnAPI.getAlbum(albumId);
+                    
+                    if (!album) {
+                        tracks.innerHTML = '<p class="text-gray-400">Album not found</p>';
+                        return;
+                    }
+                    
+                    header.innerHTML = `
+                        <img src="${album.img}" class="w-48 h-48 rounded-xl shadow-2xl" onerror="this.src='https://placehold.co/200/333/fff?text=Album'">
+                        <div>
+                            <span class="source-badge jiosaavn mb-2 inline-block">JioSaavn Album</span>
+                            <h1 class="text-4xl font-bold text-white">${searchManager.escapeHtml(album.name)}</h1>
+                            <p class="text-gray-400 mt-2">${searchManager.escapeHtml(album.artist)}</p>
+                            <p class="text-gray-500 text-sm mt-1">${album.year || ''} • ${album.songCount || album.songs.length} songs</p>
+                            <button onclick="albumsView.playAll('${albumId}')" class="mt-4 bg-green-500 hover:bg-green-600 text-black font-bold py-2 px-6 rounded-full transition">
+                                Play All
+                            </button>
+                        </div>
+                    `;
+                    
+                    if (album.songs && album.songs.length > 0) {
+                        tracks.innerHTML = album.songs.map((song, i) => `
+                            <div class="flex items-center gap-4 p-3 rounded-lg hover:bg-white/5 cursor-pointer transition group" onclick="player.playDirect(${JSON.stringify(song).replace(/"/g, '&quot;')})">
+                                <span class="text-gray-500 w-6 text-center font-mono text-sm">${i + 1}</span>
+                                <img src="${song.img}" class="w-10 h-10 rounded object-cover" onerror="this.src='https://placehold.co/40/333/fff?text=M'">
+                                <div class="flex-1 overflow-hidden">
+                                    <h4 class="text-white font-medium truncate">${searchManager.escapeHtml(song.name)}</h4>
+                                    <p class="text-gray-400 text-xs truncate">${searchManager.escapeHtml(song.artist)}</p>
+                                </div>
+                                <span class="text-gray-500 text-xs">${Math.floor(song.duration / 60)}:${(song.duration % 60).toString().padStart(2, '0')}</span>
+                            </div>
+                        `).join('');
+                        
+                        // Store album songs for play all
+                        albumsView.currentAlbumSongs = album.songs;
+                    } else {
+                        tracks.innerHTML = '<p class="text-gray-400">No tracks available</p>';
+                    }
+                } catch (error) {
+                    debugError('Album detail error:', error);
+                    tracks.innerHTML = '<p class="text-gray-400">Unable to load album</p>';
+                }
+            },
+            
+            currentAlbumSongs: [],
+            
+            playAll: (albumId) => {
+                if (albumsView.currentAlbumSongs.length > 0) {
+                    player.setQueue(albumsView.currentAlbumSongs, 0);
                 }
             }
         };
@@ -775,43 +2012,102 @@
                     };
                 }
             },
+            
+            showLoading: (show) => {
+                const playBtn = document.getElementById('btn-play');
+                if (playBtn) {
+                    if (show) {
+                        playBtn.innerHTML = '<div class="loading-spinner"></div>';
+                    } else {
+                        playBtn.innerHTML = `
+                            <span id="icon-play" class="${state.playing ? 'hidden' : 'flex ml-1'}"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>
+                            <span id="icon-pause" class="${state.playing ? 'flex' : 'hidden'}"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg></span>
+                        `;
+                    }
+                }
+            },
+            
             render: () => {
-                const recGrid = document.getElementById('rec-grid');
-                if(recGrid) recGrid.innerHTML = LIBRARY.slice(0,4).map(ui.createCard).join('');
-                
-                const recentGrid = document.getElementById('recent-grid');
-                if(recentGrid) recentGrid.innerHTML = LIBRARY.slice(4,8).map(ui.createCard).join('');
-                
                 const libList = document.getElementById('lib-list');
-                if(libList) libList.innerHTML = LIBRARY.map(ui.createRow).join('');
+                if(libList) {
+                    if (LIBRARY.length === 0) {
+                        libList.innerHTML = '<div class="text-gray-500">No songs in library. Search JioSaavn to discover music!</div>';
+                    } else {
+                        libList.innerHTML = LIBRARY.map(ui.createRow).join('');
+                    }
+                }
 
                 const likedList = document.getElementById('liked-list');
                 if(likedList) {
+                    // Combine liked songs from library and play history
                     const likedTracks = LIBRARY.filter(t => state.likedIds.includes(t.id));
-                    if(likedTracks.length === 0) likedList.innerHTML = '<div class="text-gray-500">No liked songs yet.</div>';
-                    else likedList.innerHTML = likedTracks.map(ui.createRow).join('');
+                    if(likedTracks.length === 0) {
+                        likedList.innerHTML = '<div class="text-gray-500">No liked songs yet. Click the heart icon to like songs!</div>';
+                    } else {
+                        likedList.innerHTML = likedTracks.map(ui.createRow).join('');
+                    }
                 }
             },
+            
+            // Create card for local library songs
             createCard: (t, i) => `
                 <div class="bg-white/5 hover:bg-white/10 p-4 rounded-xl cursor-pointer transition group" onclick="player.playTrack(${LIBRARY.indexOf(t)})">
                     <div class="relative aspect-square rounded-lg overflow-hidden mb-3 bg-gray-800 shadow-lg">
-                        <img src="${t.img || 'https://placehold.co/300/333/fff?text=Music'}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                        <img src="${t.img || 'https://placehold.co/300/333/fff?text=Music'}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" onerror="this.src='https://placehold.co/300/333/fff?text=Music'">
                         <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
                             <span class="bg-green-500 text-black p-3 rounded-full shadow-xl transform scale-75 group-hover:scale-100 transition"><svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>
                         </div>
                     </div>
-                    <h3 class="font-bold text-white truncate">${t.name}</h3>
-                    <p class="text-sm text-gray-400 truncate">${t.artist}</p>
+                    <h3 class="font-bold text-white truncate">${searchManager.escapeHtml(t.name)}</h3>
+                    <p class="text-sm text-gray-400 truncate">${searchManager.escapeHtml(t.artist)}</p>
+                    ${t.source === 'local' ? '<span class="source-badge mt-1 inline-block">Local</span>' : ''}
                 </div>`,
+            
+            // Create card for JioSaavn songs
+            createJioSaavnCard: (song, i) => {
+                const songJson = JSON.stringify(song).replace(/"/g, '&quot;');
+                return `
+                <div class="bg-white/5 hover:bg-white/10 p-4 rounded-xl cursor-pointer transition group" onclick="player.playDirect(${songJson})">
+                    <div class="relative aspect-square rounded-lg overflow-hidden mb-3 bg-gray-800 shadow-lg">
+                        <img src="${song.img}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" onerror="this.src='https://placehold.co/300/333/fff?text=Music'">
+                        <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                            <span class="bg-green-500 text-black p-3 rounded-full shadow-xl transform scale-75 group-hover:scale-100 transition"><svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>
+                        </div>
+                    </div>
+                    <h3 class="font-bold text-white truncate">${searchManager.escapeHtml(song.name)}</h3>
+                    <p class="text-sm text-gray-400 truncate">${searchManager.escapeHtml(song.artist)}</p>
+                    <span class="source-badge jiosaavn mt-1 inline-block">JioSaavn</span>
+                </div>`;
+            },
+            
+            // Create album card
+            createAlbumCard: (album) => `
+                <div class="content-card" onclick="albumsView.openAlbum('${album.id}')">
+                    <img src="${album.img}" alt="${searchManager.escapeHtml(album.name)}" onerror="this.src='https://placehold.co/200/333/fff?text=Album'">
+                    <h3 class="font-bold text-white truncate">${searchManager.escapeHtml(album.name)}</h3>
+                    <p class="text-sm text-gray-400 truncate">${searchManager.escapeHtml(album.artist)}</p>
+                    <p class="text-xs text-gray-500 mt-1">${album.year || ''} ${album.songCount ? '• ' + album.songCount + ' songs' : ''}</p>
+                </div>
+            `,
+            
+            // Create artist card
+            createArtistCard: (artist) => `
+                <div class="content-card artist" onclick="searchManager.searchByArtist('${searchManager.escapeHtml(artist.name)}')">
+                    <img src="${artist.img}" alt="${searchManager.escapeHtml(artist.name)}" onerror="this.src='https://placehold.co/200/333/fff?text=Artist'">
+                    <h3 class="font-bold text-white truncate text-center">${searchManager.escapeHtml(artist.name)}</h3>
+                    <p class="text-sm text-gray-400 text-center">Artist</p>
+                </div>
+            `,
+            
             createRow: (t, i) => `
                 <div class="flex items-center gap-4 p-3 rounded-lg hover:bg-white/5 cursor-pointer transition group" onclick="player.playTrack(${LIBRARY.indexOf(t)})">
                     <span class="text-gray-500 w-6 text-center font-mono text-sm">${i+1}</span>
-                    <img src="${t.img || 'https://placehold.co/100/333/fff?text=M'}" class="w-10 h-10 rounded object-cover">
+                    <img src="${t.img || 'https://placehold.co/100/333/fff?text=M'}" class="w-10 h-10 rounded object-cover" onerror="this.src='https://placehold.co/40/333/fff?text=M'">
                     <div class="flex-1 overflow-hidden">
-                        <h4 class="text-white font-medium truncate ${state.idx === LIBRARY.indexOf(t) ? 'text-green-400' : ''}">${t.name}</h4>
-                        <p class="text-gray-400 text-xs truncate">${t.artist}</p>
+                        <h4 class="text-white font-medium truncate ${state.currentTrack && state.currentTrack.id === t.id ? 'text-green-400' : ''}">${searchManager.escapeHtml(t.name)}</h4>
+                        <p class="text-gray-400 text-xs truncate">${searchManager.escapeHtml(t.artist)}</p>
                     </div>
-                    <span class="text-gray-500 text-xs hidden sm:block">3:45</span>
+                    <span class="source-badge ${t.source === 'jiosaavn' ? 'jiosaavn' : ''}">${t.source === 'jiosaavn' ? 'JioSaavn' : 'Local'}</span>
                 </div>`,
             updatePlayBtn: () => {
                 const isPlaying = state.playing;
@@ -823,8 +2119,8 @@
                 if(bgPlaying) bgPlaying.style.opacity = isPlaying ? 1 : 0;
             },
             updateLikeBtn: () => {
-                if(state.idx === -1) return;
-                const id = LIBRARY[state.idx].id;
+                if(!state.currentTrack) return;
+                const id = state.currentTrack.id;
                 const btn = document.getElementById('p-like-btn');
                 if(btn) btn.className = state.likedIds.includes(id) ? 'text-red-500 transition ml-2' : 'text-gray-400 hover:text-red-500 transition ml-2';
             }
@@ -852,14 +2148,15 @@
             toggle: async () => {
                 if (document.pictureInPictureElement) document.exitPictureInPicture();
                 else {
-                    if (state.idx !== -1) pipManager.drawCanvas(LIBRARY[state.idx]);
+                    if (state.currentTrack) pipManager.drawCanvas(state.currentTrack);
                     const stream = pipManager.canvas.captureStream();
                     pipManager.video.srcObject = stream;
                     await pipManager.video.play();
-                    try { await pipManager.video.requestPictureInPicture(); } catch(e) { alert("PiP Failed: " + e.message); }
+                    try { await pipManager.video.requestPictureInPicture(); } catch(e) { errorHandler.show("PiP Failed: " + e.message); }
                 }
             },
             drawCanvas: (track) => {
+                if (!track) return;
                 const ctx = pipManager.ctx;
                 const w = 500, h = 500;
                 ctx.fillStyle = "#111"; ctx.fillRect(0, 0, w, h);
@@ -867,7 +2164,7 @@
                 img.crossOrigin = "anonymous";
                 img.src = track.img || 'https://placehold.co/500/333/fff?text=No+Art';
                 img.onload = () => { ctx.drawImage(img, 0, 0, w, w); };
-                ctx.fillStyle = "white"; ctx.font = "bold 40px sans-serif"; ctx.fillText(track.name, 20, 450);
+                ctx.fillStyle = "white"; ctx.font = "bold 40px sans-serif"; ctx.fillText(track.name || 'Unknown', 20, 450);
             }
         };
 
