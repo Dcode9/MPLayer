@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cloud Music Player</title>
+    <title>JioSaavn Music Player</title>
     <link rel="icon" href="data:,">
     
     <!-- Libraries -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.2/color-thief.umd.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -394,23 +393,12 @@
         <div id="ripple-effect"></div>
     </div>
 
-    <!-- Setup Modal -->
-    <div id="config-modal">
-        <div class="bg-gray-900 border border-gray-700 p-8 rounded-2xl shadow-2xl max-w-md w-full">
-            <h2 class="text-2xl font-bold text-green-400 mb-2">Connect Database</h2>
-            <p class="text-gray-400 text-sm mb-4">Enter your Supabase keys to access the library.</p>
-            <input type="text" id="inp-url" placeholder="Supabase Project URL" class="w-full bg-gray-800 border border-gray-700 text-white p-3 rounded-lg mb-3 focus:outline-none focus:border-green-500">
-            <input type="text" id="inp-key" placeholder="Supabase Anon Key" class="w-full bg-gray-800 border border-gray-700 text-white p-3 rounded-lg mb-6 focus:outline-none focus:border-green-500">
-            <button onclick="saveManualConfig()" class="w-full bg-green-500 hover:bg-green-600 text-black font-bold py-3 rounded-lg transition">Connect</button>
-        </div>
-    </div>
-
     <div class="flex h-screen relative z-10">
         <!-- Sidebar -->
         <div id="nav-panel" class="w-64 flex-shrink-0 flex flex-col p-6 gap-6 h-full">
             <div class="flex items-center gap-3 text-2xl font-bold text-white">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-green-400" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
-                <span>SpatialPlay</span>
+                <span>JioSaavn Player</span>
             </div>
             
             <!-- Search Bar -->
@@ -418,7 +406,7 @@
                 <svg class="search-icon w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                 </svg>
-                <input type="text" class="search-input" id="search-input" placeholder="Search JioSaavn..." autocomplete="off">
+                <input type="text" class="search-input" id="search-input" placeholder="Search songs, albums, artists..." autocomplete="off">
                 <div class="search-results" id="search-results"></div>
             </div>
             
@@ -434,10 +422,6 @@
                 <button class="nav-btn flex items-center gap-4 p-3 rounded-lg text-gray-300 hover:text-white hover:bg-white/5 transition" onclick="router.go('albums')">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
                     Albums
-                </button>
-                <button class="nav-btn flex items-center gap-4 p-3 rounded-lg text-gray-300 hover:text-white hover:bg-white/5 transition" onclick="router.go('library')">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/></svg>
-                    My Library
                 </button>
                 <button class="nav-btn flex items-center gap-4 p-3 rounded-lg text-gray-300 hover:text-white hover:bg-white/5 transition" onclick="router.go('liked')">
                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
@@ -455,7 +439,7 @@
                     <option value="160kbps" selected>160kbps (High)</option>
                     <option value="320kbps">320kbps (Best)</option>
                 </select>
-                <div class="text-xs text-gray-500 mt-4">Powered by JioSaavn + Supabase</div>
+                <div class="text-xs text-gray-500 mt-4">Powered by JioSaavn API</div>
             </div>
         </div>
 
@@ -521,16 +505,10 @@
                 <div id="album-detail-tracks" class="space-y-2"></div>
             </div>
             
-            <!-- Library View (Local Supabase songs) -->
-            <div id="view-library" class="view-section space-y-4">
-                <h2 class="text-3xl font-bold text-white">My Library</h2>
-                <p class="text-gray-400 text-sm">Songs from your personal Supabase database</p>
-                <div id="lib-list" class="space-y-2">Loading...</div>
-            </div>
-            
             <!-- Liked Songs View -->
             <div id="view-liked" class="view-section space-y-4">
                 <h2 class="text-3xl font-bold text-white">Liked Songs</h2>
+                <p class="text-gray-400 text-sm">Songs you've liked will appear here</p>
                 <div id="liked-list" class="space-y-2"></div>
             </div>
         </div>
@@ -615,21 +593,11 @@
         // ============================================
         // CONFIGURATION & CONSTANTS
         // ============================================
-        let SUPABASE_URL = "YOUR_SUPABASE_URL_HERE"; 
-        let SUPABASE_KEY = "YOUR_SUPABASE_ANON_KEY_HERE";
-        
         // JioSaavn API Configuration
         const JIOSAAVN_API = 'https://saavn.dev/api';
         const API_RETRY_COUNT = 3;
         const API_RETRY_DELAY = 1000;
 
-        const FALLBACK_LIB = [
-            { id: 901, name: "APT.", artist: "Rosé & Bruno Mars", img: "https://placehold.co/300/ff69b4/fff?text=APT", url: "https://raw.githubusercontent.com/Dcode9/MPLayer/58e6474295f9ea49d0ea3f3f911cc157988b39b0/APT..m4a", source: 'local' }
-        ];
-
-        let LIBRARY = [];
-        let supabase;
-        
         // ============================================
         // STATE MANAGEMENT
         // ============================================
@@ -639,6 +607,7 @@
             playing: false, 
             loaded: false,
             likedIds: JSON.parse(localStorage.getItem('likedIds') || '[]'),
+            likedSongs: JSON.parse(localStorage.getItem('likedSongs') || '[]'),
             isDragging: false,
             hoverProgress: -1,
             lastHoverProgress: 0.5,
@@ -741,10 +710,10 @@
         // ============================================
         const DEBUG = false; // Set to true for development
         function debugLog(...args) {
-            if (DEBUG) console.log('[SpatialPlay]', ...args);
+            if (DEBUG) console.log('[JioSaavn Player]', ...args);
         }
         function debugError(...args) {
-            console.error('[SpatialPlay Error]', ...args);
+            console.error('[JioSaavn Player Error]', ...args);
         }
 
         // ============================================
@@ -1129,7 +1098,17 @@
         let time = 0;
         let hoverIntensity = 0; 
         let visualizerCtx;
-        const colorThief = new ColorThief();
+        
+        // ColorThief with fallback
+        let colorThief;
+        try {
+            colorThief = new ColorThief();
+        } catch(e) {
+            // Fallback if ColorThief is not loaded
+            colorThief = {
+                getPalette: () => [[62, 207, 142], [100, 150, 200], [50, 100, 150]]
+            };
+        }
 
         let lastFrameTime = 0;
         const FPS_INTERVAL = 1000 / 30;
@@ -1152,7 +1131,7 @@
         // INITIALIZATION
         // ============================================
         async function init() {
-            debugLog('Initializing SpatialPlay...');
+            debugLog('Initializing JioSaavn Player...');
             
             const vCanvas = document.getElementById('visualizer-canvas');
             visualizerCtx = vCanvas.getContext('2d');
@@ -1169,78 +1148,17 @@
             // Initialize search
             searchManager.init();
 
-            // Load homepage content
+            // Load homepage content from JioSaavn
             homeView.load();
-
-            try {
-                const response = await fetch('/api/config');
-                if (response.ok) {
-                    const config = await response.json();
-                    if(config.supabaseUrl && config.supabaseKey) {
-                        setupSupabase(config.supabaseUrl, config.supabaseKey);
-                        return;
-                    }
-                }
-                throw new Error("Env API failed");
-            } catch(e) {
-                debugLog('Supabase env not found, checking localStorage...');
-                const storedUrl = localStorage.getItem('sb_url');
-                const storedKey = localStorage.getItem('sb_key');
-                if (!SUPABASE_URL.includes("YOUR_")) {
-                    setupSupabase(SUPABASE_URL, SUPABASE_KEY);
-                } else if(storedUrl && storedKey) {
-                    setupSupabase(storedUrl, storedKey);
-                } else {
-                    // Don't show modal - JioSaavn works without Supabase
-                    debugLog('No Supabase config, using JioSaavn only mode');
-                    LIBRARY = FALLBACK_LIB;
-                    ui.render();
-                }
-            }
+            
+            // Initialize UI listeners
             ui.initListeners();
+            
+            // Start visualizer
             viz.startLoop();
-        }
-
-        function setupSupabase(url, key) {
-            const { createClient } = window.supabase;
-            supabase = createClient(url, key);
-            fetchSongs();
-        }
-
-        function saveManualConfig() {
-            const url = document.getElementById('inp-url').value.trim();
-            const key = document.getElementById('inp-key').value.trim();
-            if(url && key) {
-                localStorage.setItem('sb_url', url);
-                localStorage.setItem('sb_key', key);
-                location.reload();
-            }
-        }
-
-        async function fetchSongs() {
-            if (!supabase) {
-                debugLog('Supabase not configured, using fallback');
-                LIBRARY = FALLBACK_LIB.map(s => ({ ...s, source: 'local' }));
-                state.queue = [...LIBRARY];
-                ui.render();
-                return;
-            }
             
-            const { data, error } = await supabase.from('songs').select('*').order('id', {ascending: false});
-            if (data && data.length > 0) {
-                LIBRARY = data.map(s => ({ ...s, source: 'local' }));
-            } else {
-                LIBRARY = FALLBACK_LIB.map(s => ({ ...s, source: 'local' }));
-            }
-            
-            LIBRARY = LIBRARY.map(s => {
-                if(s.url && s.url.includes('github.com') && !s.url.includes('raw.githubusercontent.com')) {
-                   s.url = s.url.replace('github.com', 'raw.githubusercontent.com').replace('/blob/', '/').replace('/raw/', '/');
-                }
-                return s;
-            });
-            state.queue = [...LIBRARY];
-            ui.render();
+            // Render liked songs
+            ui.renderLikedSongs();
         }
 
         const audio = document.getElementById('audio-el');
@@ -1262,15 +1180,7 @@
         // PLAYER
         // ============================================
         const player = {
-            // Play track from LIBRARY by index
-            playTrack: (index) => {
-                if (index < 0 || index >= LIBRARY.length) return;
-                state.idx = index;
-                const track = LIBRARY[index];
-                player.playDirect(track);
-            },
-            
-            // Play any track object directly (JioSaavn or local)
+            // Play any track object directly (JioSaavn)
             playDirect: async (track) => {
                 if (!track) return;
                 if (isPlaybackPending) {
@@ -1286,7 +1196,7 @@
                     let playUrl = track.url;
                     
                     // For JioSaavn tracks, ensure we have a streaming URL
-                    if (track.source === 'jiosaavn' && !jiosaavnAPI.isStreamingUrl(playUrl)) {
+                    if (!jiosaavnAPI.isStreamingUrl(playUrl)) {
                         debugLog('Fetching streaming URL for:', track.name);
                         const songDetails = await jiosaavnAPI.getSong(track.id);
                         if (songDetails && songDetails.url) {
@@ -1309,10 +1219,6 @@
                     state.currentTrack = track;
                     state.loaded = true;
                     ui.enableControls();
-                    
-                    // Update idx if track is in LIBRARY
-                    const libIdx = LIBRARY.findIndex(t => t.id === track.id);
-                    if (libIdx !== -1) state.idx = libIdx;
                     
                     await audio.play();
                     
@@ -1358,7 +1264,7 @@
             
             togglePlay: () => {
                 if(!state.loaded) { 
-                    if(LIBRARY.length > 0) player.playTrack(0); 
+                    // No track loaded yet - do nothing
                     return; 
                 }
                 if(state.playing) { 
@@ -1381,20 +1287,19 @@
             },
             
             next: () => { 
-                if(state.queue.length === 0 && LIBRARY.length === 0) return;
+                if(state.queue.length === 0) return;
                 
-                const queue = state.queue.length > 0 ? state.queue : LIBRARY;
                 let nextIdx;
                 
                 if(state.shuffle) {
                     // Use weighted shuffle for better recommendations
-                    nextIdx = recommendations.getWeightedShuffleIndex(queue);
+                    nextIdx = recommendations.getWeightedShuffleIndex(state.queue);
                 } else {
                     nextIdx = state.idx + 1;
-                    if(nextIdx >= queue.length) nextIdx = 0;
+                    if(nextIdx >= state.queue.length) nextIdx = 0;
                 }
                 
-                const nextTrack = queue[nextIdx];
+                const nextTrack = state.queue[nextIdx];
                 if (nextTrack) {
                     state.idx = nextIdx;
                     player.playDirect(nextTrack);
@@ -1402,13 +1307,12 @@
             },
             
             prev: () => { 
-                if(state.queue.length === 0 && LIBRARY.length === 0) return;
+                if(state.queue.length === 0) return;
                 
-                const queue = state.queue.length > 0 ? state.queue : LIBRARY;
                 let prevIdx = state.idx - 1;
-                if(prevIdx < 0) prevIdx = queue.length - 1;
+                if(prevIdx < 0) prevIdx = state.queue.length - 1;
                 
-                const prevTrack = queue[prevIdx];
+                const prevTrack = state.queue[prevIdx];
                 if (prevTrack) {
                     state.idx = prevIdx;
                     player.playDirect(prevTrack);
@@ -1421,11 +1325,22 @@
                 if(!state.currentTrack) return;
                 const id = state.currentTrack.id;
                 const index = state.likedIds.indexOf(id);
-                if(index === -1) state.likedIds.push(id); 
-                else state.likedIds.splice(index, 1);
+                
+                if(index === -1) {
+                    // Add to liked
+                    state.likedIds.push(id);
+                    // Also store the full song object
+                    state.likedSongs.push(state.currentTrack);
+                } else {
+                    // Remove from liked
+                    state.likedIds.splice(index, 1);
+                    state.likedSongs = state.likedSongs.filter(s => s.id !== id);
+                }
+                
                 localStorage.setItem('likedIds', JSON.stringify(state.likedIds));
+                localStorage.setItem('likedSongs', JSON.stringify(state.likedSongs));
                 ui.updateLikeBtn();
-                ui.render();
+                ui.renderLikedSongs();
             },
             
             toggleShuffle: () => {
@@ -1449,6 +1364,7 @@
             // Set queue from any source
             setQueue: (tracks, startIndex = 0) => {
                 state.queue = [...tracks];
+                state.idx = startIndex;
                 if (startIndex >= 0 && startIndex < tracks.length) {
                     player.playDirect(tracks[startIndex]);
                 }
@@ -1603,8 +1519,8 @@
                 document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
                 const btns = document.querySelectorAll('.nav-btn');
                 
-                // Map views to button indices
-                const viewMap = { 'home': 0, 'trending': 1, 'albums': 2, 'library': 3, 'liked': 4, 'album-detail': 2 };
+                // Map views to button indices (updated: removed library)
+                const viewMap = { 'home': 0, 'trending': 1, 'albums': 2, 'liked': 3, 'album-detail': 2 };
                 const btnIdx = viewMap[view];
                 if (btnIdx !== undefined && btns[btnIdx]) {
                     btns[btnIdx].classList.add('active');
@@ -1616,6 +1532,9 @@
                 }
                 if (view === 'albums' && !albumsView.loaded) {
                     albumsView.load();
+                }
+                if (view === 'liked') {
+                    ui.renderLikedSongs();
                 }
             }
         };
@@ -1669,7 +1588,6 @@
                 
                 if (data.songs.length > 0) {
                     html += '<div class="search-section-title">Songs</div>';
-                    html += data.songs.slice(0, 5).map(song => `
                     html += data.songs.slice(0, 5).map(song => {
                         const storeId = songStore.add(song);
                         return `
@@ -1679,7 +1597,6 @@
                                 <div class="text-white font-medium truncate">${searchManager.escapeHtml(song.name)}</div>
                                 <div class="text-gray-400 text-sm truncate">${searchManager.escapeHtml(song.artist)}</div>
                             </div>
-                            <span class="source-badge jiosaavn">JioSaavn</span>
                         </div>
                     `;
                     }).join('');
@@ -2092,41 +2009,27 @@
                 }
             },
             
-            render: () => {
-                const libList = document.getElementById('lib-list');
-                if(libList) {
-                    if (LIBRARY.length === 0) {
-                        libList.innerHTML = '<div class="text-gray-500">No songs in library. Search JioSaavn to discover music!</div>';
-                    } else {
-                        libList.innerHTML = LIBRARY.map(ui.createRow).join('');
-                    }
-                }
-
+            renderLikedSongs: () => {
                 const likedList = document.getElementById('liked-list');
                 if(likedList) {
-                    // Combine liked songs from library and play history
-                    const likedTracks = LIBRARY.filter(t => state.likedIds.includes(t.id));
-                    if(likedTracks.length === 0) {
+                    if(state.likedSongs.length === 0) {
                         likedList.innerHTML = '<div class="text-gray-500">No liked songs yet. Click the heart icon to like songs!</div>';
                     } else {
-                        likedList.innerHTML = likedTracks.map(ui.createRow).join('');
+                        likedList.innerHTML = state.likedSongs.map((song, i) => {
+                            const storeId = songStore.add(song);
+                            return `
+                            <div class="flex items-center gap-4 p-3 rounded-lg hover:bg-white/5 cursor-pointer transition group" onclick="playSongById('${storeId}')">
+                                <span class="text-gray-500 w-6 text-center font-mono text-sm">${i+1}</span>
+                                <img src="${song.img || 'https://placehold.co/100/333/fff?text=M'}" class="w-10 h-10 rounded object-cover" onerror="this.src='https://placehold.co/40/333/fff?text=M'">
+                                <div class="flex-1 overflow-hidden">
+                                    <h4 class="text-white font-medium truncate">${searchManager.escapeHtml(song.name)}</h4>
+                                    <p class="text-gray-400 text-xs truncate">${searchManager.escapeHtml(song.artist)}</p>
+                                </div>
+                            </div>`;
+                        }).join('');
                     }
                 }
             },
-            
-            // Create card for local library songs
-            createCard: (t, i) => `
-                <div class="bg-white/5 hover:bg-white/10 p-4 rounded-xl cursor-pointer transition group" onclick="player.playTrack(${LIBRARY.indexOf(t)})">
-                    <div class="relative aspect-square rounded-lg overflow-hidden mb-3 bg-gray-800 shadow-lg">
-                        <img src="${t.img || 'https://placehold.co/300/333/fff?text=Music'}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" onerror="this.src='https://placehold.co/300/333/fff?text=Music'">
-                        <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
-                            <span class="bg-green-500 text-black p-3 rounded-full shadow-xl transform scale-75 group-hover:scale-100 transition"><svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>
-                        </div>
-                    </div>
-                    <h3 class="font-bold text-white truncate">${searchManager.escapeHtml(t.name)}</h3>
-                    <p class="text-sm text-gray-400 truncate">${searchManager.escapeHtml(t.artist)}</p>
-                    ${t.source === 'local' ? '<span class="source-badge mt-1 inline-block">Local</span>' : ''}
-                </div>`,
             
             // Create card for JioSaavn songs (uses songStore for XSS safety)
             createJioSaavnCard: (song, i) => {
@@ -2141,7 +2044,6 @@
                     </div>
                     <h3 class="font-bold text-white truncate">${searchManager.escapeHtml(song.name)}</h3>
                     <p class="text-sm text-gray-400 truncate">${searchManager.escapeHtml(song.artist)}</p>
-                    <span class="source-badge jiosaavn mt-1 inline-block">JioSaavn</span>
                 </div>`;
             },
             
@@ -2167,16 +2069,6 @@
             `;
             },
             
-            createRow: (t, i) => `
-                <div class="flex items-center gap-4 p-3 rounded-lg hover:bg-white/5 cursor-pointer transition group" onclick="player.playTrack(${LIBRARY.indexOf(t)})">
-                    <span class="text-gray-500 w-6 text-center font-mono text-sm">${i+1}</span>
-                    <img src="${t.img || 'https://placehold.co/100/333/fff?text=M'}" class="w-10 h-10 rounded object-cover" onerror="this.src='https://placehold.co/40/333/fff?text=M'">
-                    <div class="flex-1 overflow-hidden">
-                        <h4 class="text-white font-medium truncate ${state.currentTrack && state.currentTrack.id === t.id ? 'text-green-400' : ''}">${searchManager.escapeHtml(t.name)}</h4>
-                        <p class="text-gray-400 text-xs truncate">${searchManager.escapeHtml(t.artist)}</p>
-                    </div>
-                    <span class="source-badge ${t.source === 'jiosaavn' ? 'jiosaavn' : ''}">${t.source === 'jiosaavn' ? 'JioSaavn' : 'Local'}</span>
-                </div>`,
             updatePlayBtn: () => {
                 const isPlaying = state.playing;
                 const playIcon = document.getElementById('icon-play');
