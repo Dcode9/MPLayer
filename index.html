@@ -648,8 +648,48 @@
             playHistory: JSON.parse(localStorage.getItem('playHistory') || '[]'),
             artistPlayCounts: JSON.parse(localStorage.getItem('artistPlayCounts') || '{}'),
             isLoading: false,
-            searchDebounce: null,
-            audioReady: false
+            searchDebounce: null
+        };
+
+        // ============================================
+        // SONG STORE (For safe click handlers - prevents XSS)
+        // ============================================
+        const songStore = {
+            songs: new Map(),
+            counter: 0,
+            
+            add: (song) => {
+                const id = `song_${songStore.counter++}`;
+                songStore.songs.set(id, song);
+                return id;
+            },
+            
+            get: (id) => {
+                return songStore.songs.get(id);
+            },
+            
+            clear: () => {
+                songStore.songs.clear();
+                songStore.counter = 0;
+            }
+        };
+
+        // Global function for safe song playback
+        window.playSongById = (storeId) => {
+            const song = songStore.get(storeId);
+            if (song) {
+                player.playDirect(song);
+            }
+        };
+
+        // Global function for safe album opening
+        window.openAlbumById = (albumId) => {
+            albumsView.openAlbum(albumId);
+        };
+
+        // Global function for safe artist search
+        window.searchArtistByName = (artistName) => {
+            searchManager.searchByArtist(artistName);
         };
 
         // ============================================
@@ -699,7 +739,7 @@
         // ============================================
         // DEBUG LOGGING
         // ============================================
-        const DEBUG = true;
+        const DEBUG = false; // Set to true for development
         function debugLog(...args) {
             if (DEBUG) console.log('[SpatialPlay]', ...args);
         }
@@ -1014,11 +1054,21 @@
                 state.playHistory = state.playHistory.slice(0, 100); // Keep last 100
                 localStorage.setItem('playHistory', JSON.stringify(state.playHistory));
                 
-                // Update artist play counts
+                // Update artist play counts (limit to 500 artists to prevent unbounded growth)
                 const artists = track.artist ? track.artist.split(',').map(a => a.trim()) : [];
                 artists.forEach(artist => {
                     state.artistPlayCounts[artist] = (state.artistPlayCounts[artist] || 0) + 1;
                 });
+                
+                // Prune artistPlayCounts if too large
+                const artistKeys = Object.keys(state.artistPlayCounts);
+                if (artistKeys.length > 500) {
+                    // Keep only top 300 most played artists
+                    const sorted = artistKeys.sort((a, b) => state.artistPlayCounts[b] - state.artistPlayCounts[a]);
+                    const toRemove = sorted.slice(300);
+                    toRemove.forEach(key => delete state.artistPlayCounts[key]);
+                }
+                
                 localStorage.setItem('artistPlayCounts', JSON.stringify(state.artistPlayCounts));
             },
 
@@ -1267,7 +1317,6 @@
                     await audio.play();
                     
                     state.playing = true;
-                    state.audioReady = true;
                     ui.updatePlayBtn();
                     
                     if (audioContext && audioContext.state === 'suspended') {
@@ -1621,7 +1670,10 @@
                 if (data.songs.length > 0) {
                     html += '<div class="search-section-title">Songs</div>';
                     html += data.songs.slice(0, 5).map(song => `
-                        <div class="search-result-item" onclick="player.playDirect(${JSON.stringify(song).replace(/"/g, '&quot;')})">
+                    html += data.songs.slice(0, 5).map(song => {
+                        const storeId = songStore.add(song);
+                        return `
+                        <div class="search-result-item" onclick="playSongById('${storeId}')">
                             <img src="${song.img}" alt="" onerror="this.src='https://placehold.co/48/333/fff?text=M'">
                             <div class="flex-1 min-w-0">
                                 <div class="text-white font-medium truncate">${searchManager.escapeHtml(song.name)}</div>
@@ -1629,13 +1681,14 @@
                             </div>
                             <span class="source-badge jiosaavn">JioSaavn</span>
                         </div>
-                    `).join('');
+                    `;
+                    }).join('');
                 }
                 
                 if (data.albums.length > 0) {
                     html += '<div class="search-section-title">Albums</div>';
                     html += data.albums.slice(0, 3).map(album => `
-                        <div class="search-result-item" onclick="albumsView.openAlbum('${album.id}')">
+                        <div class="search-result-item" onclick="openAlbumById('${searchManager.escapeHtml(album.id)}')">
                             <img src="${album.img}" alt="" onerror="this.src='https://placehold.co/48/333/fff?text=A'">
                             <div class="flex-1 min-w-0">
                                 <div class="text-white font-medium truncate">${searchManager.escapeHtml(album.name)}</div>
@@ -1647,15 +1700,18 @@
                 
                 if (data.artists.length > 0) {
                     html += '<div class="search-section-title">Artists</div>';
-                    html += data.artists.slice(0, 3).map(artist => `
-                        <div class="search-result-item" onclick="searchManager.searchByArtist('${searchManager.escapeHtml(artist.name)}')">
+                    html += data.artists.slice(0, 3).map(artist => {
+                        const safeName = encodeURIComponent(artist.name || '');
+                        return `
+                        <div class="search-result-item" onclick="searchArtistByName(decodeURIComponent('${safeName}'))">
                             <img src="${artist.img}" alt="" style="border-radius: 50%;" onerror="this.src='https://placehold.co/48/333/fff?text=A'">
                             <div class="flex-1 min-w-0">
                                 <div class="text-white font-medium truncate">${searchManager.escapeHtml(artist.name)}</div>
                                 <div class="text-gray-400 text-sm truncate">Artist</div>
                             </div>
                         </div>
-                    `).join('');
+                    `;
+                    }).join('');
                 }
                 
                 if (!html) {
@@ -1866,17 +1922,24 @@
                     `;
                     
                     if (album.songs && album.songs.length > 0) {
-                        tracks.innerHTML = album.songs.map((song, i) => `
-                            <div class="flex items-center gap-4 p-3 rounded-lg hover:bg-white/5 cursor-pointer transition group" onclick="player.playDirect(${JSON.stringify(song).replace(/"/g, '&quot;')})">
+                        // Store songs in songStore for safe click handling
+                        tracks.innerHTML = album.songs.map((song, i) => {
+                            const storeId = songStore.add(song);
+                            const duration = song.duration || 0;
+                            const mins = Math.floor(duration / 60);
+                            const secs = (duration % 60).toString().padStart(2, '0');
+                            return `
+                            <div class="flex items-center gap-4 p-3 rounded-lg hover:bg-white/5 cursor-pointer transition group" onclick="playSongById('${storeId}')">
                                 <span class="text-gray-500 w-6 text-center font-mono text-sm">${i + 1}</span>
                                 <img src="${song.img}" class="w-10 h-10 rounded object-cover" onerror="this.src='https://placehold.co/40/333/fff?text=M'">
                                 <div class="flex-1 overflow-hidden">
                                     <h4 class="text-white font-medium truncate">${searchManager.escapeHtml(song.name)}</h4>
                                     <p class="text-gray-400 text-xs truncate">${searchManager.escapeHtml(song.artist)}</p>
                                 </div>
-                                <span class="text-gray-500 text-xs">${Math.floor(song.duration / 60)}:${(song.duration % 60).toString().padStart(2, '0')}</span>
+                                <span class="text-gray-500 text-xs">${mins}:${secs}</span>
                             </div>
-                        `).join('');
+                        `;
+                        }).join('');
                         
                         // Store album songs for play all
                         albumsView.currentAlbumSongs = album.songs;
@@ -1894,6 +1957,8 @@
             playAll: (albumId) => {
                 if (albumsView.currentAlbumSongs.length > 0) {
                     player.setQueue(albumsView.currentAlbumSongs, 0);
+                } else {
+                    errorHandler.show('No tracks to play');
                 }
             }
         };
@@ -2063,11 +2128,11 @@
                     ${t.source === 'local' ? '<span class="source-badge mt-1 inline-block">Local</span>' : ''}
                 </div>`,
             
-            // Create card for JioSaavn songs
+            // Create card for JioSaavn songs (uses songStore for XSS safety)
             createJioSaavnCard: (song, i) => {
-                const songJson = JSON.stringify(song).replace(/"/g, '&quot;');
+                const storeId = songStore.add(song);
                 return `
-                <div class="bg-white/5 hover:bg-white/10 p-4 rounded-xl cursor-pointer transition group" onclick="player.playDirect(${songJson})">
+                <div class="bg-white/5 hover:bg-white/10 p-4 rounded-xl cursor-pointer transition group" onclick="playSongById('${storeId}')">
                     <div class="relative aspect-square rounded-lg overflow-hidden mb-3 bg-gray-800 shadow-lg">
                         <img src="${song.img}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" onerror="this.src='https://placehold.co/300/333/fff?text=Music'">
                         <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
@@ -2080,9 +2145,9 @@
                 </div>`;
             },
             
-            // Create album card
+            // Create album card (album.id is sanitized server-side)
             createAlbumCard: (album) => `
-                <div class="content-card" onclick="albumsView.openAlbum('${album.id}')">
+                <div class="content-card" onclick="openAlbumById('${searchManager.escapeHtml(album.id)}')">
                     <img src="${album.img}" alt="${searchManager.escapeHtml(album.name)}" onerror="this.src='https://placehold.co/200/333/fff?text=Album'">
                     <h3 class="font-bold text-white truncate">${searchManager.escapeHtml(album.name)}</h3>
                     <p class="text-sm text-gray-400 truncate">${searchManager.escapeHtml(album.artist)}</p>
@@ -2090,14 +2155,17 @@
                 </div>
             `,
             
-            // Create artist card
-            createArtistCard: (artist) => `
-                <div class="content-card artist" onclick="searchManager.searchByArtist('${searchManager.escapeHtml(artist.name)}')">
+            // Create artist card (uses encodeURIComponent for safe passing)
+            createArtistCard: (artist) => {
+                const safeName = encodeURIComponent(artist.name || '');
+                return `
+                <div class="content-card artist" onclick="searchArtistByName(decodeURIComponent('${safeName}'))">
                     <img src="${artist.img}" alt="${searchManager.escapeHtml(artist.name)}" onerror="this.src='https://placehold.co/200/333/fff?text=Artist'">
                     <h3 class="font-bold text-white truncate text-center">${searchManager.escapeHtml(artist.name)}</h3>
                     <p class="text-sm text-gray-400 text-center">Artist</p>
                 </div>
-            `,
+            `;
+            },
             
             createRow: (t, i) => `
                 <div class="flex items-center gap-4 p-3 rounded-lg hover:bg-white/5 cursor-pointer transition group" onclick="player.playTrack(${LIBRARY.indexOf(t)})">
