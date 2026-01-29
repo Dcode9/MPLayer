@@ -606,16 +606,36 @@
             idx: -1, 
             playing: false, 
             loaded: false,
-            likedIds: JSON.parse(localStorage.getItem('likedIds') || '[]'),
-            likedSongs: JSON.parse(localStorage.getItem('likedSongs') || '[]'),
+            likedIds: (() => {
+                try {
+                    const data = JSON.parse(localStorage.getItem('likedIds') || '[]');
+                    return Array.isArray(data) ? data : [];
+                } catch(e) { return []; }
+            })(),
+            likedSongs: (() => {
+                try {
+                    const data = JSON.parse(localStorage.getItem('likedSongs') || '[]');
+                    return Array.isArray(data) ? data.slice(0, 500) : []; // Limit to 500 songs
+                } catch(e) { return []; }
+            })(),
             isDragging: false,
             hoverProgress: -1,
             lastHoverProgress: 0.5,
             shuffle: false,
             repeat: 0, // 0: off, 1: all, 2: one
             currentTrack: null,
-            playHistory: JSON.parse(localStorage.getItem('playHistory') || '[]'),
-            artistPlayCounts: JSON.parse(localStorage.getItem('artistPlayCounts') || '{}'),
+            playHistory: (() => {
+                try {
+                    const data = JSON.parse(localStorage.getItem('playHistory') || '[]');
+                    return Array.isArray(data) ? data : [];
+                } catch(e) { return []; }
+            })(),
+            artistPlayCounts: (() => {
+                try {
+                    const data = JSON.parse(localStorage.getItem('artistPlayCounts') || '{}');
+                    return typeof data === 'object' && data !== null ? data : {};
+                } catch(e) { return {}; }
+            })(),
             isLoading: false,
             searchDebounce: null
         };
@@ -1264,7 +1284,8 @@
             
             togglePlay: () => {
                 if(!state.loaded) { 
-                    // No track loaded yet - do nothing
+                    // No track loaded yet - show feedback
+                    errorHandler.show('Search for a song to start playing');
                     return; 
                 }
                 if(state.playing) { 
@@ -1327,18 +1348,29 @@
                 const index = state.likedIds.indexOf(id);
                 
                 if(index === -1) {
-                    // Add to liked
+                    // Add to liked (limit to 500 songs)
+                    if (state.likedSongs.length >= 500) {
+                        // Remove oldest liked song
+                        state.likedSongs.shift();
+                        state.likedIds.shift();
+                    }
                     state.likedIds.push(id);
-                    // Also store the full song object
-                    state.likedSongs.push(state.currentTrack);
+                    // Also store the full song object (avoid duplicates)
+                    if (!state.likedSongs.find(s => s.id === id)) {
+                        state.likedSongs.push(state.currentTrack);
+                    }
                 } else {
                     // Remove from liked
                     state.likedIds.splice(index, 1);
                     state.likedSongs = state.likedSongs.filter(s => s.id !== id);
                 }
                 
-                localStorage.setItem('likedIds', JSON.stringify(state.likedIds));
-                localStorage.setItem('likedSongs', JSON.stringify(state.likedSongs));
+                try {
+                    localStorage.setItem('likedIds', JSON.stringify(state.likedIds));
+                    localStorage.setItem('likedSongs', JSON.stringify(state.likedSongs));
+                } catch(e) {
+                    errorHandler.show('Unable to save liked songs (storage full)');
+                }
                 ui.updateLikeBtn();
                 ui.renderLikedSongs();
             },
@@ -1363,10 +1395,14 @@
             
             // Set queue from any source
             setQueue: (tracks, startIndex = 0) => {
+                if (!tracks || tracks.length === 0) return;
                 state.queue = [...tracks];
-                state.idx = startIndex;
                 if (startIndex >= 0 && startIndex < tracks.length) {
+                    state.idx = startIndex;
                     player.playDirect(tracks[startIndex]);
+                } else {
+                    state.idx = 0;
+                    player.playDirect(tracks[0]);
                 }
             }
         };
