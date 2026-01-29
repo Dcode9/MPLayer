@@ -593,10 +593,25 @@
         // ============================================
         // CONFIGURATION & CONSTANTS
         // ============================================
-        // JioSaavn API Configuration
-        const JIOSAAVN_API = 'https://saavn.dev/api';
+        // JioSaavn API Configuration - Multiple fallback endpoints
+        const JIOSAAVN_API_ENDPOINTS = [
+            'https://saavn.dev/api',
+            'https://jiosaavn-api-v2.vercel.app/api',
+            'https://saavn.me/api',
+            'https://jio-saavn-api-red.vercel.app/api'
+        ];
+        let currentApiIndex = 0;
+        let JIOSAAVN_API = JIOSAAVN_API_ENDPOINTS[currentApiIndex];
         const API_RETRY_COUNT = 3;
         const API_RETRY_DELAY = 1000;
+        
+        // Function to switch to next API endpoint
+        function switchToNextApi() {
+            currentApiIndex = (currentApiIndex + 1) % JIOSAAVN_API_ENDPOINTS.length;
+            JIOSAAVN_API = JIOSAAVN_API_ENDPOINTS[currentApiIndex];
+            console.log('[JioSaavn Player] Switching to API:', JIOSAAVN_API);
+            return currentApiIndex !== 0; // Returns true if we haven't cycled through all
+        }
 
         // ============================================
         // STATE MANAGEMENT
@@ -760,8 +775,11 @@
                 let message = 'Something went wrong. Please try again.';
                 
                 if (error.message) {
-                    if (error.message.includes('network') || error.message.includes('fetch')) {
-                        message = 'Network error. Check your connection.';
+                    if (error.message.includes('network') || 
+                        error.message.includes('fetch') || 
+                        error.message.includes('ERR_NAME_NOT_RESOLVED') ||
+                        error.name === 'AbortError') {
+                        message = 'Cannot connect to music service. Trying alternative servers...';
                     } else if (error.message.includes('404')) {
                         message = 'Content not found.';
                     } else if (error.message.includes('429')) {
@@ -777,25 +795,60 @@
         // JIOSAAVN API SERVICE
         // ============================================
         const jiosaavnAPI = {
-            // Retry wrapper for API calls
+            // Retry wrapper for API calls with automatic API endpoint switching
             fetchWithRetry: async (url, retries = API_RETRY_COUNT) => {
-                for (let i = 0; i < retries; i++) {
-                    try {
-                        debugLog(`Fetching: ${url} (attempt ${i + 1})`);
-                        const response = await fetch(url);
-                        if (!response.ok) {
-                            throw new Error(`HTTP ${response.status}`);
+                let apiSwitchAttempts = JIOSAAVN_API_ENDPOINTS.length;
+                
+                while (apiSwitchAttempts > 0) {
+                    for (let i = 0; i < retries; i++) {
+                        try {
+                            // Update URL with current API endpoint
+                            const currentUrl = url.replace(/https:\/\/[^\/]+\/api/, JIOSAAVN_API);
+                            debugLog(`Fetching: ${currentUrl} (attempt ${i + 1})`);
+                            
+                            const controller = new AbortController();
+                            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+                            
+                            const response = await fetch(currentUrl, { signal: controller.signal });
+                            clearTimeout(timeoutId);
+                            
+                            if (!response.ok) {
+                                throw new Error(`HTTP ${response.status}`);
+                            }
+                            const data = await response.json();
+                            if (data.success === false) {
+                                throw new Error(data.message || 'API returned error');
+                            }
+                            return data;
+                        } catch (error) {
+                            debugLog(`Attempt ${i + 1} failed:`, error.message);
+                            
+                            // Check if it's a network error that suggests we should try another API
+                            const isNetworkError = error.name === 'TypeError' || 
+                                                   error.name === 'AbortError' ||
+                                                   error.message.includes('Failed to fetch') ||
+                                                   error.message.includes('NetworkError') ||
+                                                   error.message.includes('ERR_NAME_NOT_RESOLVED');
+                            
+                            if (isNetworkError && i === retries - 1) {
+                                // Try switching to next API endpoint
+                                if (switchToNextApi()) {
+                                    apiSwitchAttempts--;
+                                    debugLog('Trying next API endpoint...');
+                                    break; // Break retry loop, try with new API
+                                }
+                            }
+                            
+                            if (i === retries - 1) throw error;
+                            await new Promise(r => setTimeout(r, API_RETRY_DELAY * (i + 1)));
                         }
-                        const data = await response.json();
-                        if (data.success === false) {
-                            throw new Error(data.message || 'API returned error');
-                        }
-                        return data;
-                    } catch (error) {
-                        debugLog(`Attempt ${i + 1} failed:`, error.message);
-                        if (i === retries - 1) throw error;
-                        await new Promise(r => setTimeout(r, API_RETRY_DELAY * (i + 1)));
                     }
+                    
+                    // If we get here after switching API, continue the while loop
+                    if (apiSwitchAttempts > 0 && apiSwitchAttempts < JIOSAAVN_API_ENDPOINTS.length) {
+                        continue;
+                    }
+                    break;
                 }
             },
 
