@@ -2329,9 +2329,9 @@
                 // Wait a frame for layout to settle
                 requestAnimationFrame(() => {
                     const container = el.parentElement;
-                    if (container && el.scrollWidth > container.clientWidth) {
-                        const distance = -(el.scrollWidth - container.clientWidth);
-                        el.style.setProperty('--slide-distance', distance + 'px');
+                    const overflow = el.scrollWidth - container.clientWidth;
+                    if (container && overflow > 5) {
+                        el.style.setProperty('--slide-distance', -overflow + 'px');
                         el.classList.add('sliding');
                     }
                 });
@@ -2383,7 +2383,7 @@
                 const currentIdx = state.idx;
                 // Show songs after current; if repeat-all, wrap around
                 let upcoming = state.queue.slice(currentIdx + 1);
-                if (state.repeat === 1 && currentIdx > 0) {
+                if (state.repeat === 1) {
                     upcoming = upcoming.concat(state.queue.slice(0, currentIdx));
                 }
                 if (upcoming.length === 0) {
