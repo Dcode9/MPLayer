@@ -584,7 +584,7 @@
 
         <!-- MAIN PLAYER PILL -->
         <!-- pointer-events-auto re-enables clicking on the player -->
-        <!-- Changed rounded-tr-sm to rounded-tl-sm as requested -->
+        <!-- rounded-full for perfect pill; JS adds rounded-tl-[8px] when info island is visible -->
         <div class="w-full bg-black/60 backdrop-blur-3xl border border-white/10 rounded-full shadow-2xl p-2 px-4 flex items-center gap-4 transition-all duration-500 h-[72px] pointer-events-auto" id="player-card">
             
             <!-- Left Controls: Play, Prev, Next -->
@@ -1297,6 +1297,24 @@
             
             // Render liked songs
             ui.renderLikedSongs();
+            
+            // Restore last played track metadata in player (without auto-playing)
+            try {
+                const lastTrack = JSON.parse(localStorage.getItem('lastPlayedTrack'));
+                if (lastTrack && lastTrack.name) {
+                    state.currentTrack = lastTrack;
+                    ui.updateMetadata(lastTrack);
+                    ui.updateLikeBtn();
+                    // Show info island but keep controls disabled
+                    const island = document.getElementById('info-island');
+                    if (island) {
+                        island.style.opacity = '1';
+                        island.style.transform = 'translateY(0)';
+                    }
+                    const playerCard = document.getElementById('player-card');
+                    if (playerCard) playerCard.classList.add('rounded-tl-[8px]');
+                }
+            } catch(e) {}
         }
 
         const audio = document.getElementById('audio-el');
@@ -1375,6 +1393,14 @@
                     
                     // Record play for recommendations
                     recommendations.recordPlay(track);
+                    
+                    // Save last played track for session restore
+                    try {
+                        localStorage.setItem('lastPlayedTrack', JSON.stringify({
+                            id: track.id, name: track.name, artist: track.artist,
+                            img: track.img, source: track.source
+                        }));
+                    } catch(e) {}
                     
                     debugLog('Now playing:', track.name);
                     
