@@ -80,14 +80,14 @@ document.addEventListener('keydown', (e) => {
 // INITIALIZATION
 // ============================================
 async function init() {
-    debugLog('Initializing D\'Tunes Player...');
+    debugLog('Initializing JioSaavn Player...');
     
     const vCanvas = document.getElementById('visualizer-canvas');
     visualizerCtx = vCanvas.getContext('2d');
     resizeVisualizer();
     window.addEventListener('resize', () => {
-        if(!window._resizeTimeout) {
-            window._resizeTimeout = setTimeout(() => { resizeVisualizer(); window._resizeTimeout = null; }, 100);
+        if(!window.resizeTimeout) {
+            window.resizeTimeout = setTimeout(() => { resizeVisualizer(); window.resizeTimeout = null; }, 100);
         }
     });
 
