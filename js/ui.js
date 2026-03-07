@@ -140,7 +140,6 @@ const ui = {
         if (!el) return;
         el.classList.remove('sliding');
         el.style.removeProperty('--slide-distance');
-        // Wait a frame for layout to settle
         requestAnimationFrame(() => {
             const container = el.parentElement;
             const overflow = el.scrollWidth - container.clientWidth;
@@ -195,7 +194,6 @@ const ui = {
             return;
         }
         const currentIdx = state.idx;
-        // Show songs after current; if repeat-all, wrap around
         let upcoming = state.queue.slice(currentIdx + 1);
         if (state.repeat === 1) {
             upcoming = upcoming.concat(state.queue.slice(0, currentIdx));

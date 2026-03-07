@@ -13,7 +13,6 @@ let colorThief;
 try {
     colorThief = new ColorThief();
 } catch(e) {
-    // Fallback if ColorThief is not loaded
     colorThief = {
         getPalette: () => [[62, 207, 142], [100, 150, 200], [50, 100, 150]]
     };

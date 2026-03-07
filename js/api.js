@@ -273,7 +273,6 @@ const jiosaavnAPI = {
     // Check if URL is a page URL vs streaming URL
     isStreamingUrl: (url) => {
         if (!url) return false;
-        // Streaming URLs typically have these patterns
         return url.includes('.mp3') || 
                url.includes('.m4a') || 
                url.includes('.aac') ||
@@ -291,7 +290,6 @@ const recommendations = {
     recordPlay: (track) => {
         if (!track) return;
         
-        // Update play history
         const historyEntry = {
             id: track.id,
             name: track.name,
@@ -301,10 +299,9 @@ const recommendations = {
             timestamp: Date.now()
         };
         state.playHistory.unshift(historyEntry);
-        state.playHistory = state.playHistory.slice(0, 100); // Keep last 100
+        state.playHistory = state.playHistory.slice(0, 100);
         localStorage.setItem('playHistory', JSON.stringify(state.playHistory));
         
-        // Update artist play counts (limit to 500 artists to prevent unbounded growth)
         const artists = track.artist ? track.artist.split(',').map(a => a.trim()) : [];
         artists.forEach(artist => {
             state.artistPlayCounts[artist] = (state.artistPlayCounts[artist] || 0) + 1;
@@ -313,7 +310,6 @@ const recommendations = {
         // Prune artistPlayCounts if too large
         const artistKeys = Object.keys(state.artistPlayCounts);
         if (artistKeys.length > 500) {
-            // Keep only top 300 most played artists
             const sorted = artistKeys.sort((a, b) => state.artistPlayCounts[b] - state.artistPlayCounts[a]);
             const toRemove = sorted.slice(300);
             toRemove.forEach(key => delete state.artistPlayCounts[key]);
@@ -327,29 +323,22 @@ const recommendations = {
         if (!queue || queue.length === 0) return -1;
         if (queue.length === 1) return 0;
         
-        // Calculate weights based on artist play history
         const weights = queue.map((track, idx) => {
             let weight = 1;
-            
-            // Boost tracks from frequently played artists
             const artists = track.artist ? track.artist.split(',').map(a => a.trim()) : [];
             artists.forEach(artist => {
                 weight += (state.artistPlayCounts[artist] || 0) * 0.5;
             });
             
-            // Reduce weight for recently played tracks
             const recentlyPlayed = state.playHistory.slice(0, 10).map(h => h.id);
             if (recentlyPlayed.includes(track.id)) {
                 weight *= 0.2;
             }
             
-            // Slight randomness factor
             weight *= (0.8 + Math.random() * 0.4);
-            
             return { idx, weight };
         });
         
-        // Sort by weight and pick from top candidates with some randomness
         weights.sort((a, b) => b.weight - a.weight);
         const topCandidates = weights.slice(0, Math.min(5, weights.length));
         const selected = topCandidates[Math.floor(Math.random() * topCandidates.length)];
@@ -360,12 +349,8 @@ const recommendations = {
     // Get recommendations based on current track
     getRelatedTracks: async (track) => {
         if (!track) return [];
-        
-        // Search for similar tracks by artist
         const artistQuery = track.artist.split(',')[0].trim();
         const related = await jiosaavnAPI.searchSongs(artistQuery, 10);
-        
-        // Filter out current track
         return related.filter(t => t.id !== track.id);
     }
 };

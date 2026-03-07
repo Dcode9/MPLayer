@@ -12,7 +12,6 @@ audio.onerror = (e) => {
         ui.updatePlayBtn(); 
     }
     isPlaybackPending = false;
-    // Auto-skip to next on error
     setTimeout(() => player.next(), 1000);
 };
 
@@ -109,7 +108,6 @@ const player = {
     
     togglePlay: () => {
         if(!state.loaded) { 
-            // No track loaded yet - show feedback
             errorHandler.show('Search for a song to start playing');
             return; 
         }
@@ -138,7 +136,6 @@ const player = {
         let nextIdx;
         
         if(state.shuffle) {
-            // Use weighted shuffle for better recommendations
             nextIdx = recommendations.getWeightedShuffleIndex(state.queue);
         } else {
             nextIdx = state.idx + 1;
@@ -173,19 +170,15 @@ const player = {
         const index = state.likedIds.indexOf(id);
         
         if(index === -1) {
-            // Add to liked (limit to 500 songs)
             if (state.likedSongs.length >= 500) {
-                // Remove oldest liked song
                 state.likedSongs.shift();
                 state.likedIds.shift();
             }
             state.likedIds.push(id);
-            // Also store the full song object (avoid duplicates)
             if (!state.likedSongs.find(s => s.id === id)) {
                 state.likedSongs.push(state.currentTrack);
             }
         } else {
-            // Remove from liked
             state.likedIds.splice(index, 1);
             state.likedSongs = state.likedSongs.filter(s => s.id !== id);
         }
@@ -209,7 +202,6 @@ const player = {
     },
     
     toggleRepeat: () => {
-        // 0: none, 1: all, 2: one
         state.repeat = (state.repeat + 1) % 3;
         const btn = document.getElementById('btn-repeat');
         if(state.repeat === 0) btn.classList.remove('active-state');

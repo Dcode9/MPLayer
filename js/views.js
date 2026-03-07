@@ -10,14 +10,12 @@ const router = {
         document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
         const btns = document.querySelectorAll('.nav-btn');
         
-        // Map views to button indices
         const viewMap = { 'home': 0, 'trending': 1, 'albums': 2, 'playlists': 3, 'album-detail': 2, 'search': -1 };
         const btnIdx = viewMap[view];
         if (btnIdx >= 0 && btns[btnIdx]) {
             btns[btnIdx].classList.add('active');
         }
         
-        // Load data for specific views
         if (view === 'trending' && !trendingView.loaded) {
             trendingView.load();
         }
@@ -43,21 +41,17 @@ const homeView = {
         const quickPicks = document.getElementById('quick-picks-grid');
         const recentGrid = document.getElementById('recent-grid');
         
-        // Show skeleton loading
         if (quickPicks) {
             quickPicks.innerHTML = Array(8).fill('<div class="scroll-card skeleton h-[220px] rounded-xl"></div>').join('');
         }
         
         try {
-            // Fetch trending songs
             const trending = await jiosaavnAPI.getTrending();
             
-            // Quick picks: mix trending + play history artists, deduplicate, show 16
             if (quickPicks) {
                 const seenIds = new Set();
                 let picks = [];
                 
-                // Add trending songs first
                 for (const song of trending) {
                     if (song && !seenIds.has(song.id)) {
                         seenIds.add(song.id);
@@ -65,7 +59,6 @@ const homeView = {
                     }
                 }
                 
-                // If user has play history, fetch related songs
                 if (state.playHistory.length > 0) {
                     const uniqueArtists = [...new Set(state.playHistory.slice(0, 10).map(h => h.artist.split(',')[0].trim()))].slice(0, 3);
                     const relatedPromises = uniqueArtists.map(a => jiosaavnAPI.searchSongs(a, 6));
@@ -84,7 +77,6 @@ const homeView = {
                 quickPicks.innerHTML = picks.map(song => ui.createScrollCard(song)).join('');
             }
             
-            // Recent plays with album art
             if (recentGrid && state.playHistory.length > 0) {
                 const seenIds = new Set();
                 const recentTracks = [];
@@ -140,7 +132,6 @@ const trendingView = {
     switchTab: async (tab) => {
         trendingView.currentTab = tab;
         
-        // Update tab pills
         document.querySelectorAll('#trending-tabs .tab-pill').forEach(pill => {
             pill.classList.remove('active');
             if (pill.textContent.toLowerCase() === tab) {
@@ -169,7 +160,6 @@ const trendingView = {
                     ? `<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">${items.map(a => ui.createAlbumCard(a)).join('')}</div>`
                     : '<p class="text-gray-400">No albums available</p>';
             } else if (tab === 'artists') {
-                // Search for popular artists
                 items = await jiosaavnAPI.searchArtists('popular indian artists', 20);
                 content.innerHTML = items.length > 0
                     ? `<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">${items.map(a => ui.createArtistCard(a)).join('')}</div>`
@@ -238,7 +228,6 @@ const albumsView = {
             `;
             
             if (album.songs && album.songs.length > 0) {
-                // Store songs in songStore for safe click handling
                 tracks.innerHTML = album.songs.map((song, i) => {
                     const storeId = songStore.add(song);
                     const duration = song.duration || 0;
@@ -257,7 +246,6 @@ const albumsView = {
                 `;
                 }).join('');
                 
-                // Store album songs for play all
                 albumsView.currentAlbumSongs = album.songs;
             } else {
                 tracks.innerHTML = '<p class="text-gray-400">No tracks available</p>';

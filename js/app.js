@@ -80,14 +80,14 @@ document.addEventListener('keydown', (e) => {
 // INITIALIZATION
 // ============================================
 async function init() {
-    debugLog('Initializing JioSaavn Player...');
+    debugLog('Initializing D\'Tunes Player...');
     
     const vCanvas = document.getElementById('visualizer-canvas');
     visualizerCtx = vCanvas.getContext('2d');
     resizeVisualizer();
     window.addEventListener('resize', () => {
-        if(!window.resizeTimeout) {
-            window.resizeTimeout = setTimeout(() => { resizeVisualizer(); window.resizeTimeout = null; }, 100);
+        if(!window._resizeTimeout) {
+            window._resizeTimeout = setTimeout(() => { resizeVisualizer(); window._resizeTimeout = null; }, 100);
         }
     });
 
@@ -116,7 +116,6 @@ async function init() {
             state.currentTrack = lastTrack;
             ui.updateMetadata(lastTrack);
             ui.updateLikeBtn();
-            // Show info island but keep controls disabled
             const island = document.getElementById('info-island');
             if (island) {
                 island.style.opacity = '1';

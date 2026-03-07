@@ -15,7 +15,7 @@ const state = {
     likedSongs: (() => {
         try {
             const data = JSON.parse(localStorage.getItem('likedSongs') || '[]');
-            return Array.isArray(data) ? data.slice(0, 500) : []; // Limit to 500 songs
+            return Array.isArray(data) ? data.slice(0, 500) : [];
         } catch(e) { return []; }
     })(),
     isDragging: false,

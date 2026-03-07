@@ -23,50 +23,6 @@ function switchToNextApi() {
 }
 
 // ============================================
-// PREFERENCES MANAGER
-// ============================================
-const preferences = {
-    quality: localStorage.getItem('audioQuality') || '160kbps',
-    
-    setQuality: (quality) => {
-        preferences.quality = quality;
-        localStorage.setItem('audioQuality', quality);
-        debugLog('Quality set to:', quality);
-    },
-    
-    getQualityUrl: (downloadUrls) => {
-        if (!downloadUrls || !Array.isArray(downloadUrls)) return null;
-        // Find the URL that matches preferred quality, or get best available
-        const qualityMap = {
-            '12kbps': 0,
-            '48kbps': 1,
-            '96kbps': 2,
-            '160kbps': 3,
-            '320kbps': 4
-        };
-        const preferredIdx = qualityMap[preferences.quality] || 3;
-        // Try to get preferred quality, otherwise get closest lower quality
-        for (let i = preferredIdx; i >= 0; i--) {
-            if (downloadUrls[i] && downloadUrls[i].url) {
-                return downloadUrls[i].url;
-            }
-        }
-        // Fallback to any available URL
-        for (let i = 0; i < downloadUrls.length; i++) {
-            if (downloadUrls[i] && downloadUrls[i].url) {
-                return downloadUrls[i].url;
-            }
-        }
-        return null;
-    },
-    
-    load: () => {
-        const selector = document.getElementById('quality-selector');
-        if (selector) selector.value = preferences.quality;
-    }
-};
-
-// ============================================
 // DEBUG LOGGING
 // ============================================
 const DEBUG = false; // Set to true for development
@@ -114,5 +70,46 @@ const errorHandler = {
         }
         
         errorHandler.show(message);
+    }
+};
+
+// ============================================
+// PREFERENCES MANAGER
+// ============================================
+const preferences = {
+    quality: localStorage.getItem('audioQuality') || '160kbps',
+    
+    setQuality: (quality) => {
+        preferences.quality = quality;
+        localStorage.setItem('audioQuality', quality);
+        debugLog('Quality set to:', quality);
+    },
+    
+    getQualityUrl: (downloadUrls) => {
+        if (!downloadUrls || !Array.isArray(downloadUrls)) return null;
+        const qualityMap = {
+            '12kbps': 0,
+            '48kbps': 1,
+            '96kbps': 2,
+            '160kbps': 3,
+            '320kbps': 4
+        };
+        const preferredIdx = qualityMap[preferences.quality] || 3;
+        for (let i = preferredIdx; i >= 0; i--) {
+            if (downloadUrls[i] && downloadUrls[i].url) {
+                return downloadUrls[i].url;
+            }
+        }
+        for (let i = 0; i < downloadUrls.length; i++) {
+            if (downloadUrls[i] && downloadUrls[i].url) {
+                return downloadUrls[i].url;
+            }
+        }
+        return null;
+    },
+    
+    load: () => {
+        const selector = document.getElementById('quality-selector');
+        if (selector) selector.value = preferences.quality;
     }
 };

@@ -149,11 +149,9 @@
     </div>
 
     <!-- PLAYER FOOTER STACK -->
-    <!-- pointer-events-none on container so clicks pass through empty spaces -->
     <div id="player-footer" class="fixed bottom-6 left-6 right-6 z-50 flex flex-col items-start gap-1 pointer-events-none">
         
-        <!-- NEW INFO ISLAND (Top Left) -->
-        <!-- pointer-events-auto re-enables clicking on the island -->
+        <!-- INFO ISLAND (Top Left) -->
         <div class="bg-black/60 backdrop-blur-3xl border border-white/10 rounded-[24px] rounded-bl-[8px] p-3 pr-6 flex items-center gap-3 shadow-2xl transition-all duration-300 pointer-events-auto" id="info-island" style="opacity:0; transform:translateY(10px);">
             <div id="album-art-wrapper" class="relative w-12 h-12 flex-shrink-0 transition-opacity duration-300">
                 <div id="album-art-glow"></div>
@@ -173,8 +171,6 @@
         </div>
 
         <!-- MAIN PLAYER PILL -->
-        <!-- pointer-events-auto re-enables clicking on the player -->
-        <!-- rounded-full for perfect pill; JS adds rounded-tl-[8px] when info island is visible -->
         <div class="w-full bg-black/60 backdrop-blur-3xl border border-white/10 rounded-full shadow-2xl p-2 px-4 flex items-center gap-4 transition-all duration-500 h-[72px] pointer-events-auto" id="player-card">
             
             <!-- Left Controls: Play, Prev, Next -->
@@ -227,7 +223,7 @@
     <canvas id="pip-canvas" width="500" height="500" class="hidden"></canvas>
     <video id="pip-video" muted class="fixed top-[-1000px] w-px h-px"></video>
 
-    <!-- App Scripts (loaded in dependency order) -->
+    <!-- JavaScript Modules (loaded in dependency order) -->
     <script src="js/config.js"></script>
     <script src="js/state.js"></script>
     <script src="js/api.js"></script>
