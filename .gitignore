@@ -4,3 +4,19 @@
 # OS files
 .DS_Store
 Thumbs.db
+
+# Audio files
+*.m4a
+*.mp3
+*.wav
+*.flac
+*.ogg
+*.aac
+
+# Dependencies
+node_modules/
+
+# Build artifacts
+dist/
+build/
+.cache/
