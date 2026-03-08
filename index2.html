@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>D'Tunes</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233ecf8e'><path d='M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z'/></svg>">
+    <link rel="icon" href="data:,">
 
     <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -207,7 +207,7 @@
         backdrop-filter: blur(8px);
         color: white;
         font-size: 11px;
-        font-family: 'SF Mono', 'Cascadia Code', monospace;
+        font-family: 'SF Mono', 'Cascadia Code', 'Consolas', 'Courier New', monospace;
         padding: 4px 10px;
         border-radius: 6px;
         pointer-events: none;
@@ -653,11 +653,11 @@
             <div class="mt-auto pt-4 border-t border-white/5">
                 <label class="text-[11px] text-gray-500 font-medium uppercase tracking-wider block mb-1.5">Audio Quality</label>
                 <select class="quality-selector w-full" id="quality-selector" onchange="preferences.setQuality(this.value)">
-                    <option value="12kbps">12kbps — Low</option>
-                    <option value="48kbps">48kbps — Medium</option>
-                    <option value="96kbps">96kbps — Good</option>
-                    <option value="160kbps" selected>160kbps — High</option>
-                    <option value="320kbps">320kbps — Best</option>
+                    <option value="12kbps">12kbps (Low)</option>
+                    <option value="48kbps">48kbps (Medium)</option>
+                    <option value="96kbps">96kbps (Good)</option>
+                    <option value="160kbps" selected>160kbps (High)</option>
+                    <option value="320kbps">320kbps (Best)</option>
                 </select>
             </div>
         </div>
@@ -765,7 +765,7 @@
              id="info-island" style="opacity:0; transform:translateY(10px);">
             <div id="album-art-wrapper" class="relative w-12 h-12 flex-shrink-0 transition-opacity duration-300">
                 <div id="album-art-glow"></div>
-                <img id="curr-art-img" src="https://placehold.co/300/1a1a25/666?text=♪" class="w-full h-full rounded-full object-cover border border-white/10" crossorigin="anonymous">
+                <img id="curr-art-img" src="https://placehold.co/300/1a1a25/666?text=♪" alt="Album artwork" class="w-full h-full rounded-full object-cover border border-white/10" crossorigin="anonymous">
             </div>
             <div class="overflow-hidden min-w-[100px] max-w-[200px]">
                 <div class="slide-text-container">
@@ -830,7 +830,7 @@
     <!-- === HIDDEN MEDIA ELEMENTS === -->
     <audio id="audio-el" crossorigin="anonymous" class="hidden"></audio>
     <canvas id="pip-canvas" width="500" height="500" class="hidden"></canvas>
-    <video id="pip-video" muted class="fixed top-[-9999px] w-px h-px opacity-0"></video>
+    <video id="pip-video" muted class="hidden"></video>
 
     <!-- === JAVASCRIPT MODULES (Legacy API + Seek Bar logic preserved) === -->
     <script src="js/config.js"></script>
