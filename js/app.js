@@ -79,6 +79,8 @@ document.addEventListener('keydown', (e) => {
 // ============================================
 // INITIALIZATION
 // ============================================
+let resizeDebounceTimer = null;
+
 async function init() {
     debugLog('Initializing D\'Tunes Player...');
     
@@ -86,8 +88,8 @@ async function init() {
     visualizerCtx = vCanvas.getContext('2d');
     resizeVisualizer();
     window.addEventListener('resize', () => {
-        if(!window._resizeTimeout) {
-            window._resizeTimeout = setTimeout(() => { resizeVisualizer(); window._resizeTimeout = null; }, 100);
+        if(!resizeDebounceTimer) {
+            resizeDebounceTimer = setTimeout(() => { resizeVisualizer(); resizeDebounceTimer = null; }, 100);
         }
     });
 
