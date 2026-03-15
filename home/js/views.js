@@ -16,6 +16,26 @@ const router = {
             btns[btnIdx].classList.add('active');
         }
         
+        // Sync mobile bottom nav
+        const mobileViewMap = { 'home': 0, 'trending': 1, 'albums': 2, 'playlists': 3, 'album-detail': 2 };
+        const mobileBtns = document.querySelectorAll('#mobile-bottom-nav .mobile-nav-btn');
+        mobileBtns.forEach(btn => btn.classList.remove('active'));
+        const mobileIdx = mobileViewMap[view];
+        if (mobileIdx !== undefined && mobileBtns[mobileIdx]) {
+            mobileBtns[mobileIdx].classList.add('active');
+        }
+        
+        // Close mobile sidebar if open
+        const nav = document.getElementById('nav-panel');
+        const overlay = document.getElementById('sidebar-overlay');
+        if (nav && nav.classList.contains('mobile-open')) {
+            nav.classList.remove('mobile-open');
+            if (overlay) {
+                overlay.classList.remove('active');
+                setTimeout(() => { overlay.style.display = 'none'; }, 300);
+            }
+        }
+        
         if (view === 'trending' && !trendingView.loaded) {
             trendingView.load();
         }
