@@ -77,6 +77,9 @@
             scroll-behavior: smooth; scrollbar-width: none; -ms-overflow-style: none;
             padding-left: 2rem; padding-right: 2rem;
         }
+        @media (max-width: 640px) {
+            .horizontal-scroll { padding-left: 1rem; padding-right: 1rem; }
+        }
         .horizontal-scroll::-webkit-scrollbar { display: none; }
         .scroll-card { flex-shrink: 0; flex-basis: calc((100% - (2 * 1rem)) / 2.5); min-width: 0; user-select: none; }
         @media (min-width: 768px) { .scroll-card { flex-basis: calc((100% - (4 * 1rem)) / 4.5); } }
@@ -86,6 +89,9 @@
         .global-blur-edge {
             position: fixed; top: 80px; bottom: 100px; width: 32px; z-index: 30; pointer-events: none;
             backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+        }
+        @media (max-width: 640px) {
+            .global-blur-edge { width: 16px; top: 60px; bottom: 80px; }
         }
         .blur-left { left: 0; mask-image: linear-gradient(to right, black 20%, transparent 100%); -webkit-mask-image: linear-gradient(to right, black 20%, transparent 100%); }
         .blur-right { right: 0; mask-image: linear-gradient(to left, black 20%, transparent 100%); -webkit-mask-image: linear-gradient(to left, black 20%, transparent 100%); }
@@ -169,7 +175,7 @@
         
         /* Full Expanded State */
         #queue-wrapper.queue-expanded #queue-blur-bg { opacity: 1; }
-        #queue-wrapper.queue-expanded #queue-expandable-area { max-height: 500px; opacity: 1; pointer-events: auto; }
+        #queue-wrapper.queue-expanded #queue-expandable-area { max-height: 60vh; opacity: 1; pointer-events: auto; }
         #queue-wrapper.queue-expanded #queue-preview-slot { opacity: 0; position: absolute; pointer-events: none; }
         #queue-wrapper.queue-expanded #queue-full-content { opacity: 1; position: relative; pointer-events: auto; transition-delay: 0.1s; }
         #queue-wrapper.queue-expanded #btn-expand-queue { transform: rotate(180deg); color: white; }
@@ -235,7 +241,7 @@
     </div>
 
     <!-- TOP HEADER (Floating Glass) -->
-    <header class="fixed top-4 left-6 right-6 z-40 glass-panel rounded-2xl px-6 py-3 flex items-center justify-between gap-4 shadow-xl">
+    <header class="fixed top-2 sm:top-4 left-3 sm:left-6 right-3 sm:right-6 z-40 glass-panel rounded-2xl px-3 sm:px-6 py-2 sm:py-3 flex items-center justify-between gap-2 sm:gap-4 shadow-xl">
         <div class="flex items-center gap-2 text-2xl font-bold text-white cursor-pointer w-32 flex-shrink-0" onclick="ui.switchView('home')">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-green-400" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
             <span class="hidden sm:block">D'Tunes</span>
@@ -267,37 +273,37 @@
     </header>
 
     <!-- MAIN SCROLLABLE CONTENT -->
-    <main id="main-container" class="h-screen overflow-y-auto pt-32 pb-48">
+    <main id="main-container" class="h-screen overflow-y-auto pt-24 sm:pt-32 pb-32 sm:pb-48">
         
         <!-- ================= HOME VIEW ================= -->
         <div id="view-home">
             <section id="section-trending" class="mb-12 hidden">
-                <h2 class="text-2xl font-bold text-white mb-6 px-8">Trending Right Now</h2>
+                <h2 class="text-2xl font-bold text-white mb-6 px-4 sm:px-8">Trending Right Now</h2>
                 <div id="trending-grid" class="horizontal-scroll"></div>
             </section>
 
             <section id="section-quick-picks" class="mb-12 hidden">
-                <h2 class="text-2xl font-bold text-white mb-6 px-8">Quick Picks For You</h2>
+                <h2 class="text-2xl font-bold text-white mb-6 px-4 sm:px-8">Quick Picks For You</h2>
                 <div id="quick-picks-grid" class="horizontal-scroll"></div>
             </section>
 
             <section id="section-recent" class="mb-12 hidden">
-                <h2 class="text-2xl font-bold text-white mb-6 px-8">Recently Played</h2>
+                <h2 class="text-2xl font-bold text-white mb-6 px-4 sm:px-8">Recently Played</h2>
                 <div id="recent-grid" class="horizontal-scroll"></div>
             </section>
 
             <section id="section-playlists" class="mb-12">
-                <h2 class="text-2xl font-bold text-white mb-6 px-8">Your Library</h2>
+                <h2 class="text-2xl font-bold text-white mb-6 px-4 sm:px-8">Your Library</h2>
                 <div id="playlists-grid" class="horizontal-scroll items-stretch"></div>
             </section>
         </div>
 
         <!-- ================= FULL SEARCH VIEW ================= -->
         <div id="view-search" class="hidden pb-12">
-            <h2 class="text-3xl font-bold text-white mb-8 px-8" id="search-title">Search Results</h2>
-            <div id="search-loading" class="text-gray-400 hidden px-8">Searching across the universe...</div>
+            <h2 class="text-3xl font-bold text-white mb-8 px-4 sm:px-8" id="search-title">Search Results</h2>
+            <div id="search-loading" class="text-gray-400 hidden px-4 sm:px-8">Searching across the universe...</div>
             <div id="search-content" class="hidden">
-                <div class="grid grid-cols-1 lg:grid-cols-5 gap-8 mb-12 relative z-20 px-8">
+                <div class="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-8 mb-12 relative z-20 px-4 sm:px-8">
                     <div class="lg:col-span-2 relative z-20">
                         <h3 class="text-xl font-bold text-gray-300 mb-4">Top Result</h3>
                         <div id="search-top-result" class="glass-panel rounded-2xl p-6 transition hover-pause group relative overflow-hidden h-80 flex flex-col justify-end cursor-pointer"></div>
@@ -309,25 +315,25 @@
                 </div>
 
                 <div class="mb-12">
-                    <h3 class="text-xl font-bold text-gray-300 mb-4 px-8">Albums</h3>
+                    <h3 class="text-xl font-bold text-gray-300 mb-4 px-4 sm:px-8">Albums</h3>
                     <div id="search-albums-grid" class="horizontal-scroll"></div>
                 </div>
                 <div class="mb-12">
-                    <h3 class="text-xl font-bold text-gray-300 mb-4 px-8">Artists</h3>
+                    <h3 class="text-xl font-bold text-gray-300 mb-4 px-4 sm:px-8">Artists</h3>
                     <div id="search-artists-grid" class="horizontal-scroll"></div>
                 </div>
             </div>
         </div>
 
         <!-- ================= PLAYLIST / ALBUM VIEW ================= -->
-        <div id="view-playlist" class="hidden pb-12 px-8">
-            <div class="flex flex-col md:flex-row gap-8">
+        <div id="view-playlist" class="hidden pb-12 px-4 sm:px-8">
+            <div class="flex flex-col md:flex-row gap-4 sm:gap-8">
                 <div class="md:w-[30%] flex-shrink-0">
                     <div class="sticky top-32 flex flex-col items-center md:items-start text-center md:text-left gap-4 hover-pause">
                         <button class="w-12 h-12 rounded-full glass-panel hover:bg-white/10 flex items-center justify-center text-white transition mb-2" onclick="ui.switchView('home')">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
                         </button>
-                        <div id="pl-view-art" class="w-64 h-64 md:w-full md:aspect-square rounded-2xl shadow-2xl flex items-center justify-center text-6xl font-bold text-white shadow-black/50 overflow-hidden">
+                        <div id="pl-view-art" class="w-48 h-48 sm:w-64 sm:h-64 md:w-full md:aspect-square rounded-2xl shadow-2xl flex items-center justify-center text-6xl font-bold text-white shadow-black/50 overflow-hidden">
                             <!-- Injected by JS -->
                         </div>
                         <div class="w-full flex flex-col min-w-0">
@@ -348,10 +354,10 @@
     </main>
 
     <!-- PLAYER FOOTER STACK -->
-    <div id="player-footer" class="fixed bottom-6 left-6 right-6 z-50 flex flex-col items-end pointer-events-none gap-2 translate-y-[150%] opacity-0 transition-all duration-700 ease-out">
+    <div id="player-footer" class="fixed bottom-3 sm:bottom-6 left-3 sm:left-6 right-3 sm:right-6 z-50 flex flex-col items-end pointer-events-none gap-2 translate-y-[150%] opacity-0 transition-all duration-700 ease-out">
         
         <!-- Queue Anchor (Builds UPWARDS from behind the player bar) -->
-        <div class="relative w-72 md:w-80 flex-shrink-0 pointer-events-none h-0 z-[40]">
+        <div class="relative w-56 sm:w-72 md:w-80 flex-shrink-0 pointer-events-none h-0 z-[40]">
             
             <div id="queue-wrapper" class="absolute bottom-0 right-0 w-full flex flex-col z-[40]">
                 
@@ -360,8 +366,8 @@
                 <!-- 1. TOP ITEM: Current Song Info Island -->
                 <div id="info-island" class="relative z-20 glass-panel rounded-2xl p-2 pr-4 flex items-center shadow-2xl w-full border border-white/10 transition-colors order-1 bg-[#121212]/90 pointer-events-auto hover-pause group">
                     
-                    <!-- Clean Expand Arrow that reveals on hover (Zero disruption to padding layout) -->
-                    <button class="w-0 opacity-0 overflow-hidden text-gray-400 hover:text-white transition-all duration-300 ease-in-out group-hover:w-8 group-hover:opacity-100 flex items-center justify-center flex-shrink-0 pl-1" id="btn-expand-queue" onclick="ui.toggleQueue()">
+                    <!-- Clean Expand Arrow that reveals on hover/touch -->
+                    <button class="w-0 opacity-0 overflow-hidden text-gray-400 hover:text-white transition-all duration-300 ease-in-out group-hover:w-8 group-hover:opacity-100 sm:group-hover:w-8 sm:group-hover:opacity-100 flex items-center justify-center flex-shrink-0 pl-1 max-sm:w-8 max-sm:opacity-100" id="btn-expand-queue" onclick="ui.toggleQueue()">
                         <svg class="w-5 h-5 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
                     </button>
 
@@ -403,7 +409,7 @@
 
         <!-- MAIN PLAYER PILL -->
         <!-- Placed below to visually overlap the queue dropping from above -->
-        <div class="w-full glass-panel rounded-2xl shadow-2xl p-2 px-4 flex items-center gap-4 h-[72px] pointer-events-auto relative z-[50]" id="player-card">
+        <div class="w-full glass-panel rounded-2xl shadow-2xl p-2 px-3 sm:px-4 flex items-center gap-2 sm:gap-4 h-16 sm:h-[72px] pointer-events-auto relative z-[50]" id="player-card">
             
             <div class="flex items-center gap-3 flex-shrink-0">
                 <button class="text-gray-400 hover:text-white disabled:opacity-30 transition" onclick="player.toggleShuffle()" id="btn-shuffle" disabled>
@@ -413,7 +419,7 @@
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="19 20 9 12 19 4 19 20"></polygon><line x1="5" y1="19" x2="5" y2="5"></line></svg>
                 </button>
                 
-                <button onclick="player.togglePlay()" id="btn-play" class="w-12 h-12 bg-white rounded-full flex-shrink-0 flex items-center justify-center text-black hover:scale-105 transition shadow-lg shadow-white/20 disabled:bg-gray-500 disabled:scale-100 disabled:cursor-not-allowed mx-1" disabled>
+                <button onclick="player.togglePlay()" id="btn-play" class="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-full flex-shrink-0 flex items-center justify-center text-black hover:scale-105 transition shadow-lg shadow-white/20 disabled:bg-gray-500 disabled:scale-100 disabled:cursor-not-allowed mx-1" disabled>
                     <span id="icon-play" class="flex ml-1"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>
                     <span id="icon-pause" class="hidden"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg></span>
                 </button>
