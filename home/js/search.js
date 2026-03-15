@@ -5,8 +5,22 @@ const searchManager = {
     lastResults: null,
     
     init: () => {
-        const input = document.getElementById('search-input');
-        const results = document.getElementById('search-results');
+        // Initialize both desktop and mobile search inputs
+        searchManager._initInput('search-input', 'search-results');
+        searchManager._initInput('mobile-search-input', 'mobile-search-results');
+        
+        // Close on click outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.search-container')) {
+                document.getElementById('search-results')?.classList.remove('active');
+                document.getElementById('mobile-search-results')?.classList.remove('active');
+            }
+        });
+    },
+    
+    _initInput: (inputId, resultsId) => {
+        const input = document.getElementById(inputId);
+        const results = document.getElementById(resultsId);
         
         if (!input || !results) return;
         
@@ -20,7 +34,7 @@ const searchManager = {
             }
             
             state.searchDebounce = setTimeout(() => {
-                searchManager.search(query);
+                searchManager._searchDropdown(query, results);
             }, 300);
         });
         
@@ -40,17 +54,9 @@ const searchManager = {
                 results.classList.add('active');
             }
         });
-        
-        // Close on click outside
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.search-container')) {
-                results.classList.remove('active');
-            }
-        });
     },
     
-    search: async (query) => {
-        const results = document.getElementById('search-results');
+    _searchDropdown: async (query, results) => {
         results.innerHTML = '<div class="p-4 text-center"><div class="loading-spinner"></div></div>';
         results.classList.add('active');
         
@@ -108,6 +114,11 @@ const searchManager = {
         }
         
         results.innerHTML = html;
+    },
+    
+    search: async (query) => {
+        const results = document.getElementById('search-results');
+        if (results) searchManager._searchDropdown(query, results);
     },
     
     searchMain: async (query) => {
@@ -201,8 +212,12 @@ const searchManager = {
     },
     
     searchByArtist: async (artistName) => {
-        document.getElementById('search-results').classList.remove('active');
-        document.getElementById('search-input').value = artistName;
+        document.getElementById('search-results')?.classList.remove('active');
+        document.getElementById('mobile-search-results')?.classList.remove('active');
+        const desktopInput = document.getElementById('search-input');
+        const mobileInput = document.getElementById('mobile-search-input');
+        if (desktopInput) desktopInput.value = artistName;
+        if (mobileInput) mobileInput.value = artistName;
         
         const songs = await jiosaavnAPI.searchSongs(artistName, 20);
         if (songs.length > 0) {

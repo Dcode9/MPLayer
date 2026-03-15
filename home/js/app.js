@@ -77,6 +77,47 @@ document.addEventListener('keydown', (e) => {
 });
 
 // ============================================
+// MOBILE NAVIGATION
+// ============================================
+function toggleMobileMenu() {
+    const nav = document.getElementById('nav-panel');
+    const overlay = document.getElementById('sidebar-overlay');
+    if (!nav || !overlay) return;
+    const isOpen = nav.classList.contains('mobile-open');
+    if (isOpen) {
+        nav.classList.remove('mobile-open');
+        overlay.classList.remove('active');
+        setTimeout(() => { overlay.style.display = 'none'; }, 300);
+    } else {
+        overlay.style.display = 'block';
+        requestAnimationFrame(() => {
+            nav.classList.add('mobile-open');
+            overlay.classList.add('active');
+        });
+    }
+}
+
+function mobileNav(view) {
+    if (view === 'search') {
+        const input = document.getElementById('mobile-search-input');
+        if (input) {
+            input.focus();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            const mainView = document.getElementById('main-view');
+            if (mainView) mainView.scrollTop = 0;
+        }
+        return;
+    }
+    router.go(view);
+    // Update mobile bottom nav active state
+    document.querySelectorAll('#mobile-bottom-nav .mobile-nav-btn').forEach(btn => btn.classList.remove('active'));
+    const viewMap = { 'home': 0, 'trending': 1, 'albums': 2, 'playlists': 3 };
+    const idx = viewMap[view];
+    const btns = document.querySelectorAll('#mobile-bottom-nav .mobile-nav-btn');
+    if (idx !== undefined && btns[idx]) btns[idx].classList.add('active');
+}
+
+// ============================================
 // INITIALIZATION
 // ============================================
 async function init() {
