@@ -61,16 +61,19 @@
             85%, 100% { transform: translateX(var(--scroll-dist)); }
         }
 
-        /* --- Unified Song Pill --- */
+        /* --- Unified Song Pill (Matches Now Playing perfectly) --- */
         .song-pill {
-            display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem;
-            border-radius: 0.75rem; cursor: pointer; transition: background 0.2s, transform 0.2s; user-select: none;
-            border: 1px solid transparent;
+            display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem; padding-right: 1rem;
+            background: rgba(18, 18, 18, 0.9);
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem; cursor: pointer; transition: border-color 0.2s; user-select: none;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
         }
-        .song-pill:hover { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.05); }
-        .song-pill img { width: 2.5rem; height: 2.5rem; border-radius: 0.5rem; object-fit: cover; flex-shrink: 0; }
+        .song-pill:hover { border-color: rgba(255, 255, 255, 0.3); }
+        .song-pill img { width: 3rem; height: 3rem; border-radius: 0.75rem; object-fit: cover; flex-shrink: 0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.1); }
         .song-pill-info { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
-        
+
         /* --- Horizontal Scroll Logic --- */
         .horizontal-scroll {
             display: flex; gap: 1rem; overflow-x: auto; padding-bottom: 1rem;
@@ -82,13 +85,19 @@
         @media (min-width: 768px) { .scroll-card { flex-basis: calc((100% - (4 * 1rem)) / 4.5); } }
         @media (min-width: 1024px) { .scroll-card { flex-basis: calc((100% - (6 * 1rem)) / 6.5); } }
 
-        /* --- Global Edge Blurs (Fixed Position) --- */
-        .global-blur-edge {
-            position: fixed; top: 80px; bottom: 100px; width: 32px; z-index: 30; pointer-events: none;
+        /* --- Local Row Blurs --- */
+        .row-blur-left {
+            position: absolute; left: 0; top: 0; bottom: 16px; width: 48px; z-index: 10; pointer-events: none;
             backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            mask-image: linear-gradient(to right, black 20%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to right, black 20%, transparent 100%);
         }
-        .blur-left { left: 0; mask-image: linear-gradient(to right, black 20%, transparent 100%); -webkit-mask-image: linear-gradient(to right, black 20%, transparent 100%); }
-        .blur-right { right: 0; mask-image: linear-gradient(to left, black 20%, transparent 100%); -webkit-mask-image: linear-gradient(to left, black 20%, transparent 100%); }
+        .row-blur-right {
+            position: absolute; right: 0; top: 0; bottom: 16px; width: 48px; z-index: 10; pointer-events: none;
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            mask-image: linear-gradient(to left, black 20%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to left, black 20%, transparent 100%);
+        }
 
         /* --- Search Bar & Smooth Dropdown --- */
         .search-input {
@@ -104,10 +113,11 @@
             pointer-events: none; z-index: 100; visibility: hidden;
         }
         .search-blur-bg {
-            inset: 0; border-radius: 2rem; position: absolute; background: transparent;
+            inset: 0; border-radius: 2rem; position: absolute; background: rgba(10, 10, 10, 0.6);
             backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); pointer-events: none;
             mask-image: radial-gradient(ellipse at top, black 50%, transparent 90%);
             -webkit-mask-image: radial-gradient(ellipse at top, black 50%, transparent 90%);
+            opacity: 0; transition: opacity 0.3s;
         }
         .search-results-content {
             position: relative; z-index: 10; background: transparent; border-radius: 1.5rem;
@@ -115,13 +125,13 @@
             opacity: 0; transform: translateY(-10px); transition: all 0.3s ease;
         }
         .search-dropdown-wrapper.active { pointer-events: auto; visibility: visible; }
-        .search-dropdown-wrapper.active .search-results-content { opacity: 1; transform: translateY(0); padding: 0.5rem; background: rgba(15,15,15,0.8); border: 1px solid rgba(255,255,255,0.05); }
+        .search-dropdown-wrapper.active .search-blur-bg { opacity: 1; }
+        .search-dropdown-wrapper.active .search-results-content { opacity: 1; transform: translateY(0); padding: 0.5rem; }
 
         /* --- Player Components --- */
         #seek-bar-container { position: relative; width: 100%; height: 60px; display: flex; align-items: center; justify-content: center; transition: opacity 0.3s; touch-action: none; }
         #seek-bar-container.disabled { opacity: 0.3; pointer-events: none; }
         
-        /* Precision Seekbar Track & Tip Centering */
         #seek-bar-track { position: absolute; height: 2px; width: 100%; background-color: rgba(255, 255, 255, 0.15); border-radius: 3px; top: 50%; transform: translateY(-50%); clip-path: inset(0 0 0 0%); transition: height 0.2s; pointer-events: none; }
         #visualizer-canvas { position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; clip-path: inset(0 100% 0 0); }
         
@@ -130,12 +140,11 @@
             background: transparent; outline: none; margin: 0; padding: 0; z-index: 2; cursor: pointer;
             height: 20px; top: 50%; transform: translateY(-50%);
         }
-        /* Hidden webkit track forces perfect mathematical centering of thumb */
         input[type="range"]#seek-bar::-webkit-slider-runnable-track { width: 100%; height: 2px; background: transparent; }
         input[type="range"]#seek-bar::-webkit-slider-thumb { 
             -webkit-appearance: none; appearance: none; width: 12px; height: 12px; background: #fff; 
             border-radius: 50%; cursor: pointer; box-shadow: 0 0 10px rgba(0,0,0,0.5); transition: transform 0.1s; 
-            margin-top: -5px; /* Centers cleanly on the pseudo track */
+            margin-top: -5px; 
         }
         input[type="range"]#seek-bar:disabled::-webkit-slider-thumb { display: none; }
         input[type="range"]#seek-bar::-webkit-slider-thumb:hover { transform: scale(1.5); }
@@ -156,34 +165,35 @@
             -webkit-mask-image: radial-gradient(ellipse at center bottom, black 40%, transparent 80%);
         }
         
+        #player-active-area { position: relative; width: 100%; display: flex; flex-direction: column; z-index: 20; }
+        
         #queue-expandable-area {
             transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
             max-height: 0; opacity: 0; overflow: hidden; width: 100%; display: flex; flex-direction: column;
         }
 
+        #queue-preview-slot { 
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease; 
+            max-height: 0; opacity: 0; overflow: hidden; width: 100%; 
+        }
+
         /* 10-Second Auto-Preview State */
         #queue-wrapper.preview-expanded #queue-blur-bg { opacity: 1; }
-        #queue-wrapper.preview-expanded #queue-expandable-area { max-height: 70px; opacity: 1; pointer-events: none; }
-        #queue-wrapper.preview-expanded #queue-preview-slot { opacity: 1; position: relative; }
-        #queue-wrapper.preview-expanded #queue-full-content { opacity: 0; position: absolute; pointer-events: none; }
+        #queue-wrapper.preview-expanded #queue-preview-slot { max-height: 100px; opacity: 1; margin-top: 0.5rem; }
         
         /* Full Expanded State */
         #queue-wrapper.queue-expanded #queue-blur-bg { opacity: 1; }
         #queue-wrapper.queue-expanded #queue-expandable-area { max-height: 500px; opacity: 1; pointer-events: auto; }
-        #queue-wrapper.queue-expanded #queue-preview-slot { opacity: 0; position: absolute; pointer-events: none; }
+        #queue-wrapper.queue-expanded #btn-expand-queue { transform: rotate(180deg); color: white; opacity: 1; width: 2rem; }
+
+        /* Seamless Morph Swap Animation */
+        #queue-wrapper.track-swap-out #info-island { transform: translateY(-20px); opacity: 0; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        #queue-wrapper.track-swap-out #up-next-label { opacity: 0; transition: opacity 0.2s; }
+        #queue-wrapper.track-swap-out #queue-preview-pill { transform: translateY(-70px); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+
+        #queue-full-content { opacity: 0; transition: opacity 0.3s; pointer-events: none; display: flex; flex-direction: column; flex: 1; min-height: 0; }
         #queue-wrapper.queue-expanded #queue-full-content { opacity: 1; position: relative; pointer-events: auto; transition-delay: 0.1s; }
-        #queue-wrapper.queue-expanded #btn-expand-queue { transform: rotate(180deg); color: white; }
-
-        /* Track Swap Out Animation (At 0 seconds) */
-        #queue-wrapper.track-swap-out #info-island {
-            transform: translateY(-40px) scale(0.95); opacity: 0; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        #queue-wrapper.track-swap-out #queue-preview-slot {
-            transform: translateY(-60px); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        #queue-full-content { opacity: 0; transition: opacity 0.3s; pointer-events: none; display: flex; flex-direction: column; flex: 1; min-height: 0;}
-        #queue-preview-slot { opacity: 0; position: absolute; width: 100%; transition: opacity 0.3s; }
+        #queue-tabs { position: relative; z-index: 20; }
 
         /* Modal Overlay */
         #playlist-modal, #playlist-selector-modal { transition: opacity 0.3s ease; }
@@ -196,11 +206,7 @@
     <!-- Dynamic Playing Background -->
     <div id="background-playing"></div>
 
-    <!-- Global Edge Blurs for Horizontal Scrolling -->
-    <div class="global-blur-edge blur-left"></div>
-    <div class="global-blur-edge blur-right"></div>
-
-    <!-- MODALS -->
+    <!-- PLAYLIST MODALS -->
     <div id="playlist-modal" class="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm hidden">
         <div class="glass-panel p-6 rounded-2xl w-full max-w-sm shadow-2xl border border-white/10 transform transition-transform">
             <h3 class="text-xl font-bold text-white mb-4">Create Playlist</h3>
@@ -220,6 +226,7 @@
         </div>
     </div>
 
+    <!-- GLOBAL CONTEXT MENU -->
     <div id="context-menu" class="fixed z-[100] hidden bg-[#181818] border border-white/10 rounded-xl shadow-2xl overflow-hidden py-1 w-48 text-sm">
         <div id="cm-song-options">
             <button id="cm-play-next" class="w-full text-left px-4 py-2 hover:bg-white/10 text-white flex items-center gap-2 transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/></svg> Play Next</button>
@@ -271,24 +278,24 @@
         
         <!-- ================= HOME VIEW ================= -->
         <div id="view-home">
-            <section id="section-trending" class="mb-12 hidden">
+            <section id="section-trending" class="mb-12 hidden relative">
                 <h2 class="text-2xl font-bold text-white mb-6 px-8">Trending Right Now</h2>
-                <div id="trending-grid" class="horizontal-scroll"></div>
+                <div class="row-blur-left"></div><div id="trending-grid" class="horizontal-scroll"></div><div class="row-blur-right"></div>
             </section>
 
-            <section id="section-quick-picks" class="mb-12 hidden">
+            <section id="section-quick-picks" class="mb-12 hidden relative">
                 <h2 class="text-2xl font-bold text-white mb-6 px-8">Quick Picks For You</h2>
-                <div id="quick-picks-grid" class="horizontal-scroll"></div>
+                <div class="row-blur-left"></div><div id="quick-picks-grid" class="horizontal-scroll"></div><div class="row-blur-right"></div>
             </section>
 
-            <section id="section-recent" class="mb-12 hidden">
+            <section id="section-recent" class="mb-12 hidden relative">
                 <h2 class="text-2xl font-bold text-white mb-6 px-8">Recently Played</h2>
-                <div id="recent-grid" class="horizontal-scroll"></div>
+                <div class="row-blur-left"></div><div id="recent-grid" class="horizontal-scroll"></div><div class="row-blur-right"></div>
             </section>
 
-            <section id="section-playlists" class="mb-12">
+            <section id="section-playlists" class="mb-12 relative">
                 <h2 class="text-2xl font-bold text-white mb-6 px-8">Your Library</h2>
-                <div id="playlists-grid" class="horizontal-scroll items-stretch"></div>
+                <div class="row-blur-left"></div><div id="playlists-grid" class="horizontal-scroll items-stretch"></div><div class="row-blur-right"></div>
             </section>
         </div>
 
@@ -304,17 +311,17 @@
                     </div>
                     <div class="lg:col-span-3 relative z-10">
                         <h3 class="text-xl font-bold text-gray-300 mb-4">Songs</h3>
-                        <div id="search-songs-list" class="flex flex-col gap-3"></div>
+                        <div id="search-songs-list" class="flex flex-col gap-2"></div>
                     </div>
                 </div>
 
-                <div class="mb-12">
+                <div class="mb-12 relative">
                     <h3 class="text-xl font-bold text-gray-300 mb-4 px-8">Albums</h3>
-                    <div id="search-albums-grid" class="horizontal-scroll"></div>
+                    <div class="row-blur-left" style="top: 40px"></div><div id="search-albums-grid" class="horizontal-scroll"></div><div class="row-blur-right" style="top: 40px"></div>
                 </div>
-                <div class="mb-12">
+                <div class="mb-12 relative">
                     <h3 class="text-xl font-bold text-gray-300 mb-4 px-8">Artists</h3>
-                    <div id="search-artists-grid" class="horizontal-scroll"></div>
+                    <div class="row-blur-left" style="top: 40px"></div><div id="search-artists-grid" class="horizontal-scroll"></div><div class="row-blur-right" style="top: 40px"></div>
                 </div>
             </div>
         </div>
@@ -331,7 +338,7 @@
                             <!-- Injected by JS -->
                         </div>
                         <div class="w-full flex flex-col min-w-0">
-                            <div class="marquee-container mb-2 w-full"><h2 class="text-4xl font-bold text-white marquee-text" id="playlist-view-title">Name</h2></div>
+                            <div class="marquee-container mb-2 w-full"><h2 class="text-4xl font-bold text-white marquee-text font-bold" id="playlist-view-title">Name</h2></div>
                             <p class="text-gray-400 mb-6 text-sm" id="playlist-view-count">0 tracks</p>
                             <button id="playlist-play-all" class="bg-green-500 text-black px-8 py-3 rounded-full font-bold hover:scale-105 transition shadow-lg shadow-green-500/30 flex items-center justify-center gap-2 w-full max-w-xs mx-auto md:mx-0">
                                 <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> Play All
@@ -350,61 +357,58 @@
     <!-- PLAYER FOOTER STACK -->
     <div id="player-footer" class="fixed bottom-6 left-6 right-6 z-50 flex flex-col items-end pointer-events-none gap-2 translate-y-[150%] opacity-0 transition-all duration-700 ease-out">
         
-        <!-- Queue Anchor (Builds UPWARDS from behind the player bar) -->
+        <!-- Queue Anchor -->
         <div class="relative w-72 md:w-80 flex-shrink-0 pointer-events-none h-0 z-[40]">
-            
             <div id="queue-wrapper" class="absolute bottom-0 right-0 w-full flex flex-col z-[40]">
                 
                 <div id="queue-blur-bg" class="liquid-blur-fade"></div>
 
-                <!-- 1. TOP ITEM: Current Song Info Island -->
-                <div id="info-island" class="relative z-20 glass-panel rounded-2xl p-2 pr-4 flex items-center shadow-2xl w-full border border-white/10 transition-colors order-1 bg-[#121212]/90 pointer-events-auto hover-pause group">
-                    
-                    <!-- Clean Expand Arrow that reveals on hover (Zero disruption to padding layout) -->
-                    <button class="w-0 opacity-0 overflow-hidden text-gray-400 hover:text-white transition-all duration-300 ease-in-out group-hover:w-8 group-hover:opacity-100 flex items-center justify-center flex-shrink-0 pl-1" id="btn-expand-queue" onclick="ui.toggleQueue()">
-                        <svg class="w-5 h-5 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
-                    </button>
+                <!-- Active Area containing Now Playing and Up Next Morph Slot -->
+                <div id="player-active-area" class="order-1 w-full pointer-events-auto relative z-20">
+                    <!-- 1. TOP ITEM: Current Song Info Island -->
+                    <div id="info-island" class="glass-panel rounded-2xl p-2 pr-4 flex items-center shadow-2xl w-full border border-white/10 bg-[#121212]/90 transition-all duration-400 group hover-pause">
+                        
+                        <button class="w-0 opacity-0 overflow-hidden text-gray-400 hover:text-white transition-all duration-300 ease-in-out group-hover:w-8 group-hover:opacity-100 flex items-center justify-center flex-shrink-0 pl-1" id="btn-expand-queue" onclick="ui.toggleQueue()">
+                            <svg class="w-5 h-5 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
+                        </button>
 
-                    <div id="album-art-wrapper" class="relative w-12 h-12 flex-shrink-0 cursor-pointer ml-1" ondblclick="player.toggleLike()">
-                        <div id="album-art-glow"></div>
-                        <img id="curr-art-img" src="https://placehold.co/300/333/fff?text=Music" class="w-full h-full rounded-xl object-cover border border-white/20" crossorigin="anonymous">
+                        <div id="album-art-wrapper" class="relative w-12 h-12 flex-shrink-0 cursor-pointer rounded-xl overflow-hidden shadow-md ml-1" ondblclick="player.toggleLike()">
+                            <div id="album-art-glow"></div>
+                            <img id="curr-art-img" src="https://placehold.co/300/333/fff?text=Music" class="w-full h-full object-cover border border-white/20" crossorigin="anonymous">
+                        </div>
+
+                        <div class="flex-1 min-w-0 flex flex-col justify-center cursor-pointer ml-3" ondblclick="player.toggleLike()">
+                            <div class="marquee-container w-full"><h3 id="p-title" class="font-bold text-white text-sm marquee-text">Not Playing</h3></div>
+                            <div class="marquee-container w-full mt-0.5"><p id="p-artist" class="text-xs text-gray-400 marquee-text">Select song</p></div>
+                        </div>
+                        <button onclick="player.toggleLike(); event.stopPropagation();" id="p-like-btn" class="text-gray-400 hover:text-red-500 transition disabled:opacity-30 flex-shrink-0 ml-2" disabled>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                        </button>
                     </div>
-                    <div class="flex-1 min-w-0 flex flex-col justify-center cursor-pointer ml-3" ondblclick="player.toggleLike()">
-                        <div class="marquee-container w-full"><h3 id="p-title" class="font-bold text-white text-sm marquee-text">Not Playing</h3></div>
-                        <div class="marquee-container w-full mt-0.5"><p id="p-artist" class="text-xs text-gray-400 marquee-text">Select song</p></div>
+
+                    <!-- Dedicated 10s Preview Slot for Morphing -->
+                    <div id="queue-preview-slot" class="w-full pointer-events-none">
+                        <div id="up-next-label" class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1 pl-2 drop-shadow-md transition-opacity duration-400">Up Next</div>
+                        <div id="queue-preview-pill" class="glass-panel rounded-2xl p-2 pr-4 flex items-center shadow-2xl w-full border border-white/10 bg-[#121212]/90 transition-all duration-400"></div>
                     </div>
-                    <button onclick="player.toggleLike(); event.stopPropagation();" id="p-like-btn" class="text-gray-400 hover:text-red-500 transition disabled:opacity-30 flex-shrink-0 ml-2" disabled>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                    </button>
                 </div>
 
                 <!-- 2. BOTTOM ITEM: Expanding Lists Container -->
                 <div id="queue-expandable-area" class="order-2">
-                    
-                    <!-- Dedicated 10s Preview Slot -->
-                    <div id="queue-preview-slot" class="px-2 pt-2">
-                        <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1 pl-2 drop-shadow-md">Up Next</div>
-                        <div id="queue-preview-pill" class="song-pill glass-panel mb-1 hover-pause"></div>
-                    </div>
-
-                    <!-- Full Queue Content -->
                     <div id="queue-full-content">
-                        <div id="queue-tabs" class="flex items-center gap-4 px-4 pt-4 pb-2 border-b border-white/5 flex-shrink-0">
+                        <div id="queue-tabs" class="flex items-center gap-4 px-4 pt-4 pb-2 border-b border-white/5 flex-shrink-0 relative z-20">
                             <button class="text-xs font-bold uppercase tracking-wider text-white" id="tab-upnext" onclick="ui.switchQueueTab('upnext')">Up Next</button>
                             <button class="text-xs font-bold uppercase tracking-wider text-gray-500 hover:text-gray-300" id="tab-history" onclick="ui.switchQueueTab('history')">History</button>
                         </div>
                         <div class="pt-2 pb-1 overflow-y-auto custom-scrollbar flex flex-col gap-1 flex-1 px-2" id="queue-list"></div>
                         <div class="pt-2 pb-1 overflow-y-auto custom-scrollbar flex flex-col gap-1 flex-1 px-2 hidden" id="history-list"></div>
                     </div>
-
                 </div>
             </div>
         </div>
 
         <!-- MAIN PLAYER PILL -->
-        <!-- Placed below to visually overlap the queue dropping from above -->
         <div class="w-full glass-panel rounded-2xl shadow-2xl p-2 px-4 flex items-center gap-4 h-[72px] pointer-events-auto relative z-[50]" id="player-card">
-            
             <div class="flex items-center gap-3 flex-shrink-0">
                 <button class="text-gray-400 hover:text-white disabled:opacity-30 transition" onclick="player.toggleShuffle()" id="btn-shuffle" disabled>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>
@@ -412,12 +416,10 @@
                 <button class="text-gray-300 hover:text-white disabled:opacity-30 flex-shrink-0" onclick="player.prev()" id="btn-prev" disabled>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="19 20 9 12 19 4 19 20"></polygon><line x1="5" y1="19" x2="5" y2="5"></line></svg>
                 </button>
-                
                 <button onclick="player.togglePlay()" id="btn-play" class="w-12 h-12 bg-white rounded-full flex-shrink-0 flex items-center justify-center text-black hover:scale-105 transition shadow-lg shadow-white/20 disabled:bg-gray-500 disabled:scale-100 disabled:cursor-not-allowed mx-1" disabled>
                     <span id="icon-play" class="flex ml-1"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>
                     <span id="icon-pause" class="hidden"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg></span>
                 </button>
-
                 <button class="text-gray-300 hover:text-white disabled:opacity-30 flex-shrink-0" onclick="player.next()" id="btn-next" disabled>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19"></line></svg>
                 </button>
@@ -425,7 +427,6 @@
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
                 </button>
             </div>
-
             <div class="flex-1 h-full relative flex items-center group px-4 border-l border-white/10 ml-2">
                 <div id="seek-bar-container" class="w-full h-[60px] disabled relative">
                     <div id="seek-tooltip">0:00</div>
@@ -434,7 +435,6 @@
                     <input type="range" id="seek-bar" value="0" step="0.1" disabled>
                 </div>
             </div>
-            
             <div class="w-24 hidden md:block border-l border-white/10 pl-4 flex-shrink-0">
                 <input type="range" min="0" max="1" step="0.05" oninput="player.setVolume(this.value)" class="w-full h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer">
             </div>
@@ -445,41 +445,35 @@
 
     <script>
         // ============================================
-        // UTILS & JS MARQUEE
+        // UTILS & JS MARQUEE ENGINE
         // ============================================
         const utils = {
             decodeHtml: (html) => {
                 if(!html) return '';
-                const txt = document.createElement("textarea");
-                txt.innerHTML = html;
-                return txt.value;
+                const txt = document.createElement("textarea"); txt.innerHTML = html; return txt.value;
             },
             escapeHtml: (text) => text ? text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;") : ''
         };
 
         const updateMarquees = () => {
             document.querySelectorAll('.marquee-container').forEach(container => {
+                if(container.offsetParent === null) return;
                 const text = container.querySelector('.marquee-text');
                 if(!text) return;
                 
-                // Reset state to measure raw overflow
-                text.style.animation = 'none';
-                text.classList.remove('is-overflowing');
-                container.classList.remove('is-overflowing');
+                if(text.classList.contains('is-overflowing') && text.dataset.scrollWidth === String(text.scrollWidth)) return;
+
+                text.style.animation = 'none'; text.classList.remove('is-overflowing'); container.classList.remove('is-overflowing');
                 
-                // Check if content is wider than container (with 2px buffer)
                 if (text.scrollWidth > container.clientWidth + 2) {
                     const dist = text.scrollWidth - container.clientWidth;
-                    const dur = Math.max(3, dist / 15); // Dynamic speed scaling based on string length
-                    
+                    const dur = Math.max(3, dist / 15);
                     text.style.setProperty('--scroll-dist', `-${dist}px`);
                     text.style.setProperty('--scroll-dur', `${dur}s`);
+                    text.dataset.scrollWidth = text.scrollWidth;
                     
-                    // Force reflow and reapply
-                    void text.offsetWidth;
-                    text.style.animation = '';
-                    text.classList.add('is-overflowing');
-                    container.classList.add('is-overflowing');
+                    void text.offsetWidth; // Trigger reflow
+                    text.style.animation = ''; text.classList.add('is-overflowing'); container.classList.add('is-overflowing');
                 }
             });
         };
@@ -570,10 +564,8 @@
             normalizeSong: (song) => {
                 if (!song) return null; let bestUrl = null; const dUrls = song.downloadUrl || [];
                 for (let i = dUrls.length - 1; i >= 0; i--) { if (dUrls[i]?.url) { bestUrl = dUrls[i].url; break; } }
-                
                 const rawName = song.name || song.title || 'Unknown';
                 const rawArtist = song.artists?.primary?.map(a => a.name).join(', ') || song.primaryArtists || 'Unknown Artist';
-
                 return {
                     id: song.id, name: utils.decodeHtml(rawName), artist: utils.decodeHtml(rawArtist),
                     img: song.image?.[2]?.url || song.image?.[1]?.url || 'https://placehold.co/300/333/fff?text=Music',
@@ -620,10 +612,8 @@
                         
                         audio.src = state.currentTrack.url;
                         audio.addEventListener('loadedmetadata', function onMetaLoad() {
-                            audio.currentTime = data.time || 0;
-                            currentProgress = audio.duration ? audio.currentTime / audio.duration : 0;
-                            document.getElementById('seek-bar').value = data.time || 0;
-                            audio.removeEventListener('loadedmetadata', onMetaLoad);
+                            audio.currentTime = data.time || 0; currentProgress = audio.duration ? audio.currentTime / audio.duration : 0;
+                            document.getElementById('seek-bar').value = data.time || 0; audio.removeEventListener('loadedmetadata', onMetaLoad);
                         });
                     }
                 } catch(e) {}
@@ -676,7 +666,7 @@
 
         window.playSongById = (storeId) => {
             const song = songStore.get(storeId);
-            if (song) { state.queue = [song]; state.userQueue = []; state.idx = 0; player.playDirect(song); }
+            if (song) { player.playDirect(song); } // Just interrupt current, leave forward queue intact
         };
 
         window.playContext = async (type, id) => {
@@ -686,9 +676,7 @@
                 if(type === 'album') songs = (data.data?.songs || []).map(jiosaavnAPI.normalizeSong).filter(Boolean);
                 else if (type === 'artist') songs = (data.data?.topSongs || data.data?.songs || []).map(jiosaavnAPI.normalizeSong).filter(Boolean);
                 
-                if (songs.length > 0) {
-                    state.queue = songs; state.userQueue = []; state.idx = 0; player.playDirect(songs[0]);
-                }
+                if (songs.length > 0) { state.queue = songs; state.userQueue = []; state.idx = 0; player.playDirect(songs[0]); }
             } catch(e) {}
         };
 
@@ -697,7 +685,6 @@
                 if (!track || isPlaybackPending) return;
                 isPlaybackPending = true;
                 
-                // Clear state styling if coming from an auto-transition
                 state.upNextTriggered = false; 
                 document.getElementById('queue-wrapper').classList.remove('preview-expanded', 'track-swap-out');
                 
@@ -712,8 +699,7 @@
                     audio.src = playUrl; state.currentTrack = track; state.loaded = true; 
                     
                     document.getElementById('player-footer').classList.remove('translate-y-[150%]', 'opacity-0');
-                    ui.enableControls();
-                    await audio.play(); 
+                    ui.enableControls(); await audio.play(); 
                     
                     if (audioContext && audioContext.state === 'suspended') audioContext.resume();
                     if (!isAudioContextInitialized) setupAudioContext();
@@ -765,7 +751,6 @@
             addToQueue: (song) => { state.userQueue.push(song); ui.renderQueue(); persist.save(); }
         };
 
-        // External Audio Event Sync (Handles MediaSession & Hardware buttons)
         audio.addEventListener('play', () => { 
             state.playing = true; ui.updatePlayBtn(); persist.save();
             if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
@@ -956,24 +941,34 @@
                     </div>
                     ${menuBtn}
                     <div class="w-full min-w-0 flex-1">
-                        <div class="marquee-container"><h3 class="font-bold text-white text-sm marquee-text">${utils.escapeHtml(item.name)}</h3></div>
-                        <div class="marquee-container mt-1"><p class="text-xs text-gray-400 marquee-text">${utils.escapeHtml(item.artist)}</p></div>
+                        <div class="marquee-container w-full"><h3 class="font-bold text-white text-sm marquee-text">${utils.escapeHtml(item.name)}</h3></div>
+                        <div class="marquee-container w-full mt-1"><p class="text-xs text-gray-400 marquee-text">${utils.escapeHtml(item.artist)}</p></div>
                     </div>
                 </div>`;
             },
             createSongPillInner: (song) => {
                 return `
-                    <img src="${song.img}" onerror="this.src='https://placehold.co/40'" class="w-10 h-10 rounded-lg object-cover flex-shrink-0">
-                    <div class="song-pill-info min-w-0">
-                        <div class="marquee-container"><div class="song-pill-title marquee-text">${utils.escapeHtml(song.name)}</div></div>
-                        <div class="marquee-container mt-0.5"><div class="song-pill-artist marquee-text">${utils.escapeHtml(song.artist)}</div></div>
+                    <div class="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 shadow-md border border-white/20 ml-1">
+                        <img src="${song.img}" onerror="this.src='https://placehold.co/40'" class="w-full h-full object-cover">
+                    </div>
+                    <div class="flex-1 min-w-0 flex flex-col justify-center ml-3">
+                        <div class="marquee-container w-full"><div class="font-bold text-white text-sm marquee-text">${utils.escapeHtml(song.name)}</div></div>
+                        <div class="marquee-container w-full mt-0.5"><div class="text-xs text-gray-400 marquee-text">${utils.escapeHtml(song.artist)}</div></div>
                     </div>
                 `;
             },
-            createSongPill: (song, clickHandlerStr) => {
+            createSongPill: (song, clickHandlerStr, context = 'queue') => {
+                const storeId = songStore.add(song);
+                // Unified pill design mimicking Now Playing exactly.
+                const hoverBtnVis = context === 'quicksearch' ? 'opacity-100' : 'opacity-0 group-hover:opacity-100';
+                
                 return `
-                <div class="song-pill glass-panel hover-pause" onclick="${clickHandlerStr}" ondblclick="player.likeSong('${song.id}')">
+                <div class="glass-panel rounded-2xl p-2 pr-4 flex items-center shadow-2xl w-full border border-white/10 transition-colors bg-[#121212]/90 hover-pause group cursor-pointer" onclick="${clickHandlerStr}" ondblclick="player.likeSong('${song.id}')">
                     ${ui.createSongPillInner(song)}
+                    <div class="flex items-center ${hoverBtnVis} transition-opacity duration-200 mr-1">
+                        <button class="p-1.5 text-gray-400 hover:text-white rounded-full hover:bg-white/10 transition" title="Play Next" onclick="event.stopPropagation(); player.addNext(songStore.get('${storeId}'))"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/></svg></button>
+                        <button class="p-1.5 text-gray-400 hover:text-white rounded-full hover:bg-white/10 transition" title="Add to Queue" onclick="event.stopPropagation(); player.addToQueue(songStore.get('${storeId}'))"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h10m-10 4h6"/></svg></button>
+                    </div>
                 </div>`;
             },
             createListRow: (song, contextPlaylistName = null) => {
@@ -987,8 +982,8 @@
                         <div class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition"><svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
                     </div>
                     <div class="flex-1 min-w-0 cursor-pointer flex flex-col justify-center" onclick="playSongById('${storeId}')">
-                        <div class="marquee-container"><h4 class="text-white font-medium text-sm marquee-text">${utils.escapeHtml(song.name)}</h4></div>
-                        <div class="marquee-container mt-0.5"><p class="text-gray-400 text-xs marquee-text">${utils.escapeHtml(song.artist)}</p></div>
+                        <div class="marquee-container w-full"><h4 class="text-white font-medium text-sm marquee-text">${utils.escapeHtml(song.name)}</h4></div>
+                        <div class="marquee-container w-full mt-0.5"><p class="text-gray-400 text-xs marquee-text">${utils.escapeHtml(song.artist)}</p></div>
                     </div>
                     <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition mr-2">
                         <button class="p-2 text-gray-400 hover:text-white rounded-full hover:bg-white/10" title="Play Next" onclick="player.addNext(songStore.get('${storeId}'))"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/></svg></button>
@@ -1007,9 +1002,8 @@
                 document.getElementById('p-artist').textContent = track.artist;
                 document.getElementById('curr-art-img').src = track.img || "https://placehold.co/300/333/fff?text=Music";
                 const likeBtn = document.getElementById('p-like-btn');
-                likeBtn.className = state.likedIds.includes(track.id) ? 'text-red-500 transition flex-shrink-0 mr-2' : 'text-gray-400 hover:text-red-500 transition flex-shrink-0 mr-2';
+                likeBtn.className = state.likedIds.includes(track.id) ? 'text-red-500 transition flex-shrink-0 ml-2' : 'text-gray-400 hover:text-red-500 transition flex-shrink-0 ml-2';
 
-                // Media Session API Integration
                 if ('mediaSession' in navigator) {
                     navigator.mediaSession.metadata = new MediaMetadata({
                         title: track.name, artist: track.artist,
@@ -1033,7 +1027,7 @@
                 const wrap = document.getElementById('queue-wrapper');
                 if (state.queueExpanded) {
                     wrap.classList.add('queue-expanded');
-                    ui.switchQueueTab(state.activeQueueTab); // Keep last viewed tab
+                    ui.switchQueueTab(state.activeQueueTab);
                 } else {
                     wrap.classList.remove('queue-expanded');
                 }
@@ -1057,12 +1051,12 @@
                 const listEl = document.getElementById('queue-list');
                 let html = '';
                 if (state.userQueue.length > 0) {
-                    html += `<div class="text-[10px] text-white font-bold uppercase tracking-wider mb-1 pl-2 mt-1">Queue</div>`;
+                    html += `<div class="text-[10px] text-white font-bold uppercase tracking-wider mb-1 pl-2 mt-1 drop-shadow-md">Queue</div>`;
                     html += state.userQueue.map(song => ui.createSongPill(song, `playSongById('${songStore.add(song)}')`)).join('');
                 }
                 const upcoming = state.shuffle ? state.queue.filter((_, i) => i !== state.idx).slice(0, 10) : state.queue.slice(state.idx + 1, state.idx + 11);
                 if (upcoming.length > 0) {
-                    html += `<div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1 pl-2 mt-3">Autoplay</div>`;
+                    html += `<div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1 pl-2 mt-3 drop-shadow-md">Autoplay</div>`;
                     html += upcoming.map(song => ui.createSongPill(song, `playSongById('${songStore.add(song)}')`)).join('');
                 }
                 listEl.innerHTML = html === '' ? '<div class="text-xs text-gray-500 p-2">Queue is empty</div>' : html;
@@ -1106,9 +1100,9 @@
                         const songs = await jiosaavnAPI.searchSongs(query, 4); 
                         if(songs.length === 0) { dropWrapper.classList.remove('active'); results.innerHTML = ''; return; }
                         
-                        results.innerHTML = '<div class="search-section-title">Songs</div>' + songs.map(song => {
+                        results.innerHTML = '<div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1 pl-2 drop-shadow-md">Songs</div>' + songs.map(song => {
                             const storeId = songStore.add(song);
-                            return ui.createSongPill(song, `playSongById('${storeId}'); document.getElementById('search-dropdown').classList.remove('active');`);
+                            return ui.createSongPill(song, `playSongById('${storeId}'); document.getElementById('search-dropdown').classList.remove('active');`, 'quicksearch');
                         }).join('');
                         updateMarquees();
                     }, 400);
@@ -1131,7 +1125,7 @@
 
                 const data = await jiosaavnAPI.searchAll(query);
                 document.getElementById('search-loading').classList.add('hidden'); document.getElementById('search-content').classList.remove('hidden');
-                if(!data.top) { document.getElementById('search-content').innerHTML = '<p class="text-gray-400 pl-6">No results found.</p>'; return; }
+                if(!data.top) { document.getElementById('search-content').innerHTML = '<p class="text-gray-400 pl-8">No results found.</p>'; return; }
 
                 const topStoreId = songStore.add(data.top);
                 document.getElementById('search-top-result').innerHTML = `
@@ -1188,7 +1182,7 @@
             },
             renderRecentlyPlayed: () => {
                 const grid = document.getElementById('recent-grid'); if(!grid) return;
-                if(state.playHistory.length === 0) { grid.innerHTML = '<p class="text-gray-500 pl-6">Play some songs to see them here.</p>'; return; }
+                if(state.playHistory.length === 0) { grid.innerHTML = '<p class="text-gray-500 pl-8">Play some songs to see them here.</p>'; return; }
                 grid.innerHTML = state.playHistory.map(song => ui.createCard(song)).join('');
                 updateMarquees();
             },
@@ -1204,7 +1198,7 @@
                     uniquePicks.sort(() => Math.random() - 0.5); const finalPicks = uniquePicks.slice(0, 16);
                     grid.innerHTML = finalPicks.map(song => ui.createCard(song)).join('');
                     updateMarquees();
-                } catch(e) { grid.innerHTML = '<p class="text-red-400 pl-6">Could not load Quick Picks.</p>'; }
+                } catch(e) { grid.innerHTML = '<p class="text-red-400 pl-8">Could not load Quick Picks.</p>'; }
             }
         };
 
@@ -1236,7 +1230,7 @@
 
                     if(Math.floor(audio.currentTime) % 5 === 0) persist.save();
 
-                    // Seamless 10s Preview Logic - pushes queue slot down
+                    // Morphing 10s Preview Logic 
                     const timeRemaining = audio.duration - audio.currentTime;
                     const hasNext = state.userQueue.length > 0 || (state.queue.length > 0 && state.idx < state.queue.length - 1);
                     const wrap = document.getElementById('queue-wrapper');
@@ -1247,18 +1241,19 @@
                             let nextTrack = state.userQueue.length > 0 ? state.userQueue[0] : (state.shuffle ? state.queue.filter((_, i) => i !== state.idx)[0] : state.queue[state.idx + 1]);
                             if (nextTrack) {
                                 document.getElementById('queue-preview-pill').innerHTML = ui.createSongPillInner(nextTrack);
+                                document.getElementById('queue-preview-pill').className = "glass-panel rounded-2xl p-2 pr-4 flex items-center shadow-2xl w-full border border-white/10 bg-[#121212]/90";
                                 wrap.classList.add('preview-expanded');
                                 updateMarquees();
                             }
                         }
-                    } else if (state.upNextTriggered) {
+                    } else if (state.upNextTriggered && timeRemaining > 10) {
                         state.upNextTriggered = false;
                         wrap.classList.remove('preview-expanded');
                     }
                 }
             });
             
-            // Swap out track transition
+            // Seamless Swap Out Track Animation
             audio.addEventListener('ended', () => {
                 const wrap = document.getElementById('queue-wrapper');
                 if(state.upNextTriggered && !state.queueExpanded) {
@@ -1266,7 +1261,7 @@
                     setTimeout(() => {
                         wrap.classList.remove('preview-expanded', 'track-swap-out');
                         if(state.repeat === 2) { audio.currentTime = 0; audio.play(); state.upNextTriggered = false; } else player.next();
-                    }, 300); // Wait for physical swap out CSS animation
+                    }, 400); // Wait for CSS swap out morph
                 } else {
                     wrap.classList.remove('preview-expanded', 'track-swap-out');
                     if(state.repeat === 2) { audio.currentTime = 0; audio.play(); state.upNextTriggered = false; } else player.next();
@@ -1292,7 +1287,6 @@
 
             ctxMenu.init(); searchManager.init(); persist.load(); homeView.init(); requestAnimationFrame(viz.render);
             
-            // Re-check marquees when window resizes
             window.addEventListener('resize', () => { updateMarquees(); });
         }
 
