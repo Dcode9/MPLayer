@@ -6,7 +6,7 @@
 const spotifyAuth = {
     // Spotify App Credentials (REPLACE WITH YOUR OWN)
     clientId: '8fba37005d964e2599ce567c69ee7f1d', // Replace with your Spotify Client ID
-    redirectUri: window.location.origin + window.location.pathname,
+    redirectUri: 'https://play.dverse.fun/home/index.html',
     scopes: [
         'playlist-read-private',
         'playlist-read-collaborative',
