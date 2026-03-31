@@ -2,20 +2,23 @@
 // ROUTER
 // ============================================
 const router = {
+    currentView: 'home', // Initialize with default view
     go: (view) => {
+        debugLog(`Router: Navigating to ${view}`);
+
         document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
         const target = document.getElementById('view-'+view);
         if(target) target.classList.add('active');
-        
+
         document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
         const btns = document.querySelectorAll('.nav-btn');
-        
+
         const viewMap = { 'home': 0, 'trending': 1, 'albums': 2, 'playlists': 3, 'album-detail': 2, 'search': -1 };
         const btnIdx = viewMap[view];
         if (btnIdx >= 0 && btns[btnIdx]) {
             btns[btnIdx].classList.add('active');
         }
-        
+
         if (view === 'trending' && !trendingView.loaded) {
             trendingView.load();
         }
@@ -23,12 +26,14 @@ const router = {
             albumsView.load();
         }
         if (view === 'playlists') {
+            debugLog('Playlists view activated');
             ui.renderLikedSongs();
             ui.renderQueue();
             playlistsView.load();
         }
 
         router.currentView = view;
+        debugLog(`Router: Current view set to ${router.currentView}`);
     }
 };
 
@@ -277,29 +282,55 @@ const playlistsView = {
     loaded: false,
 
     load: () => {
+        debugLog('playlistsView.load() called');
+        debugLog('Spotify auth status:', {
+            isDefined: typeof spotifyAuth !== 'undefined',
+            isAuthenticated: typeof spotifyAuth !== 'undefined' ? spotifyAuth.isAuthenticated : false,
+            hasToken: typeof spotifyAuth !== 'undefined' ? !!spotifyAuth.getAccessToken() : false
+        });
+
         if (typeof spotifyAuth !== 'undefined' && spotifyAuth.isAuthenticated) {
+            debugLog('User is authenticated, loading Spotify playlists...');
             playlistsView.loadSpotifyPlaylists();
+        } else {
+            debugLog('User is not authenticated with Spotify');
         }
     },
 
     loadSpotifyPlaylists: async () => {
         const container = document.getElementById('spotify-playlists-container');
-        if (!container) return;
+        if (!container) {
+            debugError('Spotify playlists container not found!');
+            return;
+        }
 
+        debugLog('Loading Spotify playlists...');
         container.innerHTML = '<div class="text-gray-400 text-sm">Loading Spotify playlists...</div>';
 
         try {
+            // Verify authentication
+            if (!spotifyAuth.isAuthenticated || !spotifyAuth.getAccessToken()) {
+                debugError('Not authenticated with Spotify');
+                container.innerHTML = '<p class="text-gray-400 text-sm">Please sign in with Spotify to see your playlists</p>';
+                return;
+            }
+
+            debugLog('Fetching user info...');
             // Fetch user info
             const user = await spotifyAPI.getCurrentUser();
             if (user) {
                 state.spotifyUser = user;
                 localStorage.setItem('spotify_user', JSON.stringify(user));
+                debugLog('User info fetched:', user.name);
             }
 
+            debugLog('Fetching playlists...');
             // Fetch playlists
             const playlists = await spotifyAPI.getAllPlaylists();
             state.spotifyPlaylists = playlists;
             localStorage.setItem('spotify_playlists', JSON.stringify(playlists));
+
+            debugLog(`Fetched ${playlists.length} playlists`);
 
             if (playlists.length === 0) {
                 container.innerHTML = '<p class="text-gray-400 text-sm">No playlists found</p>';
@@ -327,9 +358,26 @@ const playlistsView = {
                 </div>
             `;
 
+            debugLog('Playlists rendered successfully');
+
         } catch (error) {
             debugError('Error loading Spotify playlists:', error);
-            container.innerHTML = '<p class="text-gray-400 text-sm">Unable to load Spotify playlists</p>';
+
+            // Show specific error message
+            let errorMsg = 'Unable to load Spotify playlists';
+            if (error.message) {
+                if (error.message.includes('Not authenticated') || error.message.includes('session expired')) {
+                    errorMsg = 'Spotify session expired. Please sign in again.';
+                } else if (error.message.includes('network') || error.message.includes('fetch')) {
+                    errorMsg = 'Network error. Please check your connection.';
+                } else if (error.message.includes('401')) {
+                    errorMsg = 'Spotify session expired. Please sign in again.';
+                    spotifyAuth.logout();
+                }
+            }
+
+            container.innerHTML = `<p class="text-gray-400 text-sm">${errorMsg}</p>`;
+            errorHandler.show(errorMsg);
         }
     },
 
