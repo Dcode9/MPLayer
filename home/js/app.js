@@ -81,7 +81,7 @@ document.addEventListener('keydown', (e) => {
 // ============================================
 async function init() {
     debugLog('Initializing D\'Tunes Player...');
-    
+
     const vCanvas = document.getElementById('visualizer-canvas');
     visualizerCtx = vCanvas.getContext('2d');
     resizeVisualizer();
@@ -94,21 +94,27 @@ async function init() {
     // Load preferences
     preferences.load();
 
+    // Initialize Spotify authentication
+    if (typeof spotifyAuth !== 'undefined') {
+        spotifyAuth.init();
+        ui.updateSpotifyButton();
+    }
+
     // Initialize search
     searchManager.init();
 
     // Load homepage content from JioSaavn
     homeView.load();
-    
+
     // Initialize UI listeners
     ui.initListeners();
-    
+
     // Start visualizer
     viz.startLoop();
-    
+
     // Render liked songs
     ui.renderLikedSongs();
-    
+
     // Restore last played track metadata in player (without auto-playing)
     try {
         const lastTrack = JSON.parse(localStorage.getItem('lastPlayedTrack'));

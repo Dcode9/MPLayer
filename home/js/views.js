@@ -25,7 +25,10 @@ const router = {
         if (view === 'playlists') {
             ui.renderLikedSongs();
             ui.renderQueue();
+            playlistsView.load();
         }
+
+        router.currentView = view;
     }
 };
 
@@ -263,6 +266,127 @@ const albumsView = {
             player.setQueue(albumsView.currentAlbumSongs, 0);
         } else {
             errorHandler.show('No tracks to play');
+        }
+    }
+};
+
+// ============================================
+// PLAYLISTS VIEW (WITH SPOTIFY INTEGRATION)
+// ============================================
+const playlistsView = {
+    loaded: false,
+
+    load: () => {
+        if (typeof spotifyAuth !== 'undefined' && spotifyAuth.isAuthenticated) {
+            playlistsView.loadSpotifyPlaylists();
+        }
+    },
+
+    loadSpotifyPlaylists: async () => {
+        const container = document.getElementById('spotify-playlists-container');
+        if (!container) return;
+
+        container.innerHTML = '<div class="text-gray-400 text-sm">Loading Spotify playlists...</div>';
+
+        try {
+            // Fetch user info
+            const user = await spotifyAPI.getCurrentUser();
+            if (user) {
+                state.spotifyUser = user;
+                localStorage.setItem('spotify_user', JSON.stringify(user));
+            }
+
+            // Fetch playlists
+            const playlists = await spotifyAPI.getAllPlaylists();
+            state.spotifyPlaylists = playlists;
+            localStorage.setItem('spotify_playlists', JSON.stringify(playlists));
+
+            if (playlists.length === 0) {
+                container.innerHTML = '<p class="text-gray-400 text-sm">No playlists found</p>';
+                return;
+            }
+
+            // Render playlists
+            container.innerHTML = `
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                    ${playlists.map(playlist => `
+                        <div class="bg-white/5 hover:bg-white/10 p-4 rounded-xl cursor-pointer transition group" onclick="playlistsView.openSpotifyPlaylist('${playlist.id}')">
+                            <div class="relative aspect-square rounded-lg overflow-hidden mb-3 bg-gray-800">
+                                <img src="${playlist.img}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/300/333/fff?text=Playlist'">
+                                <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                                    <span class="bg-green-500 text-black p-3 rounded-full shadow-xl">
+                                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                    </span>
+                                </div>
+                            </div>
+                            <h3 class="font-bold text-white text-sm truncate mb-1">${searchManager.escapeHtml(playlist.name)}</h3>
+                            <p class="text-xs text-gray-400 truncate">${playlist.trackCount} tracks • ${searchManager.escapeHtml(playlist.owner)}</p>
+                            <span class="source-badge spotify text-xs mt-2 inline-block">Spotify</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+
+        } catch (error) {
+            debugError('Error loading Spotify playlists:', error);
+            container.innerHTML = '<p class="text-gray-400 text-sm">Unable to load Spotify playlists</p>';
+        }
+    },
+
+    openSpotifyPlaylist: async (playlistId) => {
+        const container = document.getElementById('spotify-playlists-container');
+        if (!container) return;
+
+        // Show loading overlay
+        const overlay = document.createElement('div');
+        overlay.id = 'playlist-loading-overlay';
+        overlay.className = 'fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[100]';
+        overlay.innerHTML = `
+            <div class="bg-black/80 backdrop-blur-xl border border-white/10 rounded-2xl p-8 max-w-md w-full mx-4">
+                <h3 class="text-xl font-bold text-white mb-4">Converting Playlist</h3>
+                <p class="text-gray-400 text-sm mb-4">Finding matching tracks on JioSaavn...</p>
+                <div class="mb-4">
+                    <div class="bg-gray-800 h-2 rounded-full overflow-hidden">
+                        <div id="convert-progress" class="bg-green-500 h-full transition-all" style="width: 0%"></div>
+                    </div>
+                </div>
+                <p class="text-gray-500 text-xs" id="convert-status">Starting...</p>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+
+        try {
+            // Convert Spotify playlist to JioSaavn tracks
+            const result = await spotifyAPI.convertPlaylistToJioSaavn(playlistId, (progress) => {
+                const progressBar = document.getElementById('convert-progress');
+                const statusText = document.getElementById('convert-status');
+
+                if (progressBar && statusText) {
+                    const percentage = Math.round((progress.current / progress.total) * 100);
+                    progressBar.style.width = `${percentage}%`;
+                    statusText.textContent = `Processing ${progress.current} of ${progress.total} tracks (${progress.matched} matched)`;
+                }
+            });
+
+            // Remove overlay
+            overlay.remove();
+
+            if (result.tracks.length === 0) {
+                errorHandler.show('Could not find any matching tracks on JioSaavn', 4000);
+                return;
+            }
+
+            // Play the converted tracks
+            player.setQueue(result.tracks, 0);
+
+            // Show success message
+            const matchRate = Math.round((result.matched / result.total) * 100);
+            errorHandler.show(`Successfully converted ${result.matched} of ${result.total} tracks (${matchRate}%)`, 5000);
+
+        } catch (error) {
+            debugError('Error converting Spotify playlist:', error);
+            overlay.remove();
+            errorHandler.show('Failed to convert playlist. Please try again.');
         }
     }
 };

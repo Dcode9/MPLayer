@@ -284,5 +284,17 @@ const ui = {
         const id = state.currentTrack.id;
         const btn = document.getElementById('p-like-btn');
         if(btn) btn.className = state.likedIds.includes(id) ? 'text-red-500 transition ml-2' : 'text-gray-400 hover:text-red-500 transition ml-2';
+    },
+    updateSpotifyButton: () => {
+        const signinBtn = document.getElementById('spotify-signin-btn');
+        const signoutBtn = document.getElementById('spotify-signout-btn');
+
+        if (typeof spotifyAuth !== 'undefined' && spotifyAuth.isAuthenticated) {
+            if (signinBtn) signinBtn.classList.add('hidden');
+            if (signoutBtn) signoutBtn.classList.remove('hidden');
+        } else {
+            if (signinBtn) signinBtn.classList.remove('hidden');
+            if (signoutBtn) signoutBtn.classList.add('hidden');
+        }
     }
 };

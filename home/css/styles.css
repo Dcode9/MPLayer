@@ -353,6 +353,10 @@ button.active-state svg { fill: rgba(62, 207, 142, 0.2); }
     background: rgba(139, 92, 246, 0.2);
     color: #a78bfa;
 }
+.source-badge.spotify {
+    background: rgba(29, 185, 84, 0.2);
+    color: #1db954;
+}
 
 /* --- Horizontal scroll sections --- */
 .horizontal-scroll {

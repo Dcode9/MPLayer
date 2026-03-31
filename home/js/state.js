@@ -37,7 +37,20 @@ const state = {
         } catch(e) { return {}; }
     })(),
     isLoading: false,
-    searchDebounce: null
+    searchDebounce: null,
+    // Spotify state
+    spotifyPlaylists: (() => {
+        try {
+            const data = JSON.parse(localStorage.getItem('spotify_playlists') || '[]');
+            return Array.isArray(data) ? data : [];
+        } catch(e) { return []; }
+    })(),
+    spotifyUser: (() => {
+        try {
+            const data = JSON.parse(localStorage.getItem('spotify_user') || 'null');
+            return data;
+        } catch(e) { return null; }
+    })()
 };
 
 // ============================================
