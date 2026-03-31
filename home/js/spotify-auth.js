@@ -154,11 +154,16 @@ const spotifyAuth = {
                     ui.updateSpotifyButton();
                 }
 
-                // Auto-load playlists if we're on the playlists view
-                if (typeof router !== 'undefined' && router.currentView === 'playlists') {
-                    if (typeof playlistsView !== 'undefined' && playlistsView.loadSpotifyPlaylists) {
-                        playlistsView.loadSpotifyPlaylists();
-                    }
+                // Auto-navigate to playlists view and load playlists
+                debugLog('Spotify: Auto-navigating to playlists view after authentication');
+                if (typeof router !== 'undefined' && router.go) {
+                    // Small delay to ensure DOM is ready
+                    setTimeout(() => {
+                        router.go('playlists');
+                    }, 100);
+                } else if (typeof playlistsView !== 'undefined' && playlistsView.loadSpotifyPlaylists) {
+                    // Fallback: just load playlists if router is not available
+                    playlistsView.loadSpotifyPlaylists();
                 }
 
             } catch (error) {
