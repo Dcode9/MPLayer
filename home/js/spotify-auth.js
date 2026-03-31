@@ -5,7 +5,7 @@
 
 const spotifyAuth = {
     // Spotify App Credentials (REPLACE WITH YOUR OWN)
-    clientId: 'YOUR_SPOTIFY_CLIENT_ID', // Replace with your Spotify Client ID
+    clientId: '8fba37005d964e2599ce567c69ee7f1d', // Replace with your Spotify Client ID
     redirectUri: window.location.origin + window.location.pathname,
     scopes: [
         'playlist-read-private',
