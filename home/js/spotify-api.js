@@ -78,6 +78,9 @@ const spotifyAPI = {
 
             while (url) {
                 const data = await spotifyAPI.fetchWithAuth(url);
+                debugLog('Spotify API response for playlists:', data);
+                debugLog('First playlist raw data:', data.items?.[0]);
+
                 const normalized = data.items.map(spotifyAPI.normalizePlaylist);
                 playlists.push(...normalized);
 
@@ -86,6 +89,7 @@ const spotifyAPI = {
             }
 
             debugLog(`Spotify: Fetched ${playlists.length} playlists`);
+            debugLog('First normalized playlist:', playlists[0]);
             return playlists;
         } catch (error) {
             errorHandler.handleApiError(error, 'Spotify getAllPlaylists');
@@ -164,12 +168,23 @@ const spotifyAPI = {
     // Normalize playlist object
     normalizePlaylist: (playlist) => {
         if (!playlist) return null;
+
+        // Debug log to see the actual structure
+        if (DEBUG) {
+            debugLog('Normalizing playlist:', playlist.name);
+            debugLog('Tracks object:', playlist.tracks);
+            debugLog('Track count from tracks.total:', playlist.tracks?.total);
+        }
+
+        // Spotify API returns tracks as an object with 'href' and 'total' properties
+        const trackCount = playlist.tracks?.total || playlist.track_count || 0;
+
         return {
             id: playlist.id,
             name: playlist.name,
             description: playlist.description || '',
             img: playlist.images?.[0]?.url || 'https://placehold.co/300/333/fff?text=Playlist',
-            trackCount: playlist.tracks?.total || 0,
+            trackCount: trackCount,
             owner: playlist.owner?.display_name || 'Unknown',
             isPublic: playlist.public,
             isCollaborative: playlist.collaborative,
@@ -222,12 +237,16 @@ const spotifyAPI = {
     // Convert Spotify playlist to playable JioSaavn tracks
     convertPlaylistToJioSaavn: async (spotifyPlaylistId, onProgress) => {
         try {
+            debugLog(`Converting Spotify playlist ${spotifyPlaylistId} to JioSaavn`);
             const spotifyTracks = await spotifyAPI.getPlaylistTracks(spotifyPlaylistId);
+            debugLog(`Retrieved ${spotifyTracks.length} tracks from Spotify playlist`);
+
             const jiosaavnTracks = [];
             let matched = 0;
 
             for (let i = 0; i < spotifyTracks.length; i++) {
                 const spotifyTrack = spotifyTracks[i];
+                debugLog(`Processing track ${i + 1}/${spotifyTracks.length}: ${spotifyTrack.name} - ${spotifyTrack.artist}`);
 
                 // Report progress
                 if (onProgress) {
@@ -242,21 +261,27 @@ const spotifyAPI = {
                 const jiosaavnTrack = await spotifyAPI.findJioSaavnMatch(spotifyTrack);
 
                 if (jiosaavnTrack) {
+                    debugLog(`✓ Matched: ${jiosaavnTrack.name}`);
                     jiosaavnTracks.push(jiosaavnTrack);
                     matched++;
+                } else {
+                    debugLog(`✗ No match found for: ${spotifyTrack.name}`);
                 }
 
                 // Add small delay to avoid overwhelming the API
                 await new Promise(r => setTimeout(r, 100));
             }
 
-            debugLog(`Spotify: Converted ${matched}/${spotifyTracks.length} tracks to JioSaavn`);
-            return {
+            const result = {
                 tracks: jiosaavnTracks,
                 total: spotifyTracks.length,
                 matched: matched,
             };
+
+            debugLog(`Conversion complete: ${matched}/${spotifyTracks.length} tracks matched (${Math.round(matched/spotifyTracks.length*100)}%)`);
+            return result;
         } catch (error) {
+            debugError('Error in convertPlaylistToJioSaavn:', error);
             errorHandler.handleApiError(error, 'Spotify convertPlaylistToJioSaavn');
             return { tracks: [], total: 0, matched: 0 };
         }

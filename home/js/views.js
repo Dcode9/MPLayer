@@ -331,6 +331,7 @@ const playlistsView = {
             localStorage.setItem('spotify_playlists', JSON.stringify(playlists));
 
             debugLog(`Fetched ${playlists.length} playlists`);
+            debugLog('Sample playlist data:', playlists[0]);
 
             if (playlists.length === 0) {
                 container.innerHTML = '<p class="text-gray-400 text-sm">No playlists found</p>';
@@ -340,7 +341,9 @@ const playlistsView = {
             // Render playlists
             container.innerHTML = `
                 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                    ${playlists.map(playlist => `
+                    ${playlists.map(playlist => {
+                        debugLog(`Rendering playlist: ${playlist.name}, tracks: ${playlist.trackCount}, img: ${playlist.img}`);
+                        return `
                         <div class="bg-white/5 hover:bg-white/10 p-4 rounded-xl cursor-pointer transition group" onclick="playlistsView.openSpotifyPlaylist('${playlist.id}')">
                             <div class="relative aspect-square rounded-lg overflow-hidden mb-3 bg-gray-800">
                                 <img src="${playlist.img}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/300/333/fff?text=Playlist'">
@@ -354,7 +357,7 @@ const playlistsView = {
                             <p class="text-xs text-gray-400 truncate">${playlist.trackCount} tracks • ${searchManager.escapeHtml(playlist.owner)}</p>
                             <span class="source-badge spotify text-xs mt-2 inline-block">Spotify</span>
                         </div>
-                    `).join('')}
+                    `}).join('')}
                 </div>
             `;
 
@@ -362,6 +365,7 @@ const playlistsView = {
 
         } catch (error) {
             debugError('Error loading Spotify playlists:', error);
+            debugError('Error stack:', error.stack);
 
             // Show specific error message
             let errorMsg = 'Unable to load Spotify playlists';
@@ -382,8 +386,13 @@ const playlistsView = {
     },
 
     openSpotifyPlaylist: async (playlistId) => {
+        debugLog(`Opening Spotify playlist: ${playlistId}`);
+
         const container = document.getElementById('spotify-playlists-container');
-        if (!container) return;
+        if (!container) {
+            debugError('Container not found when trying to open playlist');
+            return;
+        }
 
         // Show loading overlay
         const overlay = document.createElement('div');
@@ -402,8 +411,10 @@ const playlistsView = {
             </div>
         `;
         document.body.appendChild(overlay);
+        debugLog('Loading overlay shown');
 
         try {
+            debugLog('Starting playlist conversion...');
             // Convert Spotify playlist to JioSaavn tracks
             const result = await spotifyAPI.convertPlaylistToJioSaavn(playlistId, (progress) => {
                 const progressBar = document.getElementById('convert-progress');
@@ -413,26 +424,34 @@ const playlistsView = {
                     const percentage = Math.round((progress.current / progress.total) * 100);
                     progressBar.style.width = `${percentage}%`;
                     statusText.textContent = `Processing ${progress.current} of ${progress.total} tracks (${progress.matched} matched)`;
+                    debugLog(`Conversion progress: ${percentage}%, ${progress.matched}/${progress.total} matched`);
                 }
             });
+
+            debugLog('Conversion complete:', result);
 
             // Remove overlay
             overlay.remove();
 
             if (result.tracks.length === 0) {
+                debugError('No tracks matched from Spotify playlist');
                 errorHandler.show('Could not find any matching tracks on JioSaavn', 4000);
                 return;
             }
 
+            debugLog(`Playing ${result.tracks.length} matched tracks`);
             // Play the converted tracks
             player.setQueue(result.tracks, 0);
 
             // Show success message
             const matchRate = Math.round((result.matched / result.total) * 100);
-            errorHandler.show(`Successfully converted ${result.matched} of ${result.total} tracks (${matchRate}%)`, 5000);
+            const successMsg = `Successfully converted ${result.matched} of ${result.total} tracks (${matchRate}%)`;
+            debugLog(successMsg);
+            errorHandler.show(successMsg, 5000);
 
         } catch (error) {
             debugError('Error converting Spotify playlist:', error);
+            debugError('Error details:', error.message, error.stack);
             overlay.remove();
             errorHandler.show('Failed to convert playlist. Please try again.');
         }
