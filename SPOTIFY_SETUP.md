@@ -2,6 +2,8 @@
 
 This guide will help you set up Spotify integration in MPLayer (D'Tunes) to import and play your Spotify playlists.
 
+> **Note:** If you see console warnings or messages in your browser's developer tools, please refer to [CONSOLE_MESSAGES.md](./CONSOLE_MESSAGES.md) for explanations. Most console messages are informational and don't indicate problems.
+
 ## Features
 
 - **Sign in with Spotify**: Securely authenticate using OAuth 2.0 with PKCE (Proof Key for Code Exchange)

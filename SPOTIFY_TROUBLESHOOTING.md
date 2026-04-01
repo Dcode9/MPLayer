@@ -2,6 +2,8 @@
 
 If you're experiencing issues with Spotify playlists not loading or working properly, follow this guide to diagnose and fix the problem.
 
+> **Note:** Many console messages are informational warnings, not errors. See [CONSOLE_MESSAGES.md](./CONSOLE_MESSAGES.md) for explanations of common console messages like Tailwind CDN warnings, browser extension errors, and performance hints.
+
 ## Common Issues and Solutions
 
 ### Issue 1: "Only the name comes" - Playlists show but no track count or images
