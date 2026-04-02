@@ -76,9 +76,19 @@ const spotifyAPI = {
             const playlists = [];
             let url = '/me/playlists?limit=50';
 
+            debugLog('Starting to fetch playlists from Spotify...');
+
             while (url) {
+                debugLog('Fetching playlist page:', url);
                 const data = await spotifyAPI.fetchWithAuth(url);
+
+                if (!data || !data.items) {
+                    debugError('Invalid response from Spotify playlists API:', data);
+                    throw new Error('Invalid response from Spotify playlists API');
+                }
+
                 debugLog('Spotify API response for playlists:', data);
+                debugLog('Number of playlists in this page:', data.items.length);
                 debugLog('First playlist raw data:', data.items?.[0]);
 
                 const normalized = data.items.map(spotifyAPI.normalizePlaylist);
@@ -86,14 +96,24 @@ const spotifyAPI = {
 
                 // Check for next page
                 url = data.next;
+                if (url) {
+                    debugLog('More playlists to fetch, continuing...');
+                }
             }
 
-            debugLog(`Spotify: Fetched ${playlists.length} playlists`);
-            debugLog('First normalized playlist:', playlists[0]);
+            debugLog(`Spotify: Successfully fetched ${playlists.length} playlists`);
+            if (playlists.length > 0) {
+                debugLog('First normalized playlist:', playlists[0]);
+            } else {
+                debugLog('No playlists found in Spotify account');
+            }
             return playlists;
         } catch (error) {
+            debugError('Error in getAllPlaylists:', error);
+            debugError('Error message:', error.message);
+            debugError('Error stack:', error.stack);
             errorHandler.handleApiError(error, 'Spotify getAllPlaylists');
-            return [];
+            throw error; // Re-throw to let caller handle it
         }
     },
 

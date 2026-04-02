@@ -326,7 +326,28 @@ const playlistsView = {
 
             debugLog('Fetching playlists...');
             // Fetch playlists
-            const playlists = await spotifyAPI.getAllPlaylists();
+            let playlists;
+            try {
+                playlists = await spotifyAPI.getAllPlaylists();
+            } catch (playlistError) {
+                debugError('Failed to fetch playlists:', playlistError);
+                // Show specific error to user
+                let errorMsg = 'Failed to load Spotify playlists';
+                if (playlistError.message.includes('Not authenticated')) {
+                    errorMsg = 'Spotify authentication failed. Please try signing in again.';
+                } else if (playlistError.message.includes('401')) {
+                    errorMsg = 'Spotify session expired. Please sign in again.';
+                    spotifyAuth.logout();
+                } else if (playlistError.message.includes('403')) {
+                    errorMsg = 'Access denied. Please check your Spotify app permissions.';
+                } else if (playlistError.message) {
+                    errorMsg = `Error: ${playlistError.message}`;
+                }
+                container.innerHTML = `<p class="text-gray-400 text-sm">${errorMsg}</p>`;
+                errorHandler.show(errorMsg);
+                return;
+            }
+
             state.spotifyPlaylists = playlists;
             localStorage.setItem('spotify_playlists', JSON.stringify(playlists));
 
