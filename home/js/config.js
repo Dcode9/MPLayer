@@ -25,7 +25,7 @@ function switchToNextApi() {
 // ============================================
 // DEBUG LOGGING
 // ============================================
-const DEBUG = false; // Set to true for development
+const DEBUG = true; // Set to true for development
 function debugLog(...args) {
     if (DEBUG) console.log('[JioSaavn Player]', ...args);
 }

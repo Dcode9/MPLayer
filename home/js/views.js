@@ -2,20 +2,23 @@
 // ROUTER
 // ============================================
 const router = {
+    currentView: 'home', // Initialize with default view
     go: (view) => {
+        debugLog(`Router: Navigating to ${view}`);
+
         document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
         const target = document.getElementById('view-'+view);
         if(target) target.classList.add('active');
-        
+
         document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
         const btns = document.querySelectorAll('.nav-btn');
-        
+
         const viewMap = { 'home': 0, 'trending': 1, 'albums': 2, 'playlists': 3, 'album-detail': 2, 'search': -1 };
         const btnIdx = viewMap[view];
         if (btnIdx >= 0 && btns[btnIdx]) {
             btns[btnIdx].classList.add('active');
         }
-        
+
         if (view === 'trending' && !trendingView.loaded) {
             trendingView.load();
         }
@@ -23,9 +26,14 @@ const router = {
             albumsView.load();
         }
         if (view === 'playlists') {
+            debugLog('Playlists view activated');
             ui.renderLikedSongs();
             ui.renderQueue();
+            playlistsView.load();
         }
+
+        router.currentView = view;
+        debugLog(`Router: Current view set to ${router.currentView}`);
     }
 };
 
@@ -263,6 +271,210 @@ const albumsView = {
             player.setQueue(albumsView.currentAlbumSongs, 0);
         } else {
             errorHandler.show('No tracks to play');
+        }
+    }
+};
+
+// ============================================
+// PLAYLISTS VIEW (WITH SPOTIFY INTEGRATION)
+// ============================================
+const playlistsView = {
+    loaded: false,
+
+    load: () => {
+        debugLog('playlistsView.load() called');
+        debugLog('Spotify auth status:', {
+            isDefined: typeof spotifyAuth !== 'undefined',
+            isAuthenticated: typeof spotifyAuth !== 'undefined' ? spotifyAuth.isAuthenticated : false,
+            hasToken: typeof spotifyAuth !== 'undefined' ? !!spotifyAuth.getAccessToken() : false
+        });
+
+        if (typeof spotifyAuth !== 'undefined' && spotifyAuth.isAuthenticated) {
+            debugLog('User is authenticated, loading Spotify playlists...');
+            playlistsView.loadSpotifyPlaylists();
+        } else {
+            debugLog('User is not authenticated with Spotify');
+        }
+    },
+
+    loadSpotifyPlaylists: async () => {
+        const container = document.getElementById('spotify-playlists-container');
+        if (!container) {
+            debugError('Spotify playlists container not found!');
+            return;
+        }
+
+        debugLog('Loading Spotify playlists...');
+        container.innerHTML = '<div class="text-gray-400 text-sm">Loading Spotify playlists...</div>';
+
+        try {
+            // Verify authentication
+            if (!spotifyAuth.isAuthenticated || !spotifyAuth.getAccessToken()) {
+                debugError('Not authenticated with Spotify');
+                container.innerHTML = '<p class="text-gray-400 text-sm">Please sign in with Spotify to see your playlists</p>';
+                return;
+            }
+
+            debugLog('Fetching user info...');
+            // Fetch user info
+            const user = await spotifyAPI.getCurrentUser();
+            if (user) {
+                state.spotifyUser = user;
+                localStorage.setItem('spotify_user', JSON.stringify(user));
+                debugLog('User info fetched:', user.name);
+            }
+
+            debugLog('Fetching playlists...');
+            // Fetch playlists
+            let playlists;
+            try {
+                playlists = await spotifyAPI.getAllPlaylists();
+            } catch (playlistError) {
+                debugError('Failed to fetch playlists:', playlistError);
+                // Show specific error to user
+                let errorMsg = 'Failed to load Spotify playlists';
+                if (playlistError.message.includes('Not authenticated')) {
+                    errorMsg = 'Spotify authentication failed. Please try signing in again.';
+                } else if (playlistError.message.includes('401')) {
+                    errorMsg = 'Spotify session expired. Please sign in again.';
+                    spotifyAuth.logout();
+                } else if (playlistError.message.includes('403')) {
+                    errorMsg = 'Access denied. Please check your Spotify app permissions.';
+                } else if (playlistError.message) {
+                    errorMsg = `Error: ${playlistError.message}`;
+                }
+                container.innerHTML = `<p class="text-gray-400 text-sm">${errorMsg}</p>`;
+                errorHandler.show(errorMsg);
+                return;
+            }
+
+            state.spotifyPlaylists = playlists;
+            localStorage.setItem('spotify_playlists', JSON.stringify(playlists));
+
+            debugLog(`Fetched ${playlists.length} playlists`);
+            debugLog('Sample playlist data:', playlists[0]);
+
+            if (playlists.length === 0) {
+                container.innerHTML = '<p class="text-gray-400 text-sm">No playlists found</p>';
+                return;
+            }
+
+            // Render playlists
+            container.innerHTML = `
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                    ${playlists.map(playlist => {
+                        debugLog(`Rendering playlist: ${playlist.name}, tracks: ${playlist.trackCount}, img: ${playlist.img}`);
+                        return `
+                        <div class="bg-white/5 hover:bg-white/10 p-4 rounded-xl cursor-pointer transition group" onclick="playlistsView.openSpotifyPlaylist('${playlist.id}')">
+                            <div class="relative aspect-square rounded-lg overflow-hidden mb-3 bg-gray-800">
+                                <img src="${playlist.img}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/300/333/fff?text=Playlist'">
+                                <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                                    <span class="bg-green-500 text-black p-3 rounded-full shadow-xl">
+                                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                    </span>
+                                </div>
+                            </div>
+                            <h3 class="font-bold text-white text-sm truncate mb-1">${searchManager.escapeHtml(playlist.name)}</h3>
+                            <p class="text-xs text-gray-400 truncate">${playlist.trackCount} tracks • ${searchManager.escapeHtml(playlist.owner)}</p>
+                            <span class="source-badge spotify text-xs mt-2 inline-block">Spotify</span>
+                        </div>
+                    `}).join('')}
+                </div>
+            `;
+
+            debugLog('Playlists rendered successfully');
+
+        } catch (error) {
+            debugError('Error loading Spotify playlists:', error);
+            debugError('Error stack:', error.stack);
+
+            // Show specific error message
+            let errorMsg = 'Unable to load Spotify playlists';
+            if (error.message) {
+                if (error.message.includes('Not authenticated') || error.message.includes('session expired')) {
+                    errorMsg = 'Spotify session expired. Please sign in again.';
+                } else if (error.message.includes('network') || error.message.includes('fetch')) {
+                    errorMsg = 'Network error. Please check your connection.';
+                } else if (error.message.includes('401')) {
+                    errorMsg = 'Spotify session expired. Please sign in again.';
+                    spotifyAuth.logout();
+                }
+            }
+
+            container.innerHTML = `<p class="text-gray-400 text-sm">${errorMsg}</p>`;
+            errorHandler.show(errorMsg);
+        }
+    },
+
+    openSpotifyPlaylist: async (playlistId) => {
+        debugLog(`Opening Spotify playlist: ${playlistId}`);
+
+        const container = document.getElementById('spotify-playlists-container');
+        if (!container) {
+            debugError('Container not found when trying to open playlist');
+            return;
+        }
+
+        // Show loading overlay
+        const overlay = document.createElement('div');
+        overlay.id = 'playlist-loading-overlay';
+        overlay.className = 'fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[100]';
+        overlay.innerHTML = `
+            <div class="bg-black/80 backdrop-blur-xl border border-white/10 rounded-2xl p-8 max-w-md w-full mx-4">
+                <h3 class="text-xl font-bold text-white mb-4">Converting Playlist</h3>
+                <p class="text-gray-400 text-sm mb-4">Finding matching tracks on JioSaavn...</p>
+                <div class="mb-4">
+                    <div class="bg-gray-800 h-2 rounded-full overflow-hidden">
+                        <div id="convert-progress" class="bg-green-500 h-full transition-all" style="width: 0%"></div>
+                    </div>
+                </div>
+                <p class="text-gray-500 text-xs" id="convert-status">Starting...</p>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        debugLog('Loading overlay shown');
+
+        try {
+            debugLog('Starting playlist conversion...');
+            // Convert Spotify playlist to JioSaavn tracks
+            const result = await spotifyAPI.convertPlaylistToJioSaavn(playlistId, (progress) => {
+                const progressBar = document.getElementById('convert-progress');
+                const statusText = document.getElementById('convert-status');
+
+                if (progressBar && statusText) {
+                    const percentage = Math.round((progress.current / progress.total) * 100);
+                    progressBar.style.width = `${percentage}%`;
+                    statusText.textContent = `Processing ${progress.current} of ${progress.total} tracks (${progress.matched} matched)`;
+                    debugLog(`Conversion progress: ${percentage}%, ${progress.matched}/${progress.total} matched`);
+                }
+            });
+
+            debugLog('Conversion complete:', result);
+
+            // Remove overlay
+            overlay.remove();
+
+            if (result.tracks.length === 0) {
+                debugError('No tracks matched from Spotify playlist');
+                errorHandler.show('Could not find any matching tracks on JioSaavn', 4000);
+                return;
+            }
+
+            debugLog(`Playing ${result.tracks.length} matched tracks`);
+            // Play the converted tracks
+            player.setQueue(result.tracks, 0);
+
+            // Show success message
+            const matchRate = Math.round((result.matched / result.total) * 100);
+            const successMsg = `Successfully converted ${result.matched} of ${result.total} tracks (${matchRate}%)`;
+            debugLog(successMsg);
+            errorHandler.show(successMsg, 5000);
+
+        } catch (error) {
+            debugError('Error converting Spotify playlist:', error);
+            debugError('Error details:', error.message, error.stack);
+            overlay.remove();
+            errorHandler.show('Failed to convert playlist. Please try again.');
         }
     }
 };
