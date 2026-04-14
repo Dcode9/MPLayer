@@ -363,7 +363,7 @@
         }
 
         html[data-ui-mode="mobile"] body.mobile-search-open #search-positioner {
-            bottom: calc(8px + env(safe-area-inset-bottom) + var(--mobile-keyboard-offset)) !important;
+            bottom: calc(264px + env(safe-area-inset-bottom) + var(--mobile-keyboard-lift)) !important;
         }
 
         html[data-ui-mode="mobile"] body.mobile-search-open #search-wrapper {
@@ -793,7 +793,7 @@
                 <div class="relative flex-1 flex items-center">
                     <svg class="search-icon w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                     <input type="text" class="search-input" id="search-input" placeholder="Search and press Enter..." autocomplete="off">
-                    <button class="mobile-search-cancel" onclick="ui.closeMobileSearch()">Cancel</button>
+                    <button class="mobile-search-cancel" onclick="ui.closeMobileSearch({ clearQuickState: true, restoreOrigin: true })">Cancel</button>
                     
                     <div class="search-dropdown-wrapper" id="search-dropdown">
                         <div class="search-blur-bg"></div>
@@ -2255,20 +2255,20 @@
                 
                 input.addEventListener('focus', () => { 
                     const q = input.value.trim();
-                    if (q.length >= 2 && q !== lastFullSearch && results.innerHTML !== '') dropWrapper.classList.add('active'); 
+                    if (q.length >= 2 && results.innerHTML !== '') dropWrapper.classList.add('active'); 
                 });
                 
                 input.addEventListener('blur', () => { setTimeout(() => { dropWrapper.classList.remove('active'); }, 200); });
                 
                 input.addEventListener('input', (e) => {
                     clearTimeout(state.searchDebounce); const query = e.target.value.trim();
-                    if (query.length < 2 || query === lastFullSearch) { dropWrapper.classList.remove('active'); results.innerHTML = ''; return; }
+                    if (query.length < 2) { dropWrapper.classList.remove('active'); results.innerHTML = ''; return; }
                     
                     state.searchDebounce = setTimeout(async () => {
                         results.innerHTML = '<div class="p-4 text-center text-gray-400 text-sm">Searching...</div>'; 
                         dropWrapper.classList.add('active');
                         
-                        const songs = await jiosaavnAPI.searchSongs(query, 4); 
+                        const songs = await jiosaavnAPI.searchSongs(query, 6); 
                         if(songs.length === 0) { dropWrapper.classList.remove('active'); results.innerHTML = ''; return; }
                         
                         results.innerHTML = '<div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1 pl-2 drop-shadow-md">Songs</div>' + songs.map(song => {
@@ -2276,7 +2276,7 @@
                             return ui.createSongPill(song, `ui.playFromQuickSearch('${storeId}')`, 'quicksearch');
                         }).join('');
                         updateMarquees();
-                    }, 400);
+                    }, 180);
                 });
                 
                 input.addEventListener('keydown', (e) => {
@@ -2397,6 +2397,7 @@
             if (searchShell) {
                 searchShell.addEventListener('click', (e) => {
                     if (!deviceMode.isMobileUI()) return;
+                    if (e.target.closest('.mobile-search-cancel')) return;
                     if (document.body.classList.contains('mobile-search-open')) return;
                     e.preventDefault();
                     haptics.trigger('selection');
