@@ -23,10 +23,12 @@
                 const noHover = !!(window.matchMedia && window.matchMedia('(any-hover: none)').matches);
                 const shortestViewport = Math.min(window.innerWidth || 0, window.innerHeight || 0);
                 const shortestScreen = Math.min(window.screen?.width || shortestViewport, window.screen?.height || shortestViewport);
+                const likelyCompactViewport = shortestViewport > 0 && shortestViewport <= 1024;
                 const likelyHandheld = hasTouch && (coarsePointer || noHover) && (shortestViewport <= 1024 || shortestScreen <= 1366);
 
                 if (uaDataMobile) return true;
                 if (hasMobileToken) return true;
+                if (likelyCompactViewport) return true;
                 if (likelyHandheld) return true;
                 if (desktopRequestUA) return false;
                 return false;
@@ -201,7 +203,7 @@
         /* Modal Overlay */
         #playlist-modal, #playlist-selector-modal, #profile-modal { transition: opacity 0.3s ease; }
         #playlist-modal.hidden, #playlist-selector-modal.hidden, #profile-modal.hidden { opacity: 0; pointer-events: none; }
-        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; white-space: normal; }
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; white-space: normal; }
 
         /* ================================================== */
         /* MODE-BASED UI */
@@ -241,6 +243,7 @@
             position: fixed !important;
             left: 12px !important;
             right: 12px !important;
+            top: auto !important;
             bottom: calc(8px + env(safe-area-inset-bottom)) !important;
             z-index: 140;
             display: block;
@@ -611,6 +614,72 @@
                 width: min(62vw, 260px);
                 height: min(62vw, 260px);
                 margin-top: 10px;
+            }
+        }
+
+        @media (max-width: 1024px), (max-width: 1366px) and (any-pointer: coarse) {
+            #header-account {
+                display: none !important;
+            }
+
+            header {
+                justify-content: center !important;
+                top: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+            }
+
+            #search-wrapper {
+                position: fixed !important;
+                left: 12px !important;
+                right: 12px !important;
+                top: auto !important;
+                bottom: calc(8px + env(safe-area-inset-bottom)) !important;
+                z-index: 140 !important;
+                pointer-events: none !important;
+            }
+
+            #search-shell {
+                width: 100% !important;
+                margin-left: 0 !important;
+                pointer-events: auto !important;
+                border-radius: 16px !important;
+                background: rgba(18, 18, 18, 0.95) !important;
+            }
+
+            #search-shell .hidden.md\:flex {
+                display: none !important;
+            }
+
+            #search-shell > .relative.flex-1.flex.items-center {
+                width: 100% !important;
+                flex: 1 !important;
+                min-width: 0 !important;
+            }
+
+            #search-wrapper .search-icon {
+                left: 0.8rem !important;
+                transform: translateY(-50%) !important;
+                color: #9ca3af !important;
+            }
+
+            #search-input {
+                width: 100% !important;
+                opacity: 1 !important;
+                pointer-events: auto !important;
+                border-color: rgba(255, 255, 255, 0.18) !important;
+                background: rgba(255, 255, 255, 0.06) !important;
+                padding-left: 2.3rem !important;
+                padding-right: 3.2rem !important;
+            }
+
+            .mobile-search-cancel {
+                display: inline-block !important;
+            }
+
+            #search-dropdown {
+                top: auto !important;
+                bottom: calc(100% + 8px) !important;
             }
         }
     </style>
@@ -1249,9 +1318,11 @@
                 const noHover = !!(window.matchMedia && window.matchMedia('(any-hover: none)').matches);
                 const shortestViewport = Math.min(window.innerWidth || 0, window.innerHeight || 0);
                 const shortestScreen = Math.min(window.screen?.width || shortestViewport, window.screen?.height || shortestViewport);
+                const likelyCompactViewport = shortestViewport > 0 && shortestViewport <= 1024;
                 const likelyHandheld = hasTouch && (coarsePointer || noHover) && (shortestViewport <= 1024 || shortestScreen <= 1366);
                 if (uaDataMobile) return true;
                 if (hasMobileToken) return true;
+                if (likelyCompactViewport) return true;
                 if (likelyHandheld) return true;
                 if (desktopRequestUA) return false;
                 return false;
@@ -1595,7 +1666,9 @@
                 for (let x = 0; x <= width; x++) {
                     const localProgress = x / (width * currentProgress || 1); const taper = Math.sin(localProgress * Math.PI);
                     const baseWave = Math.sin((x / width) * waveCount * Math.PI); const fastWave = Math.sin((x / width) * waveCount * 2.5 * Math.PI + time);
-                    const baseAmplitude = (centerY * 0.8) * Math.pow(smoothedLow, 2) * intensity * verticalScale; const detailAmplitude = (centerY * 0.2) * Math.pow(smoothedMid, 1.5) * intensity * verticalScale;
+                    const loudness = Math.max(0.45, intensity);
+                    const baseAmplitude = (centerY * 1.05) * Math.pow(smoothedLow, 1.7) * loudness * verticalScale;
+                    const detailAmplitude = (centerY * 0.34) * Math.pow(smoothedMid, 1.35) * loudness * verticalScale;
                     let interactionFactor = 1.0;
                     if (hoverIntensity > 0.01) { const hoverX = (isHovering ? state.hoverProgress : state.lastHoverProgress) * width; const dist = Math.abs(x - hoverX); if (dist < 60) interactionFactor = 1.0 - (hoverIntensity * (1.0 - (dist/60)*(dist/60)*(3-2*(dist/60)))); }
                     visualizerCtx.lineTo(x, centerY + (baseWave * baseAmplitude + fastWave * detailAmplitude) * taper * interactionFactor);
