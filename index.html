@@ -18,10 +18,16 @@
                 const uaDataMobile = !!(navigator.userAgentData && navigator.userAgentData.mobile);
                 const desktopRequestUA = /(Macintosh|Windows NT|X11; Linux x86_64)/i.test(ua) && !/(Android|iPhone|iPad|iPod)/i.test(ua);
                 const hasMobileToken = /(android|iphone|ipod|ipad|iemobile|opera mini|mobile|blackberry|windows phone)/i.test(ua);
+                const hasTouch = (navigator.maxTouchPoints || 0) > 0;
+                const coarsePointer = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+                const shortestScreen = Math.min(window.screen?.width || window.innerWidth, window.screen?.height || window.innerHeight);
+                const likelyHandheld = hasTouch && shortestScreen <= 1280 && (coarsePointer || shortestScreen <= 1024);
 
-                if (desktopRequestUA) return false;
                 if (uaDataMobile) return true;
-                return hasMobileToken;
+                if (hasMobileToken) return true;
+                if (likelyHandheld) return true;
+                if (desktopRequestUA) return false;
+                return false;
             };
 
             window.__dtunesResolveUiMode = function() {
@@ -230,10 +236,10 @@
         }
 
         html[data-ui-mode="mobile"] #search-wrapper {
-            position: fixed;
-            left: 12px;
-            right: 12px;
-            bottom: calc(8px + env(safe-area-inset-bottom));
+            position: fixed !important;
+            left: 12px !important;
+            right: 12px !important;
+            bottom: calc(8px + env(safe-area-inset-bottom)) !important;
             z-index: 140;
             display: block;
             pointer-events: none;
@@ -322,7 +328,7 @@
         }
 
         html[data-ui-mode="mobile"] body.mobile-search-open #search-wrapper {
-            bottom: calc(12px + env(safe-area-inset-bottom) + var(--mobile-keyboard-offset));
+            bottom: calc(8px + env(safe-area-inset-bottom) + var(--mobile-keyboard-offset)) !important;
         }
 
         html[data-ui-mode="mobile"] #search-dropdown {
@@ -1236,9 +1242,15 @@
                 const desktopRequestUA = /(Macintosh|Windows NT|X11; Linux x86_64)/i.test(ua) && !/(Android|iPhone|iPad|iPod)/i.test(ua);
                 const uaDataMobile = !!(navigator.userAgentData && navigator.userAgentData.mobile);
                 const hasMobileToken = /(android|iphone|ipod|ipad|iemobile|opera mini|mobile|blackberry|windows phone)/i.test(ua);
-                if (desktopRequestUA) return false;
+                const hasTouch = (navigator.maxTouchPoints || 0) > 0;
+                const coarsePointer = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+                const shortestScreen = Math.min(window.screen?.width || window.innerWidth, window.screen?.height || window.innerHeight);
+                const likelyHandheld = hasTouch && shortestScreen <= 1280 && (coarsePointer || shortestScreen <= 1024);
                 if (uaDataMobile) return true;
-                return hasMobileToken;
+                if (hasMobileToken) return true;
+                if (likelyHandheld) return true;
+                if (desktopRequestUA) return false;
+                return false;
             },
 
             resolveMode: () => {
@@ -1276,7 +1288,7 @@
                 if (typeof navigator === 'undefined' || typeof navigator.vibrate !== 'function') return false;
                 if (document.visibilityState !== 'visible') return false;
                 if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false;
-                return deviceMode.detectMobileBrowser();
+                return true;
             },
 
             pulse: (pattern = 'tap') => {
@@ -1293,7 +1305,9 @@
                     strong: [12, 28, 12]
                 };
 
-                navigator.vibrate(patterns[pattern] || patterns.tap);
+                try {
+                    navigator.vibrate(patterns[pattern] || patterns.tap);
+                } catch (e) {}
             }
         };
 
@@ -1527,6 +1541,10 @@
                 if (state.playing && isAudioContextInitialized) {
                     const dataArray = new Uint8Array(analyser.frequencyBinCount); analyser.getByteFrequencyData(dataArray);
                     targetLow = dataArray.slice(0, 5).reduce((a, b) => a + b, 0) / 5 / 255; targetMid = dataArray.slice(10, 40).reduce((a, b) => a + b, 0) / 30 / 255;
+                } else if (state.playing) {
+                    // Fallback motion when frequency data is unavailable (e.g., iOS restrictions).
+                    targetLow = 0.11 + (0.09 * (0.5 + 0.5 * Math.sin(time * 2.8)));
+                    targetMid = 0.07 + (0.06 * (0.5 + 0.5 * Math.cos(time * 3.4)));
                 }
                 smoothedLow += (targetLow - smoothedLow) * 0.1; smoothedMid += (targetMid - smoothedMid) * 0.1;
                 let verticalScale = audio.duration > 0 ? (0.3 + 0.7 * Math.min(1, currentProgress / 0.4)) * 0.8 : 1.0;
@@ -1621,7 +1639,9 @@
                 if(expand) {
                     ui.closeMobileSearch();
                     document.body.classList.add('mobile-player-open');
-                    setTimeout(resizeCanvas, 100);
+                    requestAnimationFrame(resizeCanvas);
+                    setTimeout(resizeCanvas, 120);
+                    setTimeout(resizeCanvas, 320);
                 } else {
                     document.body.classList.remove('mobile-player-open');
                 }
@@ -2229,8 +2249,8 @@
                 });
             }
 
-            // Keep haptics user-driven by triggering only on direct tap targets.
-            document.addEventListener('click', (e) => {
+            // Keep haptics user-driven by triggering only on direct pointer interactions.
+            document.addEventListener('pointerdown', (e) => {
                 const button = e.target.closest('button');
                 const navButton = e.target.closest('#mobile-nav [data-nav]');
                 const logoTap = e.target.closest('#app-logo');
@@ -2250,7 +2270,7 @@
                 }
 
                 haptics.pulse('tap');
-            });
+            }, { passive: true });
 
             if (window.visualViewport) {
                 const onViewportChange = () => ui.updateMobileSearchPosition();
