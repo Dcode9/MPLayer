@@ -1,0 +1,32 @@
+name: Phase 2 Test Render
+
+on:
+  workflow_dispatch:
+
+jobs:
+  render-test-video:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Render test video
+        run: npm run render:test
+
+      - name: Upload rendered video artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase-2-test-video
+          path: output/test-video.mp4
+          if-no-files-found: error
