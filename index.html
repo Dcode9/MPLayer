@@ -13,46 +13,22 @@
 
     <script>
         (function() {
-            const storageKey = 'dtunes_ui_mode';
-
             window.__dtunesDetectMobileBrowser = function() {
                 const ua = navigator.userAgent || '';
                 const uaDataMobile = !!(navigator.userAgentData && navigator.userAgentData.mobile);
-                const hasMobileToken = /(android|iphone|ipod|ipad|iemobile|opera mini|mobile|blackberry)/i.test(ua);
-                const isIPadDesktopUA = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
-                const hasTouch = navigator.maxTouchPoints > 0 || ('ontouchstart' in window);
-                const coarsePointer = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
-                const shortEdge = Math.min(window.screen.width || 0, window.screen.height || 0);
-                const touchHandheld = hasTouch && coarsePointer && shortEdge > 0 && shortEdge <= 900;
-                return uaDataMobile || hasMobileToken || isIPadDesktopUA || touchHandheld;
+                const desktopRequestUA = /(Macintosh|Windows NT|X11; Linux x86_64)/i.test(ua) && !/(Android|iPhone|iPad|iPod)/i.test(ua);
+                const hasMobileToken = /(android|iphone|ipod|ipad|iemobile|opera mini|mobile|blackberry|windows phone)/i.test(ua);
+
+                if (desktopRequestUA) return false;
+                if (uaDataMobile) return true;
+                return hasMobileToken;
             };
 
             window.__dtunesResolveUiMode = function() {
-                const params = new URLSearchParams(window.location.search);
-                const queryPref = (params.get('ui') || '').toLowerCase();
-
-                let storedPref = 'auto';
-                try {
-                    storedPref = (localStorage.getItem(storageKey) || 'auto').toLowerCase();
-                } catch (e) {}
-
-                if (!['auto', 'mobile', 'desktop'].includes(storedPref)) {
-                    storedPref = 'auto';
-                }
-
                 const detectedMobile = window.__dtunesDetectMobileBrowser();
-                let mode = detectedMobile ? 'mobile' : 'desktop';
-
-                if (storedPref === 'mobile' || storedPref === 'desktop') {
-                    mode = storedPref;
-                }
-                if (queryPref === 'mobile' || queryPref === 'desktop') {
-                    mode = queryPref;
-                }
-
                 return {
-                    mode,
-                    preference: storedPref,
+                    mode: detectedMobile ? 'mobile' : 'desktop',
+                    preference: 'browser',
                     detectedMobile
                 };
             };
@@ -68,6 +44,7 @@
         :root {
             --accent-color: #3ecf8e;
             --album-art-gradient: conic-gradient(from 0deg, #434343, #000000, #434343);
+            --mobile-keyboard-offset: 0px;
         }
 
         body {
@@ -219,15 +196,19 @@
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; white-space: normal; }
 
         /* ================================================== */
-        /* MODE-BASED UI (SCRAPPED MOBILE REBUILD) */
+        /* MODE-BASED UI */
         /* ================================================== */
         html[data-ui-mode="desktop"] #mobile-nav { display: none !important; }
         html[data-ui-mode="desktop"] .mobile-collapse-btn,
         html[data-ui-mode="desktop"] .mobile-queue-btn { display: none !important; }
 
+        html[data-ui-mode="mobile"] #header-account {
+            display: none !important;
+        }
+
         html[data-ui-mode="mobile"] #main-container {
-            padding-top: calc(84px + env(safe-area-inset-top));
-            padding-bottom: calc(184px + env(safe-area-inset-bottom));
+            padding-top: calc(64px + env(safe-area-inset-top));
+            padding-bottom: calc(204px + env(safe-area-inset-bottom));
         }
 
         html[data-ui-mode="mobile"] header {
@@ -238,34 +219,131 @@
             border-left: 0 !important;
             border-right: 0 !important;
             border-top: 0 !important;
-            padding-top: calc(8px + env(safe-area-inset-top));
-            padding-bottom: 8px;
+            padding-top: calc(10px + env(safe-area-inset-top));
+            padding-bottom: 10px;
+            justify-content: center !important;
         }
 
-        html[data-ui-mode="mobile"] #search-wrapper > div {
-            gap: 0.5rem;
+        html[data-ui-mode="mobile"] #app-logo {
+            margin: 0 auto;
+            width: auto !important;
         }
 
-        html[data-ui-mode="mobile"] #search-wrapper button.hidden.md\:flex {
+        html[data-ui-mode="mobile"] #search-wrapper {
+            position: fixed;
+            left: 12px;
+            right: 12px;
+            bottom: calc(74px + env(safe-area-inset-bottom));
+            z-index: 170;
+            display: block;
+            pointer-events: auto;
+            transition: bottom 0.24s ease;
+        }
+
+        html[data-ui-mode="mobile"] #search-shell {
+            width: 56px;
+            margin-left: auto;
+            border-radius: 9999px;
+            background: rgba(18, 18, 18, 0.92);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            overflow: hidden;
+            transition: width 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.2s ease;
+        }
+
+        html[data-ui-mode="mobile"] body.mobile-search-open #search-shell {
+            width: 100%;
+            background: rgba(18, 18, 18, 0.97);
+        }
+
+        html[data-ui-mode="mobile"] #search-shell .hidden.md\:flex {
             display: none !important;
         }
 
-        html[data-ui-mode="mobile"] .mobile-search-cancel {
-            display: inline-block;
+        html[data-ui-mode="mobile"] #search-shell > .relative.flex-1.flex.items-center {
+            width: 56px;
+            flex: none;
+            min-width: 56px;
+            transition: width 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        html[data-ui-mode="mobile"] body.mobile-search-open #search-shell > .relative.flex-1.flex.items-center {
+            width: 100%;
+            flex: 1;
+        }
+
+        html[data-ui-mode="mobile"] #search-input {
+            width: 0;
+            opacity: 0;
+            pointer-events: none;
+            border-color: transparent;
+            background: transparent;
+            padding-right: 0;
+            padding-left: 2rem;
+            transition: width 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.2s ease, padding 0.28s ease, border-color 0.2s ease;
+        }
+
+        html[data-ui-mode="mobile"] body.mobile-search-open #search-input {
+            width: 100%;
+            opacity: 1;
+            pointer-events: auto;
+            border-color: rgba(255, 255, 255, 0.18);
+            background: rgba(255, 255, 255, 0.06);
+            padding-left: 2.3rem;
+            padding-right: 3.2rem;
+        }
+
+        html[data-ui-mode="mobile"] #search-wrapper .search-icon {
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ffffff;
+            transition: left 0.25s ease, transform 0.25s ease, color 0.2s ease;
+        }
+
+        html[data-ui-mode="mobile"] body.mobile-search-open #search-wrapper .search-icon {
+            left: 0.8rem;
+            transform: translateY(-50%);
             color: #9ca3af;
-            font-size: 0.75rem;
-            font-weight: 600;
+        }
+
+        html[data-ui-mode="mobile"] .mobile-search-cancel {
+            display: none;
+            position: absolute;
+            right: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #e5e7eb;
+            font-size: 0.72rem;
+            font-weight: 700;
+        }
+
+        html[data-ui-mode="mobile"] body.mobile-search-open .mobile-search-cancel {
+            display: inline-block;
+        }
+
+        html[data-ui-mode="mobile"] body.mobile-search-open #search-wrapper {
+            bottom: calc(12px + env(safe-area-inset-bottom) + var(--mobile-keyboard-offset));
         }
 
         html[data-ui-mode="mobile"] #search-dropdown {
+            top: auto;
+            bottom: calc(100% + 8px);
             left: 0;
             right: 0;
-            padding: 8px 0 0;
+            padding: 0;
+        }
+
+        html[data-ui-mode="mobile"] #search-dropdown .search-blur-bg {
+            border-radius: 1rem;
+            background: rgba(10, 10, 10, 0.88);
+            mask-image: none;
+            -webkit-mask-image: none;
         }
 
         html[data-ui-mode="mobile"] #search-dropdown .search-results-content {
-            max-height: 50dvh;
+            max-height: min(46dvh, 340px);
             overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(12, 12, 12, 0.8);
         }
 
         html[data-ui-mode="mobile"] #mobile-nav {
@@ -279,6 +357,7 @@
             background: linear-gradient(180deg, rgba(8, 8, 8, 0.86), rgba(8, 8, 8, 0.96));
             border-top: 1px solid rgba(255, 255, 255, 0.1);
             z-index: 120;
+            transition: transform 0.24s ease, opacity 0.24s ease;
         }
 
         html[data-ui-mode="mobile"] #mobile-nav button {
@@ -306,13 +385,39 @@
             line-height: 1;
         }
 
+        html[data-ui-mode="mobile"] body.mobile-search-open #mobile-nav,
+        html[data-ui-mode="mobile"] body.mobile-player-open #mobile-nav {
+            transform: translateY(120%);
+            opacity: 0;
+            pointer-events: none;
+        }
+
         html[data-ui-mode="mobile"] #player-footer {
             left: 8px !important;
             right: 8px !important;
-            bottom: calc(76px + env(safe-area-inset-bottom)) !important;
+            bottom: calc(82px + env(safe-area-inset-bottom)) !important;
             gap: 0.75rem;
             align-items: stretch;
             z-index: 150;
+        }
+
+        html[data-ui-mode="mobile"] body.mobile-search-open #player-footer {
+            transform: translateY(140%) !important;
+            opacity: 0 !important;
+            pointer-events: none;
+        }
+
+        html[data-ui-mode="mobile"] #queue-anchor {
+            width: 100%;
+            height: auto;
+            pointer-events: auto;
+        }
+
+        html[data-ui-mode="mobile"] #queue-wrapper {
+            position: relative;
+            right: auto;
+            bottom: auto;
+            width: 100%;
         }
 
         html[data-ui-mode="mobile"] #queue-preview-slot,
@@ -354,6 +459,9 @@
             align-items: stretch;
             justify-content: flex-start;
             overflow-y: auto;
+            opacity: 1 !important;
+            transform: translateY(0) !important;
+            pointer-events: auto;
         }
 
         html[data-ui-mode="mobile"] body.mobile-player-open #player-active-area {
@@ -374,9 +482,13 @@
             padding: 0;
         }
 
+        html[data-ui-mode="mobile"] body.mobile-player-open #info-island .flex-1 {
+            margin-left: 0;
+        }
+
         html[data-ui-mode="mobile"] body.mobile-player-open #album-art-wrapper {
-            width: min(80vw, 340px);
-            height: min(80vw, 340px);
+            width: min(78vw, 320px);
+            height: min(78vw, 320px);
             border-radius: 20px;
             margin-top: 24px;
         }
@@ -392,7 +504,7 @@
         }
 
         html[data-ui-mode="mobile"] body.mobile-player-open #p-title {
-            font-size: 1.4rem;
+            font-size: 1.35rem;
         }
 
         html[data-ui-mode="mobile"] body.mobile-player-open #p-artist {
@@ -400,7 +512,12 @@
         }
 
         html[data-ui-mode="mobile"] body.mobile-player-open #p-like-btn {
-            transform: scale(1.25);
+            transform: scale(1.2);
+            margin-left: 0;
+        }
+
+        html[data-ui-mode="mobile"] body.mobile-player-open #info-island button[onclick*="player.togglePlay"] {
+            display: none !important;
         }
 
         html[data-ui-mode="mobile"] body.mobile-player-open #player-card {
@@ -432,7 +549,7 @@
         }
 
         html[data-ui-mode="mobile"] body.mobile-player-open #player-card > div:nth-child(1) #btn-play {
-            transform: scale(1.25);
+            transform: scale(1.2);
         }
 
         html[data-ui-mode="mobile"] .mobile-collapse-btn {
@@ -562,13 +679,13 @@
 
     <!-- TOP HEADER -->
     <header class="fixed top-0 left-0 right-0 z-40 glass-panel md:rounded-2xl md:top-4 md:left-6 md:right-6 px-4 md:px-6 py-2 md:py-3 flex items-center justify-between gap-4 shadow-xl border-t-0 md:border-t">
-        <div class="flex items-center gap-2 text-xl md:text-2xl font-bold text-white cursor-pointer w-auto md:w-32 flex-shrink-0" onclick="ui.switchView('home'); ui.closeMobileSearch();">
+        <div id="app-logo" class="flex items-center gap-2 text-xl md:text-2xl font-bold text-white cursor-pointer w-auto md:w-32 flex-shrink-0" onclick="ui.switchView('home'); ui.closeMobileSearch();">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 md:w-8 md:h-8 text-green-400" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
             <span>D'Tunes</span>
         </div>
 
         <div class="flex-1 flex justify-center w-full" id="search-wrapper">
-            <div class="flex items-center gap-2 w-full max-w-2xl relative">
+            <div id="search-shell" class="flex items-center gap-2 w-full max-w-2xl relative">
                 <button class="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 items-center justify-center text-gray-300 hover:text-white transition flex-shrink-0 hidden md:flex" onclick="ui.switchView('home')" title="Home">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
                 </button>
@@ -591,7 +708,7 @@
         </div>
         
         <!-- Account Area (Profile & Settings) -->
-        <div class="relative flex items-center justify-end w-auto md:w-32 flex-shrink-0">
+        <div id="header-account" class="relative flex items-center justify-end w-auto md:w-32 flex-shrink-0">
             <button class="w-8 h-8 md:w-10 md:h-10 rounded-full border border-white/20 overflow-hidden hover:border-green-400 transition cursor-pointer" onclick="document.getElementById('profile-dropdown').classList.toggle('hidden')">
                 <img src="https://placehold.co/100x100/111/fff?text=U" id="header-avatar" class="w-full h-full object-cover">
             </button>
@@ -703,15 +820,6 @@
                         </select>
                     </div>
 
-                    <div>
-                        <h3 class="text-lg font-bold text-white mb-2">Interface Mode</h3>
-                        <p class="text-sm text-gray-400 mb-4">Auto uses browser and device detection. Use Desktop mode if your phone browser requested desktop layout.</p>
-                        <select id="setting-ui-mode" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-green-400 transition appearance-none cursor-pointer" onchange="ui.updateSettings('uiMode', this.value)">
-                            <option value="auto" class="bg-gray-900">Auto Detect</option>
-                            <option value="mobile" class="bg-gray-900">Force Mobile UI</option>
-                            <option value="desktop" class="bg-gray-900">Force Desktop UI</option>
-                        </select>
-                    </div>
                 </div>
             </div>
         </div>
@@ -726,7 +834,7 @@
         </button>
 
         <!-- Queue Anchor -->
-        <div class="relative w-full md:w-80 flex-shrink-0 pointer-events-none h-0 z-[40]">
+        <div id="queue-anchor" class="relative w-full md:w-80 flex-shrink-0 pointer-events-none h-0 z-[40]">
             <div id="queue-wrapper" class="absolute bottom-0 right-0 w-full flex flex-col z-[40]">
                 
                 <div id="queue-blur-bg" class="liquid-blur-fade"></div>
@@ -1089,54 +1197,25 @@
             playlists: JSON.parse(localStorage.getItem('playlists') || '{}'),
             username: localStorage.getItem('username') || 'Guest User',
             quality: localStorage.getItem('audioQuality') || 'high',
-            uiModePreference: (() => {
-                try {
-                    const pref = localStorage.getItem('dtunes_ui_mode') || 'auto';
-                    return ['auto', 'mobile', 'desktop'].includes(pref) ? pref : 'auto';
-                } catch (e) {
-                    return 'auto';
-                }
-            })(),
             searchDebounce: null, hoverProgress: -1, lastHoverProgress: 0.5, isDragging: false, 
             upNextTriggered: false, queueExpanded: false, activeQueueTab: 'upnext'
         };
 
         const deviceMode = {
-            storageKey: 'dtunes_ui_mode',
-
             detectMobileBrowser: () => {
                 if (typeof window.__dtunesDetectMobileBrowser === 'function') {
                     return window.__dtunesDetectMobileBrowser();
                 }
                 const ua = navigator.userAgent || '';
-                const hasMobileToken = /(android|iphone|ipod|ipad|iemobile|opera mini|mobile|blackberry)/i.test(ua);
-                const isIPadDesktopUA = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
-                const hasTouch = navigator.maxTouchPoints > 0 || ('ontouchstart' in window);
-                const coarsePointer = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
-                const shortEdge = Math.min(window.screen.width || 0, window.screen.height || 0);
-                return hasMobileToken || isIPadDesktopUA || (hasTouch && coarsePointer && shortEdge <= 900);
-            },
-
-            getPreference: () => {
-                try {
-                    const pref = localStorage.getItem(deviceMode.storageKey) || 'auto';
-                    return ['auto', 'mobile', 'desktop'].includes(pref) ? pref : 'auto';
-                } catch (e) {
-                    return 'auto';
-                }
+                const desktopRequestUA = /(Macintosh|Windows NT|X11; Linux x86_64)/i.test(ua) && !/(Android|iPhone|iPad|iPod)/i.test(ua);
+                const uaDataMobile = !!(navigator.userAgentData && navigator.userAgentData.mobile);
+                const hasMobileToken = /(android|iphone|ipod|ipad|iemobile|opera mini|mobile|blackberry|windows phone)/i.test(ua);
+                if (desktopRequestUA) return false;
+                if (uaDataMobile) return true;
+                return hasMobileToken;
             },
 
             resolveMode: () => {
-                const queryPref = (new URLSearchParams(window.location.search).get('ui') || '').toLowerCase();
-                if (queryPref === 'mobile' || queryPref === 'desktop') {
-                    return queryPref;
-                }
-
-                const pref = deviceMode.getPreference();
-                if (pref === 'mobile' || pref === 'desktop') {
-                    return pref;
-                }
-
                 return deviceMode.detectMobileBrowser() ? 'mobile' : 'desktop';
             },
 
@@ -1144,35 +1223,23 @@
 
             apply: () => {
                 const resolvedMode = deviceMode.resolveMode();
-                const pref = deviceMode.getPreference();
-                state.uiModePreference = pref;
 
                 document.documentElement.setAttribute('data-ui-mode', resolvedMode);
-                document.documentElement.setAttribute('data-ui-preference', pref);
+                document.documentElement.setAttribute('data-ui-preference', 'browser');
                 document.documentElement.setAttribute('data-ui-detected-mobile', deviceMode.detectMobileBrowser() ? '1' : '0');
 
                 if (resolvedMode !== 'mobile') {
                     document.body.classList.remove('mobile-player-open');
-                }
-
-                const modeSelect = document.getElementById('setting-ui-mode');
-                if (modeSelect) {
-                    modeSelect.value = pref;
+                    document.body.classList.remove('mobile-search-open');
+                    document.documentElement.style.setProperty('--mobile-keyboard-offset', '0px');
                 }
 
                 if (typeof ui !== 'undefined' && typeof ui.setMobileNavActive === 'function') {
                     ui.setMobileNavActive(typeof ui.getCurrentView === 'function' ? ui.getCurrentView() : 'home');
                 }
-            },
-
-            setPreference: (nextPref) => {
-                const safePref = ['auto', 'mobile', 'desktop'].includes(nextPref) ? nextPref : 'auto';
-                state.uiModePreference = safePref;
-                try {
-                    localStorage.setItem(deviceMode.storageKey, safePref);
-                } catch (e) {}
-                deviceMode.apply();
-                updateMarquees();
+                if (typeof ui !== 'undefined' && typeof ui.updateMobileSearchPosition === 'function') {
+                    ui.updateMobileSearchPosition();
+                }
             }
         };
 
@@ -1255,6 +1322,10 @@
         // PLAYER LOGIC & MEDIA SESSION
         // ============================================
         const audio = document.getElementById('audio-el');
+        const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        audio.setAttribute('playsinline', '');
+        audio.setAttribute('webkit-playsinline', '');
+        audio.preload = 'metadata';
         let isPlaybackPending = false;
 
         window.playSongById = (storeId) => {
@@ -1373,6 +1444,12 @@
             if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
         });
 
+        document.addEventListener('visibilitychange', () => {
+            if ('mediaSession' in navigator && document.visibilityState === 'hidden' && state.playing) {
+                navigator.mediaSession.playbackState = 'playing';
+            }
+        });
+
         // ============================================
         // VISUALIZER
         // ============================================
@@ -1380,6 +1457,7 @@
         let smoothedLow = 0, smoothedMid = 0, currentProgress = 0, time = 0, hoverIntensity = 0; let visualizerCtx;
         let resizeCanvas = () => {};
         function setupAudioContext() {
+            if (isIOSDevice) return;
             try { audioContext = new (window.AudioContext || window.webkitAudioContext)(); analyser = audioContext.createAnalyser(); source = audioContext.createMediaElementSource(audio);
                 source.connect(analyser); analyser.connect(audioContext.destination); analyser.fftSize = 256; isAudioContextInitialized = true;
             } catch(e) {}
@@ -1442,6 +1520,20 @@
                 });
             },
 
+            updateMobileSearchPosition: () => {
+                if (!deviceMode.isMobileUI()) {
+                    document.documentElement.style.setProperty('--mobile-keyboard-offset', '0px');
+                    return;
+                }
+                if (!window.visualViewport) {
+                    document.documentElement.style.setProperty('--mobile-keyboard-offset', '0px');
+                    return;
+                }
+                const vv = window.visualViewport;
+                const offset = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
+                document.documentElement.style.setProperty('--mobile-keyboard-offset', `${offset}px`);
+            },
+
             switchView: (view) => {
                 document.getElementById('view-home').classList.add('hidden'); document.getElementById('view-search').classList.add('hidden'); document.getElementById('view-playlist').classList.add('hidden'); document.getElementById('view-settings').classList.add('hidden');
                 document.getElementById(`view-${view}`).classList.remove('hidden'); document.getElementById('main-container').scrollTo({ top: 0, behavior: 'smooth' });
@@ -1452,6 +1544,8 @@
 
                 if (view !== 'home' && deviceMode.isMobileUI()) {
                     document.body.classList.remove('mobile-player-open');
+                    document.body.classList.remove('mobile-search-open');
+                    document.documentElement.style.setProperty('--mobile-keyboard-offset', '0px');
                 }
 
                 ui.setMobileNavActive(view);
@@ -1471,6 +1565,7 @@
             toggleMobilePlayer: (expand) => {
                 if (!deviceMode.isMobileUI()) return;
                 if(expand) {
+                    ui.closeMobileSearch();
                     document.body.classList.add('mobile-player-open');
                     setTimeout(resizeCanvas, 100);
                 } else {
@@ -1484,14 +1579,22 @@
                     document.getElementById('search-input').focus();
                     return;
                 }
-                ui.switchView('home'); 
+                document.body.classList.remove('mobile-player-open');
+                ui.switchView('home');
+                document.body.classList.add('mobile-search-open');
                 ui.setMobileNavActive('search');
-                setTimeout(() => document.getElementById('search-input').focus(), 80);
+                ui.updateMobileSearchPosition();
+                setTimeout(() => {
+                    document.getElementById('search-input').focus();
+                    ui.updateMobileSearchPosition();
+                }, 80);
             },
 
             closeMobileSearch: () => {
                 document.getElementById('search-input').blur();
                 document.getElementById('search-dropdown').classList.remove('active');
+                document.body.classList.remove('mobile-search-open');
+                document.documentElement.style.setProperty('--mobile-keyboard-offset', '0px');
                 ui.setMobileNavActive(ui.getCurrentView());
             },
 
@@ -1578,11 +1681,6 @@
                 if(key === 'quality') {
                     state.quality = val;
                     localStorage.setItem('audioQuality', val);
-                    return;
-                }
-
-                if (key === 'uiMode') {
-                    deviceMode.setPreference(val);
                 }
             },
             createPlaylist: () => {
@@ -1835,12 +1933,19 @@
                         title: track.name, artist: track.artist,
                         artwork: [{ src: track.img, sizes: '500x500', type: 'image/jpeg' }]
                     });
-                    navigator.mediaSession.setActionHandler('play', player.togglePlay);
-                    navigator.mediaSession.setActionHandler('pause', player.togglePlay);
-                    navigator.mediaSession.setActionHandler('previoustrack', player.prev);
-                    navigator.mediaSession.setActionHandler('nexttrack', player.next);
-                    navigator.mediaSession.setActionHandler('seekbackward', (details) => { audio.currentTime = Math.max(audio.currentTime - (details.seekOffset || 10), 0); });
-                    navigator.mediaSession.setActionHandler('seekforward', (details) => { audio.currentTime = Math.min(audio.currentTime + (details.seekOffset || 10), audio.duration); });
+                    const safeSetHandler = (action, handler) => {
+                        try { navigator.mediaSession.setActionHandler(action, handler); } catch (e) {}
+                    };
+                    safeSetHandler('play', player.togglePlay);
+                    safeSetHandler('pause', player.togglePlay);
+                    safeSetHandler('previoustrack', player.prev);
+                    safeSetHandler('nexttrack', player.next);
+                    safeSetHandler('seekbackward', (details) => { audio.currentTime = Math.max(audio.currentTime - (details.seekOffset || 10), 0); });
+                    safeSetHandler('seekforward', (details) => { audio.currentTime = Math.min(audio.currentTime + (details.seekOffset || 10), audio.duration || 0); });
+                    safeSetHandler('seekto', (details) => {
+                        if (!details || !Number.isFinite(details.seekTime)) return;
+                        audio.currentTime = Math.max(0, Math.min(details.seekTime, audio.duration || details.seekTime));
+                    });
                 }
                 
                 const mPlayBtn = document.getElementById('m-icon-play');
@@ -2008,8 +2113,6 @@
             init: async () => {
                 ui.updateProfileUI();
                 document.getElementById('setting-audio-quality').value = state.quality;
-                const uiModeSelect = document.getElementById('setting-ui-mode');
-                if (uiModeSelect) uiModeSelect.value = state.uiModePreference;
                 
                 ui.renderPlaylists(); 
                 const isNewUser = state.playHistory.length === 0;
@@ -2059,10 +2162,65 @@
 
             deviceMode.apply();
             ui.setMobileNavActive('home');
+            ui.updateMobileSearchPosition();
+
+            const searchShell = document.getElementById('search-shell');
+            if (searchShell) {
+                searchShell.addEventListener('click', (e) => {
+                    if (!deviceMode.isMobileUI()) return;
+                    if (document.body.classList.contains('mobile-search-open')) return;
+                    e.preventDefault();
+                    ui.openMobileSearch();
+                });
+            }
+
+            if (window.visualViewport) {
+                const onViewportChange = () => ui.updateMobileSearchPosition();
+                window.visualViewport.addEventListener('resize', onViewportChange);
+                window.visualViewport.addEventListener('scroll', onViewportChange);
+            }
 
             const seekBar = document.getElementById('seek-bar'); const container = document.getElementById('seek-bar-container'); const tooltip = document.getElementById('seek-tooltip');
-            seekBar.addEventListener('mousedown', () => state.isDragging = true); seekBar.addEventListener('mouseup', () => { state.isDragging = false; persist.save(); });
-            seekBar.addEventListener('input', () => { if(audio.duration) { audio.currentTime = parseFloat(seekBar.value); currentProgress = audio.currentTime / audio.duration; } });
+            const setDragging = (dragging) => {
+                state.isDragging = dragging;
+                if (!dragging) persist.save();
+            };
+
+            seekBar.addEventListener('mousedown', () => setDragging(true));
+            seekBar.addEventListener('pointerdown', () => setDragging(true));
+            seekBar.addEventListener('touchstart', () => setDragging(true), { passive: true });
+
+            seekBar.addEventListener('mouseup', () => setDragging(false));
+            seekBar.addEventListener('pointerup', () => setDragging(false));
+            seekBar.addEventListener('pointercancel', () => setDragging(false));
+            seekBar.addEventListener('mouseleave', () => setDragging(false));
+            seekBar.addEventListener('touchend', () => setDragging(false), { passive: true });
+            seekBar.addEventListener('touchcancel', () => setDragging(false), { passive: true });
+
+            seekBar.addEventListener('input', () => {
+                if (!Number.isFinite(audio.duration) || audio.duration <= 0) return;
+                const nextTime = parseFloat(seekBar.value);
+                if (!Number.isFinite(nextTime)) return;
+                currentProgress = Math.max(0, Math.min(1, nextTime / audio.duration));
+                if (Math.abs(audio.currentTime - nextTime) > 0.08) {
+                    audio.currentTime = nextTime;
+                }
+            });
+
+            seekBar.addEventListener('change', () => {
+                if (!Number.isFinite(audio.duration) || audio.duration <= 0) return;
+                const nextTime = parseFloat(seekBar.value);
+                if (!Number.isFinite(nextTime)) return;
+                audio.currentTime = nextTime;
+                currentProgress = Math.max(0, Math.min(1, nextTime / audio.duration));
+                setDragging(false);
+            });
+
+            audio.addEventListener('loadedmetadata', () => {
+                if (Number.isFinite(audio.duration) && audio.duration > 0) {
+                    seekBar.max = audio.duration;
+                }
+            });
 
             container.addEventListener('mousemove', (e) => {
                 if(!state.loaded || !audio.duration) return; const rect = container.getBoundingClientRect();
@@ -2095,11 +2253,11 @@
             }, {passive: true});
 
             audio.addEventListener('timeupdate', () => {
-                if(audio.duration && !state.isDragging) {
+                if (Number.isFinite(audio.duration) && audio.duration > 0 && !state.isDragging) {
                     seekBar.max = audio.duration; seekBar.value = audio.currentTime;
                     currentProgress = audio.currentTime / audio.duration;
 
-                    if(Math.floor(audio.currentTime) % 5 === 0) persist.save();
+                    if (Math.floor(audio.currentTime) % 5 === 0) persist.save();
 
                     // Morphing 10s Preview Logic 
                     const timeRemaining = audio.duration - audio.currentTime;
@@ -2192,7 +2350,7 @@
             ctxMenu.init(); searchManager.init(); persist.load(); homeView.init(); requestAnimationFrame(viz.render);
             deviceMode.apply();
             
-            window.addEventListener('resize', () => { deviceMode.apply(); updateMarquees(); });
+            window.addEventListener('resize', () => { deviceMode.apply(); ui.updateMobileSearchPosition(); updateMarquees(); });
         }
 
         initApp();
