@@ -19,9 +19,11 @@
                 const desktopRequestUA = /(Macintosh|Windows NT|X11; Linux x86_64)/i.test(ua) && !/(Android|iPhone|iPad|iPod)/i.test(ua);
                 const hasMobileToken = /(android|iphone|ipod|ipad|iemobile|opera mini|mobile|blackberry|windows phone)/i.test(ua);
                 const hasTouch = (navigator.maxTouchPoints || 0) > 0;
-                const coarsePointer = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
-                const shortestScreen = Math.min(window.screen?.width || window.innerWidth, window.screen?.height || window.innerHeight);
-                const likelyHandheld = hasTouch && shortestScreen <= 1280 && (coarsePointer || shortestScreen <= 1024);
+                const coarsePointer = !!(window.matchMedia && (window.matchMedia('(any-pointer: coarse)').matches || window.matchMedia('(pointer: coarse)').matches));
+                const noHover = !!(window.matchMedia && window.matchMedia('(any-hover: none)').matches);
+                const shortestViewport = Math.min(window.innerWidth || 0, window.innerHeight || 0);
+                const shortestScreen = Math.min(window.screen?.width || shortestViewport, window.screen?.height || shortestViewport);
+                const likelyHandheld = hasTouch && (coarsePointer || noHover) && (shortestViewport <= 1024 || shortestScreen <= 1366);
 
                 if (uaDataMobile) return true;
                 if (hasMobileToken) return true;
@@ -1243,9 +1245,11 @@
                 const uaDataMobile = !!(navigator.userAgentData && navigator.userAgentData.mobile);
                 const hasMobileToken = /(android|iphone|ipod|ipad|iemobile|opera mini|mobile|blackberry|windows phone)/i.test(ua);
                 const hasTouch = (navigator.maxTouchPoints || 0) > 0;
-                const coarsePointer = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
-                const shortestScreen = Math.min(window.screen?.width || window.innerWidth, window.screen?.height || window.innerHeight);
-                const likelyHandheld = hasTouch && shortestScreen <= 1280 && (coarsePointer || shortestScreen <= 1024);
+                const coarsePointer = !!(window.matchMedia && (window.matchMedia('(any-pointer: coarse)').matches || window.matchMedia('(pointer: coarse)').matches));
+                const noHover = !!(window.matchMedia && window.matchMedia('(any-hover: none)').matches);
+                const shortestViewport = Math.min(window.innerWidth || 0, window.innerHeight || 0);
+                const shortestScreen = Math.min(window.screen?.width || shortestViewport, window.screen?.height || shortestViewport);
+                const likelyHandheld = hasTouch && (coarsePointer || noHover) && (shortestViewport <= 1024 || shortestScreen <= 1366);
                 if (uaDataMobile) return true;
                 if (hasMobileToken) return true;
                 if (likelyHandheld) return true;
@@ -1282,7 +1286,21 @@
         };
 
         const haptics = {
+            presets: {
+                success: [{ duration: 30, intensity: 0.5 }, { delay: 60, duration: 40, intensity: 1 }],
+                warning: [{ duration: 40, intensity: 0.8 }, { delay: 100, duration: 40, intensity: 0.6 }],
+                error: [{ duration: 40, intensity: 0.7 }, { delay: 40, duration: 40, intensity: 0.7 }, { delay: 40, duration: 40, intensity: 0.9 }, { delay: 40, duration: 50, intensity: 0.6 }],
+                light: [{ duration: 15, intensity: 0.4 }],
+                medium: [{ duration: 25, intensity: 0.7 }],
+                heavy: [{ duration: 35, intensity: 1 }],
+                soft: [{ duration: 40, intensity: 0.5 }],
+                rigid: [{ duration: 10, intensity: 1 }],
+                selection: [{ duration: 8, intensity: 0.3 }],
+                nudge: [{ duration: 80, intensity: 0.8 }, { delay: 80, duration: 50, intensity: 0.3 }],
+                buzz: [{ duration: 1000, intensity: 1 }]
+            },
             lastPulseAt: 0,
+            minPulseGapMs: 30,
 
             canVibrate: () => {
                 if (typeof navigator === 'undefined' || typeof navigator.vibrate !== 'function') return false;
@@ -1291,23 +1309,46 @@
                 return true;
             },
 
-            pulse: (pattern = 'tap') => {
+            resolvePattern: (presetOrPattern) => {
+                if (Array.isArray(presetOrPattern)) return presetOrPattern;
+                return haptics.presets[presetOrPattern] || haptics.presets.selection;
+            },
+
+            toVibrationSequence: (pattern, intensity = 1) => {
+                const safeIntensity = Math.max(0.2, Math.min(1, intensity));
+                const sequence = [];
+                pattern.forEach((step) => {
+                    const delay = Number.isFinite(step.delay) ? Math.max(0, Math.round(step.delay)) : 0;
+                    const rawDuration = Number.isFinite(step.duration) ? Math.max(1, Math.min(1000, step.duration)) : 0;
+                    const stepIntensity = Number.isFinite(step.intensity) ? Math.max(0.1, Math.min(1, step.intensity)) : 1;
+                    const duration = Math.max(1, Math.round(rawDuration * stepIntensity * safeIntensity));
+                    if (delay > 0) sequence.push(delay);
+                    if (duration > 0) sequence.push(duration);
+                });
+                return sequence.length > 0 ? sequence : [8];
+            },
+
+            trigger: (preset = 'selection', options = {}) => {
                 if (!haptics.canVibrate()) return;
 
                 const now = Date.now();
-                if (now - haptics.lastPulseAt < 45) return;
+                if (now - haptics.lastPulseAt < haptics.minPulseGapMs) return;
                 haptics.lastPulseAt = now;
 
-                const patterns = {
-                    tap: 8,
-                    soft: 6,
-                    medium: 12,
-                    strong: [12, 28, 12]
-                };
+                const pattern = haptics.resolvePattern(preset);
+                const sequence = haptics.toVibrationSequence(pattern, Number.isFinite(options.intensity) ? options.intensity : 1);
 
-                try {
-                    navigator.vibrate(patterns[pattern] || patterns.tap);
-                } catch (e) {}
+                try { navigator.vibrate(sequence); } catch (e) {}
+            },
+
+            pulse: (pattern = 'tap') => {
+                const legacyMap = {
+                    tap: 'selection',
+                    soft: 'light',
+                    medium: 'medium',
+                    strong: 'heavy'
+                };
+                haptics.trigger(legacyMap[pattern] || pattern);
             }
         };
 
@@ -1543,8 +1584,8 @@
                     targetLow = dataArray.slice(0, 5).reduce((a, b) => a + b, 0) / 5 / 255; targetMid = dataArray.slice(10, 40).reduce((a, b) => a + b, 0) / 30 / 255;
                 } else if (state.playing) {
                     // Fallback motion when frequency data is unavailable (e.g., iOS restrictions).
-                    targetLow = 0.11 + (0.09 * (0.5 + 0.5 * Math.sin(time * 2.8)));
-                    targetMid = 0.07 + (0.06 * (0.5 + 0.5 * Math.cos(time * 3.4)));
+                    targetLow = 0.2 + (0.16 * (0.5 + 0.5 * Math.sin(time * 2.8)));
+                    targetMid = 0.12 + (0.09 * (0.5 + 0.5 * Math.cos(time * 3.4)));
                 }
                 smoothedLow += (targetLow - smoothedLow) * 0.1; smoothedMid += (targetMid - smoothedMid) * 0.1;
                 let verticalScale = audio.duration > 0 ? (0.3 + 0.7 * Math.min(1, currentProgress / 0.4)) * 0.8 : 1.0;
@@ -2244,32 +2285,40 @@
                     if (!deviceMode.isMobileUI()) return;
                     if (document.body.classList.contains('mobile-search-open')) return;
                     e.preventDefault();
-                    haptics.pulse('soft');
+                    haptics.trigger('selection');
                     ui.openMobileSearch();
                 });
             }
 
             // Keep haptics user-driven by triggering only on direct pointer interactions.
             document.addEventListener('pointerdown', (e) => {
-                const button = e.target.closest('button');
-                const navButton = e.target.closest('#mobile-nav [data-nav]');
-                const logoTap = e.target.closest('#app-logo');
+                const control = e.target.closest('button, [onclick], #mobile-nav [data-nav], #app-logo');
+                if (!control) return;
+                if (control.tagName === 'BUTTON' && (control.disabled || control.classList.contains('disabled'))) return;
 
-                if (!button && !navButton && !logoTap) return;
-                if (button && (button.disabled || button.classList.contains('disabled'))) return;
+                const id = (control.id || '').toLowerCase();
+                const nav = (control.dataset?.nav || '').toLowerCase();
+                const clickExpr = (control.getAttribute('onclick') || '').toLowerCase();
+                const semantic = `${id} ${nav} ${clickExpr}`;
 
-                if (button) {
-                    const mediumTargets = new Set(['btn-play', 'btn-next', 'btn-prev', 'p-like-btn', 'playlist-play-all']);
-                    haptics.pulse(mediumTargets.has(button.id) ? 'medium' : 'tap');
+                if (/delete|remove|error|danger/.test(semantic)) {
+                    haptics.trigger('warning');
+                    return;
+                }
+                if (/toggleplay|playsongbyid|playcontext|playplaylist|btn-play|btn-next|btn-prev|next|prev/.test(semantic)) {
+                    haptics.trigger('medium');
+                    return;
+                }
+                if (/togglelike|like|shuffle|repeat/.test(semantic)) {
+                    haptics.trigger('light');
+                    return;
+                }
+                if (/openmobilesearch|closemobilesearch|switchview|scrolltolibrary|togglemodal|settings|profile|search|home|library/.test(semantic)) {
+                    haptics.trigger('selection');
                     return;
                 }
 
-                if (navButton) {
-                    haptics.pulse('soft');
-                    return;
-                }
-
-                haptics.pulse('tap');
+                haptics.trigger('selection');
             }, { passive: true });
 
             if (window.visualViewport) {
