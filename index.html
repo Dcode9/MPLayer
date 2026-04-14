@@ -11,6 +11,59 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.2/color-thief.umd.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
+    <script>
+        (function() {
+            const storageKey = 'dtunes_ui_mode';
+
+            window.__dtunesDetectMobileBrowser = function() {
+                const ua = navigator.userAgent || '';
+                const uaDataMobile = !!(navigator.userAgentData && navigator.userAgentData.mobile);
+                const hasMobileToken = /(android|iphone|ipod|ipad|iemobile|opera mini|mobile|blackberry)/i.test(ua);
+                const isIPadDesktopUA = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+                const hasTouch = navigator.maxTouchPoints > 0 || ('ontouchstart' in window);
+                const coarsePointer = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+                const shortEdge = Math.min(window.screen.width || 0, window.screen.height || 0);
+                const touchHandheld = hasTouch && coarsePointer && shortEdge > 0 && shortEdge <= 900;
+                return uaDataMobile || hasMobileToken || isIPadDesktopUA || touchHandheld;
+            };
+
+            window.__dtunesResolveUiMode = function() {
+                const params = new URLSearchParams(window.location.search);
+                const queryPref = (params.get('ui') || '').toLowerCase();
+
+                let storedPref = 'auto';
+                try {
+                    storedPref = (localStorage.getItem(storageKey) || 'auto').toLowerCase();
+                } catch (e) {}
+
+                if (!['auto', 'mobile', 'desktop'].includes(storedPref)) {
+                    storedPref = 'auto';
+                }
+
+                const detectedMobile = window.__dtunesDetectMobileBrowser();
+                let mode = detectedMobile ? 'mobile' : 'desktop';
+
+                if (storedPref === 'mobile' || storedPref === 'desktop') {
+                    mode = storedPref;
+                }
+                if (queryPref === 'mobile' || queryPref === 'desktop') {
+                    mode = queryPref;
+                }
+
+                return {
+                    mode,
+                    preference: storedPref,
+                    detectedMobile
+                };
+            };
+
+            const initialUiMode = window.__dtunesResolveUiMode();
+            document.documentElement.setAttribute('data-ui-mode', initialUiMode.mode);
+            document.documentElement.setAttribute('data-ui-preference', initialUiMode.preference);
+            document.documentElement.setAttribute('data-ui-detected-mobile', initialUiMode.detectedMobile ? '1' : '0');
+        })();
+    </script>
+
     <style>
         :root {
             --accent-color: #3ecf8e;
@@ -96,6 +149,7 @@
         }
         .search-input:focus { outline: none; border-color: var(--accent-color); background: rgba(255, 255, 255, 0.08); }
         .search-icon { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: #9ca3af; pointer-events: none; }
+        .mobile-search-cancel { display: none; }
         
         .search-dropdown-wrapper { position: absolute; top: 100%; left: -20px; right: -20px; padding: 20px; pointer-events: none; z-index: 100; visibility: hidden; }
         .search-blur-bg {
@@ -165,76 +219,248 @@
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; white-space: normal; }
 
         /* ================================================== */
-        /* MOBILE OVERRIDES (Responsive Mobile Player Logic) */
+        /* MODE-BASED UI (SCRAPPED MOBILE REBUILD) */
         /* ================================================== */
-        @media (max-width: 767px) {
-            #main-container { padding-bottom: 90px; } 
-            
-            header > div:nth-child(2) { display: none !important; } 
+        html[data-ui-mode="desktop"] #mobile-nav { display: none !important; }
+        html[data-ui-mode="desktop"] .mobile-collapse-btn,
+        html[data-ui-mode="desktop"] .mobile-queue-btn { display: none !important; }
 
-            #mobile-nav { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-            body.mobile-search-active #mobile-nav { transform: translateY(100%); }
+        html[data-ui-mode="mobile"] #main-container {
+            padding-top: calc(84px + env(safe-area-inset-top));
+            padding-bottom: calc(184px + env(safe-area-inset-bottom));
+        }
 
-            body.mobile-search-active header > div:nth-child(2) {
-                display: flex !important; position: fixed; bottom: 0; left: 0; right: 0; top: auto; z-index: 150; 
-                background: rgba(10,10,10,0.85); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
-                border-top: 1px solid rgba(255,255,255,0.1); padding: 12px 16px; padding-bottom: calc(12px + env(safe-area-inset-bottom));
-                animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        html[data-ui-mode="mobile"] header {
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            border-radius: 0 !important;
+            border-left: 0 !important;
+            border-right: 0 !important;
+            border-top: 0 !important;
+            padding-top: calc(8px + env(safe-area-inset-top));
+            padding-bottom: 8px;
+        }
+
+        html[data-ui-mode="mobile"] #search-wrapper > div {
+            gap: 0.5rem;
+        }
+
+        html[data-ui-mode="mobile"] #search-wrapper button.hidden.md\:flex {
+            display: none !important;
+        }
+
+        html[data-ui-mode="mobile"] .mobile-search-cancel {
+            display: inline-block;
+            color: #9ca3af;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        html[data-ui-mode="mobile"] #search-dropdown {
+            left: 0;
+            right: 0;
+            padding: 8px 0 0;
+        }
+
+        html[data-ui-mode="mobile"] #search-dropdown .search-results-content {
+            max-height: 50dvh;
+            overflow-y: auto;
+        }
+
+        html[data-ui-mode="mobile"] #mobile-nav {
+            display: grid !important;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            align-items: center;
+            height: auto;
+            padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            background: linear-gradient(180deg, rgba(8, 8, 8, 0.86), rgba(8, 8, 8, 0.96));
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 120;
+        }
+
+        html[data-ui-mode="mobile"] #mobile-nav button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            color: #9ca3af;
+            border-radius: 12px;
+            padding: 6px 0;
+            transition: color 0.2s ease, background-color 0.2s ease;
+        }
+
+        html[data-ui-mode="mobile"] #mobile-nav button.active {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        html[data-ui-mode="mobile"] #mobile-nav .mobile-nav-label {
+            font-size: 10px;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        html[data-ui-mode="mobile"] #player-footer {
+            left: 8px !important;
+            right: 8px !important;
+            bottom: calc(76px + env(safe-area-inset-bottom)) !important;
+            gap: 0.75rem;
+            align-items: stretch;
+            z-index: 150;
+        }
+
+        html[data-ui-mode="mobile"] #queue-preview-slot,
+        html[data-ui-mode="mobile"] #queue-expandable-area,
+        html[data-ui-mode="mobile"] #btn-expand-queue,
+        html[data-ui-mode="mobile"] #player-card .w-24.hidden.md\:block {
+            display: none !important;
+        }
+
+        html[data-ui-mode="mobile"] #player-card {
+            display: none;
+        }
+
+        html[data-ui-mode="mobile"] #info-island {
+            border-radius: 1rem;
+            padding: 0.5rem 0.75rem;
+            background: rgba(18, 18, 18, 0.92);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+        }
+
+        html[data-ui-mode="mobile"] #album-art-wrapper {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+        }
+
+        html[data-ui-mode="mobile"] #curr-art-img {
+            border-radius: 10px;
+        }
+
+        html[data-ui-mode="mobile"] #info-island button[onclick*="player.togglePlay"] {
+            display: flex !important;
+        }
+
+        html[data-ui-mode="mobile"] body.mobile-player-open #player-footer {
+            inset: 0 !important;
+            padding: calc(16px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));
+            background: radial-gradient(circle at 18% 8%, rgba(57, 57, 57, 0.4), rgba(5, 5, 5, 0.97) 42%);
+            align-items: stretch;
+            justify-content: flex-start;
+            overflow-y: auto;
+        }
+
+        html[data-ui-mode="mobile"] body.mobile-player-open #player-active-area {
+            align-items: center;
+            width: 100%;
+            margin-bottom: 18px;
+        }
+
+        html[data-ui-mode="mobile"] body.mobile-player-open #info-island {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 0.9rem;
+            align-items: center;
+            background: transparent;
+            border: 0;
+            box-shadow: none;
+            padding: 0;
+        }
+
+        html[data-ui-mode="mobile"] body.mobile-player-open #album-art-wrapper {
+            width: min(80vw, 340px);
+            height: min(80vw, 340px);
+            border-radius: 20px;
+            margin-top: 24px;
+        }
+
+        html[data-ui-mode="mobile"] body.mobile-player-open #curr-art-img {
+            border-radius: 20px;
+        }
+
+        html[data-ui-mode="mobile"] body.mobile-player-open #info-island .marquee-container {
+            justify-content: center;
+            text-align: center;
+            width: min(94vw, 440px);
+        }
+
+        html[data-ui-mode="mobile"] body.mobile-player-open #p-title {
+            font-size: 1.4rem;
+        }
+
+        html[data-ui-mode="mobile"] body.mobile-player-open #p-artist {
+            font-size: 1rem;
+        }
+
+        html[data-ui-mode="mobile"] body.mobile-player-open #p-like-btn {
+            transform: scale(1.25);
+        }
+
+        html[data-ui-mode="mobile"] body.mobile-player-open #player-card {
+            display: flex !important;
+            flex-direction: column;
+            height: auto;
+            border-radius: 18px;
+            gap: 1rem;
+            padding: 0.9rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(18, 18, 18, 0.75);
+        }
+
+        html[data-ui-mode="mobile"] body.mobile-player-open #player-card > div:nth-child(1) {
+            order: 2;
+            width: 100%;
+            justify-content: space-evenly;
+            gap: 0.5rem;
+            flex-wrap: nowrap;
+        }
+
+        html[data-ui-mode="mobile"] body.mobile-player-open #player-card > div:nth-child(2) {
+            order: 1;
+            width: 100%;
+            margin: 0;
+            border: 0;
+            padding: 0;
+            height: 78px;
+        }
+
+        html[data-ui-mode="mobile"] body.mobile-player-open #player-card > div:nth-child(1) #btn-play {
+            transform: scale(1.25);
+        }
+
+        html[data-ui-mode="mobile"] .mobile-collapse-btn {
+            display: none;
+            position: fixed;
+            top: calc(12px + env(safe-area-inset-top));
+            left: 12px;
+            z-index: 220;
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 9999px;
+            padding: 6px;
+            pointer-events: auto;
+        }
+
+        html[data-ui-mode="mobile"] body.mobile-player-open .mobile-collapse-btn {
+            display: block;
+        }
+
+        html[data-ui-mode="mobile"] .mobile-queue-btn {
+            display: none !important;
+        }
+
+        @media (max-height: 700px) {
+            html[data-ui-mode="mobile"] body.mobile-player-open #album-art-wrapper {
+                width: min(62vw, 260px);
+                height: min(62vw, 260px);
+                margin-top: 10px;
             }
-            @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-
-            body.mobile-search-active #search-wrapper .search-icon { display: block; }
-            body.mobile-search-active #search-wrapper .search-input { background: rgba(255,255,255,0.1); padding-right: 4rem; }
-            
-            .mobile-search-cancel { display: none; }
-            body.mobile-search-active .mobile-search-cancel { display: block; margin-left: 12px; color: white; font-size: 14px; font-weight: 500; cursor: pointer; }
-
-            body.mobile-search-active #search-dropdown {
-                visibility: visible; position: absolute; bottom: 100%; top: auto; left: 0; right: 0; padding: 0; margin-bottom: 8px; pointer-events: auto;
-            }
-            body.mobile-search-active .search-blur-bg { 
-                inset: -20px 0 0 0; border-radius: 2rem 2rem 0 0;
-                mask-image: linear-gradient(to top, black 50%, transparent 100%); 
-                -webkit-mask-image: linear-gradient(to top, black 50%, transparent 100%);
-                display: block; opacity: 1;
-            }
-            body.mobile-search-active .search-results-content { max-height: 60vh; background: transparent; border: none; padding: 0.5rem; opacity: 1; transform: none; pointer-events: auto; }
-
-            #player-footer { bottom: calc(64px + env(safe-area-inset-bottom) + 12px) !important; left: 8px !important; right: 8px !important; padding: 0; z-index: 160; justify-content: flex-end; transition: bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-            body.mobile-search-active #player-footer { bottom: calc(70px + env(safe-area-inset-bottom) + 12px) !important; }
-            
-            #player-card { display: none; } 
-            #queue-wrapper { width: 100%; position: relative; } 
-            
-            #info-island { border-radius: 9999px; padding: 0.5rem; }
-            #info-island #btn-expand-queue { display: none !important; } 
-            
-            body.mobile-expanded #player-footer {
-                bottom: 0 !important; left: 0 !important; right: 0 !important; top: 0 !important;
-                background: #050505; z-index: 200; padding: 24px; padding-top: 60px;
-                justify-content: flex-start; align-items: center; height: 100dvh; transform: translateY(0) !important;
-            }
-            body.mobile-expanded #player-active-area { order: 1; width: 100%; align-items: center; }
-            body.mobile-expanded #info-island { flex-direction: column; background: transparent; border: none; box-shadow: none; padding: 0; pointer-events: none; }
-            body.mobile-expanded #album-art-wrapper { width: 85vw; height: 85vw; max-width: 350px; max-height: 350px; margin-bottom: 2.5rem; margin-left: 0; border-radius: 1.5rem; pointer-events: auto; }
-            body.mobile-expanded #curr-art-img { border-radius: 1.5rem; }
-            body.mobile-expanded .marquee-container { justify-content: center; text-align: center; }
-            body.mobile-expanded #p-title { font-size: 1.5rem; margin-bottom: 0.5rem; text-align: center; }
-            body.mobile-expanded #p-artist { font-size: 1.1rem; text-align: center; }
-            body.mobile-expanded #p-like-btn { position: absolute; right: 0; bottom: 0; transform: scale(1.5); pointer-events: auto; }
-            body.mobile-expanded #m-btn-play { display: none !important; }
-            
-            body.mobile-expanded #player-card {
-                display: flex !important; flex-direction: column !important; width: 100% !important; background: transparent !important; border: none !important; box-shadow: none !important; margin-top: 1.5rem; height: auto; padding: 0;
-            }
-            body.mobile-expanded #player-card > div:nth-child(2) { order: 1; width: 100%; height: 100px; border: none; margin: 0; padding: 0; }
-            body.mobile-expanded #player-card > div:nth-child(1) { order: 2; width: 100%; justify-content: space-evenly; margin-top: 0.5rem; }
-            body.mobile-expanded #player-card > div:nth-child(1) button { transform: scale(1.2); }
-            body.mobile-expanded #player-card > div:nth-child(1) #btn-play { transform: scale(1.6); }
-
-            body.mobile-expanded #queue-expandable-area { display: none; }
-            body.mobile-expanded .mobile-queue-btn { display: flex; margin-top: auto; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 1rem; width: 100%; justify-content: center; font-weight: bold; font-size: 0.875rem; text-transform: uppercase; border: 1px solid rgba(255,255,255,0.1); }
-            body.mobile-expanded .mobile-collapse-btn { display: block; position: absolute; top: 16px; left: 16px; color: white; z-index: 1000; background: rgba(255,255,255,0.1); border-radius: 50%; padding: 8px; cursor: pointer; }
         }
     </style>
 </head>
@@ -476,6 +702,16 @@
                             <option value="high" class="bg-gray-900">High (Best Quality)</option>
                         </select>
                     </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold text-white mb-2">Interface Mode</h3>
+                        <p class="text-sm text-gray-400 mb-4">Auto uses browser and device detection. Use Desktop mode if your phone browser requested desktop layout.</p>
+                        <select id="setting-ui-mode" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-green-400 transition appearance-none cursor-pointer" onchange="ui.updateSettings('uiMode', this.value)">
+                            <option value="auto" class="bg-gray-900">Auto Detect</option>
+                            <option value="mobile" class="bg-gray-900">Force Mobile UI</option>
+                            <option value="desktop" class="bg-gray-900">Force Desktop UI</option>
+                        </select>
+                    </div>
                 </div>
             </div>
         </div>
@@ -587,19 +823,23 @@
 
     <!-- Mobile Bottom Nav -->
     <nav id="mobile-nav" class="fixed bottom-0 left-0 right-0 h-[64px] bg-[#050505]/95 backdrop-blur-xl border-t border-white/10 z-[100] flex md:hidden items-center justify-around pb-safe">
-        <button class="flex flex-col items-center gap-1 p-2 text-white transition-colors" onclick="ui.switchView('home'); ui.closeMobileSearch();">
+        <button data-nav="home" class="flex flex-col items-center gap-1 p-2 text-white transition-colors" onclick="ui.switchView('home'); ui.closeMobileSearch();">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+            <span class="mobile-nav-label">Home</span>
         </button>
-        <button class="flex flex-col items-center gap-1 p-2 text-gray-400 hover:text-white transition-colors" onclick="ui.openMobileSearch()">
+        <button data-nav="search" class="flex flex-col items-center gap-1 p-2 text-gray-400 hover:text-white transition-colors" onclick="ui.openMobileSearch()">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <span class="mobile-nav-label">Search</span>
         </button>
-        <button class="flex flex-col items-center gap-1 p-2 text-gray-400 hover:text-white transition-colors" onclick="ui.switchView('home'); ui.closeMobileSearch(); setTimeout(()=>document.getElementById('section-playlists').scrollIntoView({behavior:'smooth', block:'start'}), 100)">
+        <button data-nav="library" class="flex flex-col items-center gap-1 p-2 text-gray-400 hover:text-white transition-colors" onclick="ui.scrollToLibrary()">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h10m-10 4h6"/></svg>
+            <span class="mobile-nav-label">Library</span>
         </button>
-        <button class="flex flex-col items-center gap-1 p-2 text-gray-400 hover:text-white transition-colors" onclick="document.getElementById('profile-dropdown').classList.toggle('hidden')">
+        <button data-nav="profile" class="flex flex-col items-center gap-1 p-2 text-gray-400 hover:text-white transition-colors" onclick="ui.switchView('settings'); ui.closeMobileSearch();">
             <div class="w-6 h-6 rounded-full border-2 border-current flex items-center justify-center overflow-hidden">
                 <img src="https://placehold.co/100x100/111/fff?text=U" id="mobile-nav-avatar" class="w-full h-full object-cover">
             </div>
+            <span class="mobile-nav-label">Settings</span>
         </button>
     </nav>
 
@@ -849,8 +1089,91 @@
             playlists: JSON.parse(localStorage.getItem('playlists') || '{}'),
             username: localStorage.getItem('username') || 'Guest User',
             quality: localStorage.getItem('audioQuality') || 'high',
+            uiModePreference: (() => {
+                try {
+                    const pref = localStorage.getItem('dtunes_ui_mode') || 'auto';
+                    return ['auto', 'mobile', 'desktop'].includes(pref) ? pref : 'auto';
+                } catch (e) {
+                    return 'auto';
+                }
+            })(),
             searchDebounce: null, hoverProgress: -1, lastHoverProgress: 0.5, isDragging: false, 
             upNextTriggered: false, queueExpanded: false, activeQueueTab: 'upnext'
+        };
+
+        const deviceMode = {
+            storageKey: 'dtunes_ui_mode',
+
+            detectMobileBrowser: () => {
+                if (typeof window.__dtunesDetectMobileBrowser === 'function') {
+                    return window.__dtunesDetectMobileBrowser();
+                }
+                const ua = navigator.userAgent || '';
+                const hasMobileToken = /(android|iphone|ipod|ipad|iemobile|opera mini|mobile|blackberry)/i.test(ua);
+                const isIPadDesktopUA = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+                const hasTouch = navigator.maxTouchPoints > 0 || ('ontouchstart' in window);
+                const coarsePointer = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+                const shortEdge = Math.min(window.screen.width || 0, window.screen.height || 0);
+                return hasMobileToken || isIPadDesktopUA || (hasTouch && coarsePointer && shortEdge <= 900);
+            },
+
+            getPreference: () => {
+                try {
+                    const pref = localStorage.getItem(deviceMode.storageKey) || 'auto';
+                    return ['auto', 'mobile', 'desktop'].includes(pref) ? pref : 'auto';
+                } catch (e) {
+                    return 'auto';
+                }
+            },
+
+            resolveMode: () => {
+                const queryPref = (new URLSearchParams(window.location.search).get('ui') || '').toLowerCase();
+                if (queryPref === 'mobile' || queryPref === 'desktop') {
+                    return queryPref;
+                }
+
+                const pref = deviceMode.getPreference();
+                if (pref === 'mobile' || pref === 'desktop') {
+                    return pref;
+                }
+
+                return deviceMode.detectMobileBrowser() ? 'mobile' : 'desktop';
+            },
+
+            isMobileUI: () => document.documentElement.getAttribute('data-ui-mode') === 'mobile',
+
+            apply: () => {
+                const resolvedMode = deviceMode.resolveMode();
+                const pref = deviceMode.getPreference();
+                state.uiModePreference = pref;
+
+                document.documentElement.setAttribute('data-ui-mode', resolvedMode);
+                document.documentElement.setAttribute('data-ui-preference', pref);
+                document.documentElement.setAttribute('data-ui-detected-mobile', deviceMode.detectMobileBrowser() ? '1' : '0');
+
+                if (resolvedMode !== 'mobile') {
+                    document.body.classList.remove('mobile-player-open');
+                }
+
+                const modeSelect = document.getElementById('setting-ui-mode');
+                if (modeSelect) {
+                    modeSelect.value = pref;
+                }
+
+                if (typeof ui !== 'undefined' && typeof ui.setMobileNavActive === 'function') {
+                    ui.setMobileNavActive(typeof ui.getCurrentView === 'function' ? ui.getCurrentView() : 'home');
+                }
+            },
+
+            setPreference: (nextPref) => {
+                const safePref = ['auto', 'mobile', 'desktop'].includes(nextPref) ? nextPref : 'auto';
+                state.uiModePreference = safePref;
+                try {
+                    localStorage.setItem(deviceMode.storageKey, safePref);
+                } catch (e) {}
+                deviceMode.apply();
+                updateMarquees();
+            }
         };
 
         const songStore = {
@@ -1055,6 +1378,7 @@
         // ============================================
         let audioContext, analyser, source, isAudioContextInitialized = false;
         let smoothedLow = 0, smoothedMid = 0, currentProgress = 0, time = 0, hoverIntensity = 0; let visualizerCtx;
+        let resizeCanvas = () => {};
         function setupAudioContext() {
             try { audioContext = new (window.AudioContext || window.webkitAudioContext)(); analyser = audioContext.createAnalyser(); source = audioContext.createMediaElementSource(audio);
                 source.connect(analyser); analyser.connect(audioContext.destination); analyser.fftSize = 256; isAudioContextInitialized = true;
@@ -1093,31 +1417,84 @@
         // UI & RENDERING
         // ============================================
         const ui = {
+            getCurrentView: () => {
+                if (!document.getElementById('view-home').classList.contains('hidden')) return 'home';
+                if (!document.getElementById('view-search').classList.contains('hidden')) return 'search';
+                if (!document.getElementById('view-playlist').classList.contains('hidden')) return 'playlist';
+                if (!document.getElementById('view-settings').classList.contains('hidden')) return 'settings';
+                return 'home';
+            },
+
+            setMobileNavActive: (view) => {
+                const navButtons = document.querySelectorAll('#mobile-nav [data-nav]');
+                const map = {
+                    home: 'home',
+                    search: 'search',
+                    playlist: 'library',
+                    settings: 'profile',
+                    library: 'library',
+                    profile: 'profile'
+                };
+                const active = map[view] || 'home';
+                navButtons.forEach((btn) => {
+                    if (btn.dataset.nav === active) btn.classList.add('active');
+                    else btn.classList.remove('active');
+                });
+            },
+
             switchView: (view) => {
                 document.getElementById('view-home').classList.add('hidden'); document.getElementById('view-search').classList.add('hidden'); document.getElementById('view-playlist').classList.add('hidden'); document.getElementById('view-settings').classList.add('hidden');
                 document.getElementById(`view-${view}`).classList.remove('hidden'); document.getElementById('main-container').scrollTo({ top: 0, behavior: 'smooth' });
+
+                if (view !== 'search') {
+                    document.getElementById('search-dropdown').classList.remove('active');
+                }
+
+                if (view !== 'home' && deviceMode.isMobileUI()) {
+                    document.body.classList.remove('mobile-player-open');
+                }
+
+                ui.setMobileNavActive(view);
                 updateMarquees();
             },
+
+            scrollToLibrary: () => {
+                ui.switchView('home');
+                ui.closeMobileSearch();
+                const section = document.getElementById('section-playlists');
+                if (section) {
+                    setTimeout(() => section.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+                }
+                ui.setMobileNavActive('library');
+            },
+
             toggleMobilePlayer: (expand) => {
-                if(window.innerWidth >= 768) return;
+                if (!deviceMode.isMobileUI()) return;
                 if(expand) {
-                    document.body.classList.add('mobile-expanded');
+                    document.body.classList.add('mobile-player-open');
                     setTimeout(resizeCanvas, 100);
                 } else {
-                    document.body.classList.remove('mobile-expanded');
+                    document.body.classList.remove('mobile-player-open');
                 }
                 updateMarquees();
             },
+
             openMobileSearch: () => {
+                if (!deviceMode.isMobileUI()) {
+                    document.getElementById('search-input').focus();
+                    return;
+                }
                 ui.switchView('home'); 
-                document.body.classList.add('mobile-search-active'); 
-                setTimeout(() => document.getElementById('search-input').focus(), 100);
+                ui.setMobileNavActive('search');
+                setTimeout(() => document.getElementById('search-input').focus(), 80);
             },
+
             closeMobileSearch: () => {
-                document.body.classList.remove('mobile-search-active');
                 document.getElementById('search-input').blur();
                 document.getElementById('search-dropdown').classList.remove('active');
+                ui.setMobileNavActive(ui.getCurrentView());
             },
+
             toggleModal: (show) => {
                 const modal = document.getElementById('playlist-modal');
                 if(show) { 
@@ -1201,6 +1578,11 @@
                 if(key === 'quality') {
                     state.quality = val;
                     localStorage.setItem('audioQuality', val);
+                    return;
+                }
+
+                if (key === 'uiMode') {
+                    deviceMode.setPreference(val);
                 }
             },
             createPlaylist: () => {
@@ -1626,6 +2008,8 @@
             init: async () => {
                 ui.updateProfileUI();
                 document.getElementById('setting-audio-quality').value = state.quality;
+                const uiModeSelect = document.getElementById('setting-ui-mode');
+                if (uiModeSelect) uiModeSelect.value = state.uiModePreference;
                 
                 ui.renderPlaylists(); 
                 const isNewUser = state.playHistory.length === 0;
@@ -1666,11 +2050,15 @@
 
         function initApp() {
             const vCanvas = document.getElementById('visualizer-canvas'); visualizerCtx = vCanvas.getContext('2d');
-            function resizeCanvas() {
+            resizeCanvas = () => {
                 const container = document.getElementById('seek-bar-container'); const dpr = Math.min(window.devicePixelRatio || 1, 2);
-                vCanvas.width = container.offsetWidth * dpr; vCanvas.height = container.offsetHeight * dpr; visualizerCtx.scale(dpr, dpr);
-            }
+                vCanvas.width = container.offsetWidth * dpr; vCanvas.height = container.offsetHeight * dpr;
+                visualizerCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            };
             resizeCanvas(); window.addEventListener('resize', resizeCanvas);
+
+            deviceMode.apply();
+            ui.setMobileNavActive('home');
 
             const seekBar = document.getElementById('seek-bar'); const container = document.getElementById('seek-bar-container'); const tooltip = document.getElementById('seek-tooltip');
             seekBar.addEventListener('mousedown', () => state.isDragging = true); seekBar.addEventListener('mouseup', () => { state.isDragging = false; persist.save(); });
@@ -1692,7 +2080,14 @@
             island.addEventListener('touchend', e => {
                 const touchEndX = e.changedTouches[0].screenX; const touchEndY = e.changedTouches[0].screenY;
                 const deltaX = touchEndX - touchStartX; const deltaY = touchEndY - touchStartY;
-                if (window.innerWidth < 768 && !document.body.classList.contains('mobile-expanded')) {
+                if (deviceMode.isMobileUI() && !document.body.classList.contains('mobile-player-open')) {
+                    if (e.target.closest('button')) return;
+
+                    if (Math.abs(deltaX) < 12 && Math.abs(deltaY) < 12) {
+                        ui.toggleMobilePlayer(true);
+                        return;
+                    }
+
                     if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 40) {
                         if (deltaX < 0) player.next(); else player.prev();
                     } else if (deltaY < -40) { ui.toggleMobilePlayer(true); }
@@ -1795,8 +2190,9 @@
             spotifyManager.checkToken();
 
             ctxMenu.init(); searchManager.init(); persist.load(); homeView.init(); requestAnimationFrame(viz.render);
+            deviceMode.apply();
             
-            window.addEventListener('resize', () => { updateMarquees(); });
+            window.addEventListener('resize', () => { deviceMode.apply(); updateMarquees(); });
         }
 
         initApp();
