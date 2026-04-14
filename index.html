@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
     <title>D'Tunes</title>
     <link rel="icon" href="data:,">
     
@@ -55,6 +55,7 @@
             --accent-color: #3ecf8e;
             --album-art-gradient: conic-gradient(from 0deg, #434343, #000000, #434343);
             --mobile-keyboard-offset: 0px;
+            --mobile-keyboard-lift: 0px;
         }
 
         body {
@@ -232,6 +233,13 @@
             padding-top: calc(10px + env(safe-area-inset-top));
             padding-bottom: 10px;
             justify-content: center !important;
+            transition: transform 0.24s ease, opacity 0.2s ease;
+        }
+
+        html[data-ui-mode="mobile"] body.mobile-search-open header {
+            transform: translateY(calc(-100% - env(safe-area-inset-top) - 8px));
+            opacity: 0;
+            pointer-events: none;
         }
 
         html[data-ui-mode="mobile"] #app-logo {
@@ -249,6 +257,14 @@
             padding: 0 !important;
             pointer-events: none;
             transition: bottom 0.24s ease;
+        }
+
+        html[data-ui-mode="mobile"] body.mobile-search-open {
+            overflow: hidden;
+        }
+
+        html[data-ui-mode="mobile"] body.mobile-search-open #main-container {
+            overscroll-behavior-y: contain;
         }
 
         html[data-ui-mode="mobile"] #search-wrapper {
@@ -378,6 +394,10 @@
             background: rgba(12, 12, 12, 0.8);
         }
 
+        html[data-ui-mode="mobile"] body.mobile-search-open #search-dropdown .search-results-content {
+            max-height: min(24dvh, 180px);
+        }
+
         html[data-ui-mode="mobile"] #mobile-nav {
             display: grid !important;
             grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -446,9 +466,11 @@
             gap: 0.75rem;
             align-items: stretch;
             z-index: 150;
+            transition: bottom 0.24s ease, transform 0.24s ease, opacity 0.24s ease;
         }
 
         html[data-ui-mode="mobile"] body.mobile-search-open #player-footer {
+            bottom: calc(188px + env(safe-area-inset-bottom) + var(--mobile-keyboard-lift)) !important;
             transform: translateY(0) !important;
             opacity: 1 !important;
             pointer-events: auto;
@@ -1261,7 +1283,7 @@
             username: localStorage.getItem('username') || 'Guest User',
             quality: localStorage.getItem('audioQuality') || 'high',
             searchDebounce: null, hoverProgress: -1, lastHoverProgress: 0.5, isDragging: false, 
-            upNextTriggered: false, queueExpanded: false, activeQueueTab: 'upnext'
+            upNextTriggered: false, queueExpanded: false, activeQueueTab: 'upnext', mobileSearchOriginView: null
         };
 
         const deviceMode = {
@@ -1667,17 +1689,28 @@
             },
 
             updateMobileSearchPosition: () => {
-                if (!deviceMode.isMobileUI()) {
+                const resetKeyboardVars = () => {
                     document.documentElement.style.setProperty('--mobile-keyboard-offset', '0px');
+                    document.documentElement.style.setProperty('--mobile-keyboard-lift', '0px');
+                    document.body.classList.remove('mobile-keyboard-open');
+                };
+
+                if (!deviceMode.isMobileUI()) {
+                    resetKeyboardVars();
                     return;
                 }
                 if (!window.visualViewport) {
-                    document.documentElement.style.setProperty('--mobile-keyboard-offset', '0px');
+                    resetKeyboardVars();
                     return;
                 }
                 const vv = window.visualViewport;
                 const offset = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
+                const lift = Math.min(offset, 120);
                 document.documentElement.style.setProperty('--mobile-keyboard-offset', `${offset}px`);
+                document.documentElement.style.setProperty('--mobile-keyboard-lift', `${lift}px`);
+                const keyboardOpen = offset > 12 && document.body.classList.contains('mobile-search-open');
+                document.body.classList.toggle('mobile-keyboard-open', keyboardOpen);
+                if (keyboardOpen) window.scrollTo(0, 0);
             },
 
             switchView: (view) => {
@@ -1692,6 +1725,8 @@
                     document.body.classList.remove('mobile-player-open');
                     document.body.classList.remove('mobile-search-open');
                     document.documentElement.style.setProperty('--mobile-keyboard-offset', '0px');
+                    document.documentElement.style.setProperty('--mobile-keyboard-lift', '0px');
+                    document.body.classList.remove('mobile-keyboard-open');
                 }
 
                 ui.setMobileNavActive(view);
@@ -1724,26 +1759,68 @@
 
             openMobileSearch: () => {
                 if (!deviceMode.isMobileUI()) {
-                    document.getElementById('search-input').focus();
+                    document.getElementById('search-input').focus({ preventScroll: true });
                     return;
                 }
+                const input = document.getElementById('search-input');
+                state.mobileSearchOriginView = ui.getCurrentView();
                 document.body.classList.remove('mobile-player-open');
-                ui.switchView('home');
                 document.body.classList.add('mobile-search-open');
                 ui.setMobileNavActive('search');
-                ui.updateMobileSearchPosition();
-                setTimeout(() => {
-                    document.getElementById('search-input').focus();
+
+                const focusInput = () => {
+                    try {
+                        input.focus({ preventScroll: true });
+                        const cursor = input.value.length;
+                        input.setSelectionRange(cursor, cursor);
+                    } catch (e) {
+                        input.focus();
+                    }
+                    window.scrollTo(0, 0);
                     ui.updateMobileSearchPosition();
-                }, 80);
+                };
+
+                focusInput();
+                requestAnimationFrame(focusInput);
+                setTimeout(focusInput, 120);
             },
 
-            closeMobileSearch: () => {
-                document.getElementById('search-input').blur();
-                document.getElementById('search-dropdown').classList.remove('active');
+            closeMobileSearch: (options = {}) => {
+                const { clearQuickState = false, restoreOrigin = false } = options;
+                const input = document.getElementById('search-input');
+                const dropdown = document.getElementById('search-dropdown');
+                const results = document.getElementById('search-results');
+
+                input.blur();
+                dropdown.classList.remove('active');
                 document.body.classList.remove('mobile-search-open');
                 document.documentElement.style.setProperty('--mobile-keyboard-offset', '0px');
+                document.documentElement.style.setProperty('--mobile-keyboard-lift', '0px');
+                document.body.classList.remove('mobile-keyboard-open');
+
+                if (clearQuickState) {
+                    input.value = '';
+                    results.innerHTML = '';
+                    lastFullSearch = '';
+                }
+
+                if (restoreOrigin && state.mobileSearchOriginView) {
+                    const origin = state.mobileSearchOriginView;
+                    if (origin !== 'search' && ui.getCurrentView() !== origin) {
+                        ui.switchView(origin);
+                    }
+                }
+
+                state.mobileSearchOriginView = null;
                 ui.setMobileNavActive(ui.getCurrentView());
+            },
+
+            playFromQuickSearch: (storeId) => {
+                playSongById(storeId);
+                document.getElementById('search-dropdown').classList.remove('active');
+                if (deviceMode.isMobileUI() && document.body.classList.contains('mobile-search-open')) {
+                    ui.closeMobileSearch({ clearQuickState: true, restoreOrigin: true });
+                }
             },
 
             toggleModal: (show) => {
@@ -2196,7 +2273,7 @@
                         
                         results.innerHTML = '<div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1 pl-2 drop-shadow-md">Songs</div>' + songs.map(song => {
                             const storeId = songStore.add(song);
-                            return ui.createSongPill(song, `playSongById('${storeId}'); document.getElementById('search-dropdown').classList.remove('active');`, 'quicksearch');
+                            return ui.createSongPill(song, `ui.playFromQuickSearch('${storeId}')`, 'quicksearch');
                         }).join('');
                         updateMarquees();
                     }, 400);
@@ -2206,6 +2283,10 @@
                     if(e.key === 'Enter') {
                         e.preventDefault(); const query = e.target.value.trim();
                         if(query.length > 0) { 
+                            if (deviceMode.isMobileUI()) {
+                                e.target.blur();
+                                ui.closeMobileSearch();
+                            }
                             lastFullSearch = query; 
                             dropWrapper.classList.remove('active'); results.innerHTML = ''; 
                             searchManager.performFullSearch(query); 
