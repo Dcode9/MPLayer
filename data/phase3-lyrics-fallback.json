@@ -1,0 +1,253 @@
+{
+  "metadata": {
+    "generatedAt": "2026-04-14T08:16:35.627Z",
+    "phase": 3,
+    "timingMode": "approximate",
+    "songSelectionMethod": "search-best-match",
+    "sourceApis": {
+      "jiosaavn": "https://jiosaavn-api-taupe-phi.vercel.app/api",
+      "lyrics": "lyrics.ovh",
+      "lyricsMatchMode": "plain-lyrics-fallback"
+    }
+  },
+  "song": {
+    "id": "DYBuG4Ko",
+    "name": "Yellow",
+    "artist": "Coldplay",
+    "album": "Parachutes",
+    "duration": 266,
+    "language": "english",
+    "year": "2000",
+    "url": "https://www.jiosaavn.com/song/yellow/NDEpRDMEfFw",
+    "image": "https://c.saavncdn.com/254/Parachutes-English-2000-20240529104717-500x500.jpg",
+    "hasLyrics": false,
+    "source": "jiosaavn"
+  },
+  "lyricsRaw": {
+    "provider": "lyrics.ovh",
+    "hasSyncedLyrics": false,
+    "hasPlainLyrics": true,
+    "reference": {
+      "artistName": "Coldplay",
+      "trackName": "Yellow",
+      "endpoint": "https://api.lyrics.ovh/v1/Coldplay/Yellow"
+    }
+  },
+  "lines": [
+    {
+      "text": "[Chris Martin]",
+      "start": 0,
+      "end": 6.186
+    },
+    {
+      "text": "Look at the stars",
+      "start": 6.186,
+      "end": 12.372
+    },
+    {
+      "text": "Look how they shine for you",
+      "start": 12.372,
+      "end": 18.558
+    },
+    {
+      "text": "And everything you do",
+      "start": 18.558,
+      "end": 24.744
+    },
+    {
+      "text": "Yeah, they were all yellow",
+      "start": 24.744,
+      "end": 30.93
+    },
+    {
+      "text": "I came along",
+      "start": 30.93,
+      "end": 37.116
+    },
+    {
+      "text": "I wrote a song for you",
+      "start": 37.116,
+      "end": 43.302
+    },
+    {
+      "text": "And all the things you do",
+      "start": 43.302,
+      "end": 49.488
+    },
+    {
+      "text": "And it was called \"Yellow\"",
+      "start": 49.488,
+      "end": 55.674
+    },
+    {
+      "text": "So then I took my turn",
+      "start": 55.674,
+      "end": 61.86
+    },
+    {
+      "text": "Oh, what a thing to have done",
+      "start": 61.86,
+      "end": 68.047
+    },
+    {
+      "text": "And it was all yellow",
+      "start": 68.047,
+      "end": 74.233
+    },
+    {
+      "text": "[Chris, Jonny & Will]",
+      "start": 74.233,
+      "end": 80.419
+    },
+    {
+      "text": "(Aah) Your skin, oh yeah, your skin and bones",
+      "start": 80.419,
+      "end": 86.605
+    },
+    {
+      "text": "(Ooh) Turn into something beautiful",
+      "start": 86.605,
+      "end": 92.791
+    },
+    {
+      "text": "(Aah) You know, you know I love you so",
+      "start": 92.791,
+      "end": 98.977
+    },
+    {
+      "text": "You know I love you so",
+      "start": 98.977,
+      "end": 105.163
+    },
+    {
+      "text": "[Chris Martin]",
+      "start": 105.163,
+      "end": 111.349
+    },
+    {
+      "text": "I swam across",
+      "start": 111.349,
+      "end": 117.535
+    },
+    {
+      "text": "I jumped across for you",
+      "start": 117.535,
+      "end": 123.721
+    },
+    {
+      "text": "Oh, what a thing to do",
+      "start": 123.721,
+      "end": 129.907
+    },
+    {
+      "text": "'Cause you were all yellow",
+      "start": 129.907,
+      "end": 136.093
+    },
+    {
+      "text": "I drew a line",
+      "start": 136.093,
+      "end": 142.279
+    },
+    {
+      "text": "I drew a line for you",
+      "start": 142.279,
+      "end": 148.465
+    },
+    {
+      "text": "Oh, what a thing to do",
+      "start": 148.465,
+      "end": 154.651
+    },
+    {
+      "text": "And it was all yellow",
+      "start": 154.651,
+      "end": 160.837
+    },
+    {
+      "text": "[Chris, Jonny & Will]",
+      "start": 160.837,
+      "end": 167.023
+    },
+    {
+      "text": "(Aah) Your skin, oh yeah, your skin and bones",
+      "start": 167.023,
+      "end": 173.209
+    },
+    {
+      "text": "(Ooh) Turn into something beautiful",
+      "start": 173.209,
+      "end": 179.395
+    },
+    {
+      "text": "(Aah) And you know",
+      "start": 179.395,
+      "end": 185.581
+    },
+    {
+      "text": "For you, I'd bleed myself dry",
+      "start": 185.581,
+      "end": 191.767
+    },
+    {
+      "text": "For you, I'd bleed myself dry",
+      "start": 191.767,
+      "end": 197.953
+    },
+    {
+      "text": "[ Chris Martin]",
+      "start": 197.953,
+      "end": 204.14
+    },
+    {
+      "text": "It's true, look how they shine for you",
+      "start": 204.14,
+      "end": 210.326
+    },
+    {
+      "text": "Look how they shine for you",
+      "start": 210.326,
+      "end": 216.512
+    },
+    {
+      "text": "Look how they shine for",
+      "start": 216.512,
+      "end": 222.698
+    },
+    {
+      "text": "Look how they shine for you",
+      "start": 222.698,
+      "end": 228.884
+    },
+    {
+      "text": "Look how they shine for you",
+      "start": 228.884,
+      "end": 235.07
+    },
+    {
+      "text": "Look how they shine",
+      "start": 235.07,
+      "end": 241.256
+    },
+    {
+      "text": "[ Chris Martin]",
+      "start": 241.256,
+      "end": 247.442
+    },
+    {
+      "text": "Look at the stars",
+      "start": 247.442,
+      "end": 253.628
+    },
+    {
+      "text": "Look how they shine for you",
+      "start": 253.628,
+      "end": 259.814
+    },
+    {
+      "text": "And all the things that you do",
+      "start": 259.814,
+      "end": 266
+    }
+  ]
+}
