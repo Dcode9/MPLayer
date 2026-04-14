@@ -1243,6 +1243,34 @@
             }
         };
 
+        const haptics = {
+            lastPulseAt: 0,
+
+            canVibrate: () => {
+                if (typeof navigator === 'undefined' || typeof navigator.vibrate !== 'function') return false;
+                if (document.visibilityState !== 'visible') return false;
+                if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false;
+                return deviceMode.detectMobileBrowser();
+            },
+
+            pulse: (pattern = 'tap') => {
+                if (!haptics.canVibrate()) return;
+
+                const now = Date.now();
+                if (now - haptics.lastPulseAt < 45) return;
+                haptics.lastPulseAt = now;
+
+                const patterns = {
+                    tap: 8,
+                    soft: 6,
+                    medium: 12,
+                    strong: [12, 28, 12]
+                };
+
+                navigator.vibrate(patterns[pattern] || patterns.tap);
+            }
+        };
+
         const songStore = {
             songs: new Map(), counter: 0,
             add: (song) => { const id = `song_${songStore.counter++}`; songStore.songs.set(id, song); return id; },
@@ -2170,9 +2198,33 @@
                     if (!deviceMode.isMobileUI()) return;
                     if (document.body.classList.contains('mobile-search-open')) return;
                     e.preventDefault();
+                    haptics.pulse('soft');
                     ui.openMobileSearch();
                 });
             }
+
+            // Keep haptics user-driven by triggering only on direct tap targets.
+            document.addEventListener('click', (e) => {
+                const button = e.target.closest('button');
+                const navButton = e.target.closest('#mobile-nav [data-nav]');
+                const logoTap = e.target.closest('#app-logo');
+
+                if (!button && !navButton && !logoTap) return;
+                if (button && (button.disabled || button.classList.contains('disabled'))) return;
+
+                if (button) {
+                    const mediumTargets = new Set(['btn-play', 'btn-next', 'btn-prev', 'p-like-btn', 'playlist-play-all']);
+                    haptics.pulse(mediumTargets.has(button.id) ? 'medium' : 'tap');
+                    return;
+                }
+
+                if (navButton) {
+                    haptics.pulse('soft');
+                    return;
+                }
+
+                haptics.pulse('tap');
+            });
 
             if (window.visualViewport) {
                 const onViewportChange = () => ui.updateMobileSearchPosition();
@@ -2242,13 +2294,18 @@
                     if (e.target.closest('button')) return;
 
                     if (Math.abs(deltaX) < 12 && Math.abs(deltaY) < 12) {
+                        haptics.pulse('medium');
                         ui.toggleMobilePlayer(true);
                         return;
                     }
 
                     if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 40) {
+                        haptics.pulse('soft');
                         if (deltaX < 0) player.next(); else player.prev();
-                    } else if (deltaY < -40) { ui.toggleMobilePlayer(true); }
+                    } else if (deltaY < -40) {
+                        haptics.pulse('medium');
+                        ui.toggleMobilePlayer(true);
+                    }
                 }
             }, {passive: true});
 
