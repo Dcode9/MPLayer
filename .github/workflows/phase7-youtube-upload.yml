@@ -1,0 +1,139 @@
+name: Phase 7 YouTube Upload
+
+on:
+  workflow_dispatch:
+    inputs:
+      song_query:
+        description: Song query used when song_id is empty
+        required: false
+        default: Aaj Ki Raat
+        type: string
+      song_id:
+        description: Optional direct JioSaavn song id
+        required: false
+        default: ''
+        type: string
+      max_seconds:
+        description: Clip duration cap (0 means full song)
+        required: false
+        default: '30'
+        type: string
+      youtube_title:
+        description: Optional YouTube title override
+        required: false
+        default: ''
+        type: string
+      youtube_description:
+        description: Optional YouTube description override
+        required: false
+        default: ''
+        type: string
+      youtube_tags:
+        description: Optional comma-separated tags
+        required: false
+        default: ''
+        type: string
+      privacy_status:
+        description: YouTube privacy status
+        required: false
+        default: unlisted
+        type: choice
+        options:
+          - private
+          - unlisted
+          - public
+      strict_glm_fallback:
+        description: Fail if Pollinations GitHub model is unavailable and GLM fallback is not configured
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+
+jobs:
+  render-and-upload:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Prepare folders
+        run: mkdir -p data output
+
+      - name: Phase 3 - Fetch song and lyrics
+        env:
+          SONG_QUERY: ${{ inputs.song_query }}
+          SONG_ID: ${{ inputs.song_id }}
+        run: |
+          set -e
+          echo "[phase-7] Starting Phase 3"
+          if [ -n "$SONG_ID" ]; then
+            npm run phase3:build -- --song-id="$SONG_ID" --out=data/phase3-lyrics.json
+          else
+            npm run phase3:build -- --query="$SONG_QUERY" --out=data/phase3-lyrics.json
+          fi
+
+      - name: Phase 4 - Generate AI direction
+        env:
+          POLLINATIONS_API: ${{ secrets.POLLINATIONS_API }}
+          POLLINATIONS_API_KEY: ${{ secrets.POLLINATIONS_API_KEY }}
+          GLM5_API_BASE_URL: ${{ secrets.GLM5_API_BASE_URL }}
+          GLM5_API_KEY: ${{ secrets.GLM5_API_KEY }}
+          GLM5_MODEL: ${{ secrets.GLM5_MODEL }}
+          PHASE4_STRICT_GLM_FALLBACK: ${{ inputs.strict_glm_fallback }}
+        run: |
+          set -e
+          echo "[phase-7] Starting Phase 4"
+          npm run phase4:direction -- --in=data/phase3-lyrics.json --out=data/phase4-direction.json
+
+      - name: Phase 5 - Render video
+        env:
+          PHASE5_MAX_SECONDS: ${{ inputs.max_seconds }}
+          PHASE5_RENDER_CONCURRENCY: 2
+          PHASE5_RENDER_CRF: 22
+        run: |
+          set -e
+          echo "[phase-7] Starting Phase 5"
+          npm run phase5:render -- --lyrics=data/phase3-lyrics.json --direction=data/phase4-direction.json --out=output/phase7-video.mp4 --max-seconds="$PHASE5_MAX_SECONDS"
+
+      - name: Phase 7 - Upload to YouTube
+        env:
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+          YOUTUBE_TITLE: ${{ inputs.youtube_title }}
+          YOUTUBE_DESCRIPTION: ${{ inputs.youtube_description }}
+          YOUTUBE_TAGS: ${{ inputs.youtube_tags }}
+          YOUTUBE_PRIVACY_STATUS: ${{ inputs.privacy_status }}
+          PHASE7_VIDEO_FILE: output/phase7-video.mp4
+          PHASE7_PHASE3_JSON: data/phase3-lyrics.json
+          PHASE7_OUTPUT_JSON: data/phase7-youtube-upload.json
+        run: |
+          set -e
+          echo "[phase-7] Starting YouTube upload"
+          npm run phase7:upload
+
+      - name: Upload Phase 7 artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase7-youtube-upload
+          if-no-files-found: error
+          path: |
+            output/phase7-video.mp4
+            data/phase3-lyrics.json
+            data/phase4-direction.json
+            data/phase7-youtube-upload.json
