@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "generatedAt": "2026-04-14T08:15:58.054Z",
+    "generatedAt": "2026-04-14T12:33:02.276Z",
     "phase": 3,
     "timingMode": "synced",
     "songSelectionMethod": "search-best-match",
@@ -19,6 +19,7 @@
     "language": "hindi",
     "year": "2024",
     "url": "https://www.jiosaavn.com/song/aaj-ki-raat/IV4HARUADko",
+    "audioUrl": "https://aac.saavncdn.com/373/36b1b3637cdeedfaa9a9012453948aa6_320.mp4",
     "image": "https://c.saavncdn.com/373/Stree-2-Hindi-2024-20240828083834-500x500.jpg",
     "hasLyrics": true,
     "source": "jiosaavn"

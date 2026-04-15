@@ -72,6 +72,59 @@ const normalizeSong = (song) => {
     return null;
   }
 
+  const parseQualityScore = (value) => {
+    const direct = Number(value);
+    if (Number.isFinite(direct)) {
+      return direct;
+    }
+
+    const fromString = String(value || '').match(/(\d{2,3})/);
+    if (!fromString) {
+      return 0;
+    }
+
+    return Number(fromString[1]);
+  };
+
+  const extractAudioUrl = () => {
+    const candidateLists = [
+      song.downloadUrl,
+      song.downloadUrls,
+      song.more_info?.downloadUrl,
+      song.moreInfo?.downloadUrl,
+    ].filter((candidate) => Array.isArray(candidate));
+
+    const flattened = [];
+    for (const list of candidateLists) {
+      list.forEach((item, index) => {
+        if (typeof item === 'string') {
+          flattened.push({
+            url: item,
+            qualityScore: Math.max(0, 10 - index),
+          });
+          return;
+        }
+
+        if (item?.url) {
+          flattened.push({
+            url: item.url,
+            qualityScore: parseQualityScore(item.quality || item.bitrate || item.kbps) || Math.max(0, 10 - index),
+          });
+        }
+      });
+    }
+
+    if (flattened.length === 0) {
+      return null;
+    }
+
+    const best = flattened
+      .filter((entry) => typeof entry.url === 'string' && entry.url.startsWith('http'))
+      .sort((a, b) => b.qualityScore - a.qualityScore)[0];
+
+    return best?.url || null;
+  };
+
   const artist =
     song.artists?.primary?.map((item) => item.name).join(', ') ||
     song.primaryArtists ||
@@ -93,6 +146,7 @@ const normalizeSong = (song) => {
     language: song.language || null,
     year: song.year || null,
     url: song.url || null,
+    audioUrl: extractAudioUrl(),
     image,
     hasLyrics: Boolean(song.hasLyrics),
     source: 'jiosaavn',
@@ -195,8 +249,24 @@ const resolveSongMetadata = async ({songId, query}) => {
     .map((song) => ({song, score: scoreSongCandidate(song, query)}))
     .sort((a, b) => b.score - a.score);
 
+  let selectedSong = ranked[0].song;
+  if (selectedSong?.id) {
+    try {
+      const details = await getSongById(selectedSong.id);
+      if (details.song) {
+        selectedSong = {
+          ...selectedSong,
+          ...details.song,
+          audioUrl: details.song.audioUrl || selectedSong.audioUrl || null,
+        };
+      }
+    } catch (error) {
+      // Keep best-effort search result when details endpoint is unavailable.
+    }
+  }
+
   return {
-    song: ranked[0].song,
+    song: selectedSong,
     endpoint,
     selectionMethod: 'search-best-match',
     candidates: songs.slice(0, 5),

@@ -2,7 +2,7 @@ const DEFAULT_TIMEOUT_MS = Number(process.env.PHASE4_HTTP_TIMEOUT_MS || 60000);
 const MAX_AI_RETRIES = Number(process.env.PHASE4_AI_RETRIES || 2);
 const POLLINATIONS_OPENAI_URL =
   process.env.POLLINATIONS_OPENAI_URL || 'https://text.pollinations.ai/openai';
-const POLLINATIONS_API_KEY = process.env.POLLINATIONS_API_KEY || '';
+const POLLINATIONS_API_KEY = process.env.POLLINATIONS_API_KEY || process.env.POLLINATIONS_API || '';
 const POLLINATIONS_GITHUB_MODEL = process.env.POLLINATIONS_GITHUB_MODEL || 'github:gpt-4o-mini';
 const POLLINATIONS_FALLBACK_MODEL = process.env.POLLINATIONS_FALLBACK_MODEL || 'openai-fast';
 const GLM5_API_BASE_URL = process.env.GLM5_API_BASE_URL || '';
