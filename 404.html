@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Redirecting...</title>
+  <script>
+    (async function () {
+      const path = window.location.pathname || '/';
+      const segments = path.split('/').filter(Boolean);
+      const candidates = [''];
+
+      if (segments.length > 1) {
+        candidates.push('/' + segments[0]);
+      }
+
+      const targets = ['/index.html', '/home/index.html'];
+      const suffix = window.location.search + window.location.hash;
+
+      for (const base of candidates) {
+        for (const target of targets) {
+          const destination = base + target;
+          try {
+            const response = await fetch(destination, {cache: 'no-store'});
+            if (response.ok) {
+              window.location.replace(destination + suffix);
+              return;
+            }
+          } catch (error) {
+          }
+        }
+      }
+
+      document.body.innerHTML = '<p style="font-family: sans-serif; padding: 24px; color: #444;">Page not found. Try <a href="index.html">index.html</a> or <a href="home/index.html">home/index.html</a>.</p>';
+    })();
+  </script>
+</head>
+<body></body>
+</html>

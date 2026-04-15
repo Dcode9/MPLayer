@@ -7,6 +7,8 @@
     "phase4:direction": "node scripts/phase4-generate-direction.js",
     "phase5:render": "node scripts/phase5-render-video.js",
     "phase5:render:ci": "PHASE5_MAX_SECONDS=30 node scripts/phase5-render-video.js",
+    "phase7:auth": "node scripts/phase7-auth-youtube.js",
+    "phase7:auth:manual": "YOUTUBE_OAUTH_MANUAL=true node scripts/phase7-auth-youtube.js",
     "phase7:upload": "node scripts/phase7-upload-youtube.js",
     "phase7:upload:dry": "PHASE7_DRY_RUN=true node scripts/phase7-upload-youtube.js",
     "render:test": "node scripts/render-test-video.js",
