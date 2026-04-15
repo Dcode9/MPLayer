@@ -1,0 +1,315 @@
+{
+  "metadata": {
+    "generatedAt": "2026-04-14T11:35:35.367Z",
+    "phase": 4,
+    "sourceLyricsFile": "data/phase3-lyrics.json",
+    "provider": "pollinations-dev-fallback",
+    "modelRequested": "openai-fast",
+    "modelResolved": "gpt-oss-20b",
+    "githubModelSupportedInPollinations": false,
+    "fallbackReason": "Model not found: github:gpt-4o-mini. This is our legacy API - for the full model list and new features, visit https://enter.pollinations.ai | GLM5_API_BASE_URL not set; using development fallback model."
+  },
+  "song": {
+    "id": "Q6l0a09y",
+    "name": "Aaj Ki Raat",
+    "artist": "Amitabh Bhattacharya, Sachin-Jigar, Madhubanti Bagchi, Divya Kumar",
+    "album": "Stree 2",
+    "duration": 228,
+    "language": "hindi",
+    "year": "2024",
+    "url": "https://www.jiosaavn.com/song/aaj-ki-raat/IV4HARUADko",
+    "image": "https://c.saavncdn.com/373/Stree-2-Hindi-2024-20240828083834-500x500.jpg",
+    "hasLyrics": true,
+    "source": "jiosaavn"
+  },
+  "direction": {
+    "styleDescription": "Dreamy romantic with neon accents, blending watercolor textures and subtle particle effects to enhance lyrical flow.",
+    "palette": {
+      "background": "#f0f8ff",
+      "primary": "#2c3e50",
+      "accent": "#e74c3c",
+      "secondary": "#8e44ad"
+    },
+    "animationIdeas": [
+      "Text morphing with watercolor splashes",
+      "Animated vines wrapping lyrics",
+      "Particle burst on key words"
+    ],
+    "sceneDirections": [
+      {
+        "sceneId": "scene-1",
+        "start": 9.44,
+        "end": 58.95,
+        "mood": "soft romantic",
+        "cameraMotion": "slow pan",
+        "backgroundTreatment": "gradient dusk sky",
+        "entrance": "fade in",
+        "exit": "fade out",
+        "color": "#2c3e50",
+        "motionIntensity": 0.3,
+        "lineIndices": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      {
+        "sceneId": "scene-2",
+        "start": 58.95,
+        "end": 110.65,
+        "mood": "intense longing",
+        "cameraMotion": "tilt up",
+        "backgroundTreatment": "starry night",
+        "entrance": "zoom in",
+        "exit": "blur",
+        "color": "#e74c3c",
+        "motionIntensity": 0.6,
+        "lineIndices": [
+          6,
+          7,
+          8,
+          9,
+          10,
+          11
+        ]
+      },
+      {
+        "sceneId": "scene-3",
+        "start": 110.65,
+        "end": 166.48,
+        "mood": "playful mystery",
+        "cameraMotion": "orbit",
+        "backgroundTreatment": "abstract watercolor",
+        "entrance": "slide from left",
+        "exit": "slide to right",
+        "color": "#8e44ad",
+        "motionIntensity": 0.5,
+        "lineIndices": [
+          12,
+          13,
+          14,
+          15,
+          16,
+          17
+        ]
+      },
+      {
+        "sceneId": "scene-4",
+        "start": 166.48,
+        "end": 228,
+        "mood": "epic climax",
+        "cameraMotion": "dolly out",
+        "backgroundTreatment": "fiery aurora",
+        "entrance": "explode",
+        "exit": "fade to black",
+        "color": "#f0f8ff",
+        "motionIntensity": 0.8,
+        "lineIndices": [
+          18,
+          19,
+          20,
+          21,
+          22,
+          23
+        ]
+      }
+    ],
+    "lineDirections": [
+      {
+        "lineIndex": 0,
+        "entrance": "fade in",
+        "emphasis": "Match scene mood: soft romantic",
+        "exit": "fade out",
+        "color": "#2c3e50",
+        "motionIntensity": 0.3
+      },
+      {
+        "lineIndex": 1,
+        "entrance": "fade in",
+        "emphasis": "Match scene mood: soft romantic",
+        "exit": "fade out",
+        "color": "#2c3e50",
+        "motionIntensity": 0.3
+      },
+      {
+        "lineIndex": 2,
+        "entrance": "fade in",
+        "emphasis": "Match scene mood: soft romantic",
+        "exit": "fade out",
+        "color": "#2c3e50",
+        "motionIntensity": 0.3
+      },
+      {
+        "lineIndex": 3,
+        "entrance": "fade in",
+        "emphasis": "Match scene mood: soft romantic",
+        "exit": "fade out",
+        "color": "#2c3e50",
+        "motionIntensity": 0.3
+      },
+      {
+        "lineIndex": 4,
+        "entrance": "fade in",
+        "emphasis": "Match scene mood: soft romantic",
+        "exit": "fade out",
+        "color": "#2c3e50",
+        "motionIntensity": 0.3
+      },
+      {
+        "lineIndex": 5,
+        "entrance": "fade in",
+        "emphasis": "Match scene mood: soft romantic",
+        "exit": "fade out",
+        "color": "#2c3e50",
+        "motionIntensity": 0.3
+      },
+      {
+        "lineIndex": 6,
+        "entrance": "zoom in",
+        "emphasis": "Match scene mood: intense longing",
+        "exit": "blur",
+        "color": "#e74c3c",
+        "motionIntensity": 0.6
+      },
+      {
+        "lineIndex": 7,
+        "entrance": "zoom in",
+        "emphasis": "Match scene mood: intense longing",
+        "exit": "blur",
+        "color": "#e74c3c",
+        "motionIntensity": 0.6
+      },
+      {
+        "lineIndex": 8,
+        "entrance": "zoom in",
+        "emphasis": "Match scene mood: intense longing",
+        "exit": "blur",
+        "color": "#e74c3c",
+        "motionIntensity": 0.6
+      },
+      {
+        "lineIndex": 9,
+        "entrance": "zoom in",
+        "emphasis": "Match scene mood: intense longing",
+        "exit": "blur",
+        "color": "#e74c3c",
+        "motionIntensity": 0.6
+      },
+      {
+        "lineIndex": 10,
+        "entrance": "zoom in",
+        "emphasis": "Match scene mood: intense longing",
+        "exit": "blur",
+        "color": "#e74c3c",
+        "motionIntensity": 0.6
+      },
+      {
+        "lineIndex": 11,
+        "entrance": "zoom in",
+        "emphasis": "Match scene mood: intense longing",
+        "exit": "blur",
+        "color": "#e74c3c",
+        "motionIntensity": 0.6
+      },
+      {
+        "lineIndex": 12,
+        "entrance": "slide from left",
+        "emphasis": "Match scene mood: playful mystery",
+        "exit": "slide to right",
+        "color": "#8e44ad",
+        "motionIntensity": 0.5
+      },
+      {
+        "lineIndex": 13,
+        "entrance": "slide from left",
+        "emphasis": "Match scene mood: playful mystery",
+        "exit": "slide to right",
+        "color": "#8e44ad",
+        "motionIntensity": 0.5
+      },
+      {
+        "lineIndex": 14,
+        "entrance": "slide from left",
+        "emphasis": "Match scene mood: playful mystery",
+        "exit": "slide to right",
+        "color": "#8e44ad",
+        "motionIntensity": 0.5
+      },
+      {
+        "lineIndex": 15,
+        "entrance": "slide from left",
+        "emphasis": "Match scene mood: playful mystery",
+        "exit": "slide to right",
+        "color": "#8e44ad",
+        "motionIntensity": 0.5
+      },
+      {
+        "lineIndex": 16,
+        "entrance": "slide from left",
+        "emphasis": "Match scene mood: playful mystery",
+        "exit": "slide to right",
+        "color": "#8e44ad",
+        "motionIntensity": 0.5
+      },
+      {
+        "lineIndex": 17,
+        "entrance": "slide from left",
+        "emphasis": "Match scene mood: playful mystery",
+        "exit": "slide to right",
+        "color": "#8e44ad",
+        "motionIntensity": 0.5
+      },
+      {
+        "lineIndex": 18,
+        "entrance": "explode",
+        "emphasis": "Match scene mood: epic climax",
+        "exit": "fade to black",
+        "color": "#f0f8ff",
+        "motionIntensity": 0.8
+      },
+      {
+        "lineIndex": 19,
+        "entrance": "explode",
+        "emphasis": "Match scene mood: epic climax",
+        "exit": "fade to black",
+        "color": "#f0f8ff",
+        "motionIntensity": 0.8
+      },
+      {
+        "lineIndex": 20,
+        "entrance": "explode",
+        "emphasis": "Match scene mood: epic climax",
+        "exit": "fade to black",
+        "color": "#f0f8ff",
+        "motionIntensity": 0.8
+      },
+      {
+        "lineIndex": 21,
+        "entrance": "explode",
+        "emphasis": "Match scene mood: epic climax",
+        "exit": "fade to black",
+        "color": "#f0f8ff",
+        "motionIntensity": 0.8
+      },
+      {
+        "lineIndex": 22,
+        "entrance": "explode",
+        "emphasis": "Match scene mood: epic climax",
+        "exit": "fade to black",
+        "color": "#f0f8ff",
+        "motionIntensity": 0.8
+      },
+      {
+        "lineIndex": 23,
+        "entrance": "explode",
+        "emphasis": "Match scene mood: epic climax",
+        "exit": "fade to black",
+        "color": "#f0f8ff",
+        "motionIntensity": 0.8
+      }
+    ]
+  }
+}

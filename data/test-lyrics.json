@@ -1,0 +1,14 @@
+{
+  "lines": [
+    {
+      "text": "Hello world",
+      "start": 0,
+      "end": 2
+    },
+    {
+      "text": "This is a test video",
+      "start": 2,
+      "end": 5
+    }
+  ]
+}
