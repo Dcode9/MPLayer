@@ -4,6 +4,41 @@ const path = require('node:path');
 const {google} = require('googleapis');
 
 const PROJECT_ROOT = path.resolve(__dirname, '..');
+const DOTENV_PATH = path.join(PROJECT_ROOT, '.env');
+
+const loadLocalEnv = () => {
+  if (!fs.existsSync(DOTENV_PATH)) {
+    return;
+  }
+
+  const raw = fs.readFileSync(DOTENV_PATH, 'utf-8');
+  const lines = raw.split(/\r?\n/);
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith('#')) {
+      continue;
+    }
+
+    const separatorIndex = line.indexOf('=');
+    if (separatorIndex <= 0) {
+      continue;
+    }
+
+    const key = line.slice(0, separatorIndex).trim();
+    let value = line.slice(separatorIndex + 1).trim();
+
+    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1);
+    }
+
+    if (!Object.prototype.hasOwnProperty.call(process.env, key)) {
+      process.env[key] = value;
+    }
+  }
+};
+
+loadLocalEnv();
 
 const DEFAULTS = {
   video: process.env.PHASE7_VIDEO_FILE || 'output/phase6-video.mp4',
