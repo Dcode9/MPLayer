@@ -5,6 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>D'Tunes</title>
     <link rel="icon" href="data:,">
+    <script>
+        (function () {
+            const path = window.location.pathname || '/';
+            const isDirectoryPath = !path.endsWith('/') && !path.endsWith('.html');
+            if (isDirectoryPath) {
+                window.location.replace(path + '/' + window.location.search + window.location.hash);
+            }
+        })();
+    </script>
     
     <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
