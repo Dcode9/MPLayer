@@ -153,6 +153,13 @@
         .search-dropdown-wrapper.active .search-blur-bg { opacity: 1; }
         .search-dropdown-wrapper.active .search-results-content { opacity: 1; transform: translateY(0); padding: 0.5rem; }
 
+        /* Keep topbar controls clickable even with click-through positioner wrapper. */
+        #search-wrapper,
+        #search-shell,
+        #search-shell > .relative.flex-1.flex.items-center {
+            pointer-events: auto;
+        }
+
         /* --- Player Components --- */
         #seek-bar-container { position: relative; width: 100%; height: 60px; display: flex; align-items: center; justify-content: center; transition: opacity 0.3s; touch-action: none; }
         #seek-bar-container.disabled { opacity: 0.3; pointer-events: none; }
