@@ -1,3 +1,4 @@
 node_modules/
 output/*.mp4
 .env
+data/phase7-youtube-oauth.json

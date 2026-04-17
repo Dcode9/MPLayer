@@ -45,7 +45,7 @@ const loadLocalEnv = () => {
 loadLocalEnv();
 
 const DEFAULT_PORT = Number(process.env.YOUTUBE_OAUTH_PORT || 53682);
-const DEFAULT_REDIRECT_URI = process.env.YOUTUBE_OAUTH_REDIRECT_URI || `http://127.0.0.1:${DEFAULT_PORT}/oauth2callback`;
+const DEFAULT_REDIRECT_URI = process.env.YOUTUBE_OAUTH_REDIRECT_URI || `http://127.0.0.1:${DEFAULT_PORT}`;
 const OUTPUT_PATH = process.env.YOUTUBE_OAUTH_OUTPUT_JSON || 'data/phase7-youtube-oauth.json';
 const AUTO_OPEN = String(process.env.YOUTUBE_OAUTH_AUTO_OPEN || 'true').toLowerCase() !== 'false';
 const SCOPES = [
@@ -148,8 +148,31 @@ const parseAuthCode = (rawInput) => {
 
 const openBrowser = (url) => {
   if (process.env.BROWSER) {
+    const parseCommand = (raw) => {
+      return String(raw || '')
+        .trim()
+        .match(/(?:[^\s"']+|"[^"]*"|'[^']*')+/g)
+        ?.map((part) => part.replace(/^['"]|['"]$/g, '')) || [];
+    };
+
     try {
-      const child = spawn(process.env.BROWSER, [url], {detached: true, stdio: 'ignore', shell: true});
+      const pieces = parseCommand(process.env.BROWSER);
+      if (pieces.length > 0) {
+        const command = pieces[0];
+        let args = pieces.slice(1);
+
+        if (args.some((arg) => arg.includes('%s'))) {
+          args = args.map((arg) => arg.replace(/%s/g, url));
+        } else {
+          args.push(url);
+        }
+
+        const child = spawn(command, args, {detached: true, stdio: 'ignore'});
+        child.unref();
+        return true;
+      }
+
+      const child = spawn(process.env.BROWSER, [url], {detached: true, stdio: 'ignore'});
       child.unref();
       return true;
     } catch (error) {
