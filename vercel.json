@@ -4,18 +4,10 @@
   "trailingSlash": false,
   "routes": [
     {
-      "src": "^/$",
-      "dest": "/index.html"
-    },
-    {
-      "src": "^/home/?$",
-      "dest": "/home/index.html"
-    },
-    {
       "handle": "filesystem"
     },
     {
-      "src": "^(.*)$",
+      "src": "^/(.*)$",
       "dest": "/index.html"
     }
   ]
