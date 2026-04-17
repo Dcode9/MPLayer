@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "cleanUrls": false,
+  "trailingSlash": false,
+  "routes": [
+    {
+      "src": "^/$",
+      "dest": "/index.html"
+    },
+    {
+      "src": "^/home/?$",
+      "dest": "/home/index.html"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "^(.*)$",
+      "dest": "/index.html"
+    }
+  ]
+}
