@@ -152,9 +152,8 @@ const runPhase7Upload = async () => {
     tagsFromInput.length > 0 ? tagsFromInput : autoMetadata?.tags || [songName, artistName, 'lyrics', 'music'],
   );
 
-  const metadataSource = manualTitle || manualDescription || tagsFromInput.length > 0
-    ? 'manual-overrides'
-    : autoMetadata?.source || 'template-default';
+  const hasManualMetadata = Boolean(manualTitle || manualDescription || tagsFromInput.length > 0);
+  const metadataSource = hasManualMetadata ? 'manual-overrides' : autoMetadata?.source || 'template-default';
 
   const privacyStatus = ['private', 'public', 'unlisted'].includes(process.env.YOUTUBE_PRIVACY_STATUS || '')
     ? process.env.YOUTUBE_PRIVACY_STATUS
