@@ -8,6 +8,10 @@ const {google} = require('googleapis');
 
 const PROJECT_ROOT = path.resolve(__dirname, '..');
 const POLLINATIONS_METADATA_URL = 'https://text.pollinations.ai/';
+const METADATA_FETCH_TIMEOUT_MS = Number(process.env.PHASE7_METADATA_FETCH_TIMEOUT_MS || 7000);
+const YOUTUBE_TITLE_MAX_LENGTH = 95;
+const YOUTUBE_DESCRIPTION_MAX_LENGTH = 450;
+const YOUTUBE_TAG_MAX_LENGTH = 30;
 
 const parseTags = (raw) => {
   return String(raw || '')
@@ -22,7 +26,7 @@ const normalizeTags = (tags) => {
       (tags || [])
         .map((tag) => String(tag || '').trim())
         .filter(Boolean)
-        .map((tag) => tag.slice(0, 30)),
+        .map((tag) => tag.slice(0, YOUTUBE_TAG_MAX_LENGTH)),
     ),
   ).slice(0, 15);
 };
@@ -85,7 +89,7 @@ const generateAutoMetadata = async ({songName, artistName}) => {
 
   try {
     const response = await fetch(`${POLLINATIONS_METADATA_URL}${encodeURIComponent(prompt)}`, {
-      signal: AbortSignal.timeout(7000),
+      signal: AbortSignal.timeout(METADATA_FETCH_TIMEOUT_MS),
     });
     if (!response.ok) {
       return null;
@@ -97,8 +101,8 @@ const generateAutoMetadata = async ({songName, artistName}) => {
       return null;
     }
 
-    const title = String(parsed.title || '').trim().slice(0, 95);
-    const description = String(parsed.description || '').trim().slice(0, 450);
+    const title = String(parsed.title || '').trim().slice(0, YOUTUBE_TITLE_MAX_LENGTH);
+    const description = String(parsed.description || '').trim().slice(0, YOUTUBE_DESCRIPTION_MAX_LENGTH);
     const tags = normalizeTags(Array.isArray(parsed.tags) ? parsed.tags : []);
 
     if (!title || !description || tags.length === 0) {

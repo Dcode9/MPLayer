@@ -7,7 +7,8 @@ const path = require('node:path');
 const templateSongData = require('../remotion/template-song-data.json');
 
 const PROJECT_ROOT = path.resolve(__dirname, '..');
-const TRENDING_FALLBACK_QUERY = 'Aaj Ki Raat';
+const TRENDING_FALLBACK_QUERY = String(process.env.PHASE3_TRENDING_FALLBACK_QUERY || 'Aaj Ki Raat').trim() || 'Aaj Ki Raat';
+const TRENDING_FETCH_TIMEOUT_MS = Number(process.env.PHASE3_TRENDING_FETCH_TIMEOUT_MS || 5000);
 const APPLE_MUSIC_TRENDING_URL = 'https://rss.applemarketingtools.com/api/v2/in/music/most-played/25/songs.json';
 
 const parseArgs = (argv) => {
@@ -39,7 +40,7 @@ const cloneJson = (value) => JSON.parse(JSON.stringify(value));
 const fetchTrendingSongQuery = async () => {
   try {
     const response = await fetch(APPLE_MUSIC_TRENDING_URL, {
-      signal: AbortSignal.timeout(5000),
+      signal: AbortSignal.timeout(TRENDING_FETCH_TIMEOUT_MS),
     });
     if (!response.ok) {
       return {query: TRENDING_FALLBACK_QUERY, source: 'fallback'};
