@@ -7,12 +7,28 @@ const path = require('node:path');
 const {google} = require('googleapis');
 
 const PROJECT_ROOT = path.resolve(__dirname, '..');
+const POLLINATIONS_METADATA_URL = 'https://text.pollinations.ai/';
+const METADATA_FETCH_TIMEOUT_MS = Number(process.env.PHASE7_METADATA_FETCH_TIMEOUT_MS || 7000);
+const YOUTUBE_TITLE_MAX_LENGTH = 95;
+const YOUTUBE_DESCRIPTION_MAX_LENGTH = 450;
+const YOUTUBE_TAG_MAX_LENGTH = 30;
 
 const parseTags = (raw) => {
   return String(raw || '')
     .split(',')
     .map((tag) => tag.trim())
     .filter(Boolean);
+};
+
+const normalizeTags = (tags) => {
+  return Array.from(
+    new Set(
+      (tags || [])
+        .map((tag) => String(tag || '').trim())
+        .filter(Boolean)
+        .map((tag) => tag.slice(0, YOUTUBE_TAG_MAX_LENGTH)),
+    ),
+  ).slice(0, 15);
 };
 
 const fileExists = async (filePath) => {
@@ -31,6 +47,72 @@ const readJsonIfExists = async (filePath) => {
 
   const raw = await fs.readFile(filePath, 'utf-8');
   return JSON.parse(raw);
+};
+
+const parseJsonObjectFromText = (rawText) => {
+  const text = String(rawText || '').trim();
+  if (!text) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch (_error) {
+    const start = text.indexOf('{');
+    const end = text.lastIndexOf('}');
+    if (start >= 0 && end > start) {
+      try {
+        return JSON.parse(text.slice(start, end + 1));
+      } catch (_nestedError) {
+        return null;
+      }
+    }
+    return null;
+  }
+};
+
+const generateAutoMetadata = async ({songName, artistName}) => {
+  if (String(process.env.PHASE7_AUTO_METADATA || '1').trim() === '0') {
+    return null;
+  }
+
+  const prompt = [
+    'Return only valid JSON with keys: title, description, tags.',
+    `Song: ${songName}`,
+    `Artist: ${artistName}`,
+    'Style: SEO-friendly YouTube lyrics video metadata.',
+    'Constraints:',
+    '- title max 95 chars',
+    '- description 2 short lines, max 450 chars',
+    '- tags as array of 5-10 short strings',
+  ].join('\n');
+
+  try {
+    const response = await fetch(`${POLLINATIONS_METADATA_URL}${encodeURIComponent(prompt)}`, {
+      signal: AbortSignal.timeout(METADATA_FETCH_TIMEOUT_MS),
+    });
+    if (!response.ok) {
+      return null;
+    }
+
+    const rawText = await response.text();
+    const parsed = parseJsonObjectFromText(rawText);
+    if (!parsed || typeof parsed !== 'object') {
+      return null;
+    }
+
+    const title = String(parsed.title || '').trim().slice(0, YOUTUBE_TITLE_MAX_LENGTH);
+    const description = String(parsed.description || '').trim().slice(0, YOUTUBE_DESCRIPTION_MAX_LENGTH);
+    const tags = normalizeTags(Array.isArray(parsed.tags) ? parsed.tags : []);
+
+    if (!title || !description || tags.length === 0) {
+      return null;
+    }
+
+    return {title, description, tags, source: 'pollinations'};
+  } catch (_error) {
+    return null;
+  }
 };
 
 const runPhase7Upload = async () => {
@@ -55,18 +137,29 @@ const runPhase7Upload = async () => {
   const artistName = phase3Data?.song?.artist || 'Unknown Artist';
 
   const defaultTitle = `${songName} - ${artistName} | Lyrics Visualiser`;
-  const title = (process.env.YOUTUBE_TITLE || '').trim() || defaultTitle;
-
   const defaultDescription = [
     `${songName} by ${artistName}`,
     '',
     'Rendered with template-only Remotion pipeline.',
   ].join('\n');
 
-  const description = (process.env.YOUTUBE_DESCRIPTION || '').trim() || defaultDescription;
-
+  const manualTitle = (process.env.YOUTUBE_TITLE || '').trim();
+  const manualDescription = (process.env.YOUTUBE_DESCRIPTION || '').trim();
   const tagsFromInput = parseTags(process.env.YOUTUBE_TAGS || '');
-  const tags = tagsFromInput.length > 0 ? tagsFromInput : [songName, artistName, 'lyrics', 'music'];
+
+  const autoMetadata =
+    !manualTitle || !manualDescription || tagsFromInput.length === 0
+      ? await generateAutoMetadata({songName, artistName})
+      : null;
+
+  const title = manualTitle || autoMetadata?.title || defaultTitle;
+  const description = manualDescription || autoMetadata?.description || defaultDescription;
+  const tags = normalizeTags(
+    tagsFromInput.length > 0 ? tagsFromInput : autoMetadata?.tags || [songName, artistName, 'lyrics', 'music'],
+  );
+
+  const hasManualMetadata = Boolean(manualTitle || manualDescription || tagsFromInput.length > 0);
+  const metadataSource = hasManualMetadata ? 'manual-overrides' : autoMetadata?.source || 'template-default';
 
   const privacyStatus = ['private', 'public', 'unlisted'].includes(process.env.YOUTUBE_PRIVACY_STATUS || '')
     ? process.env.YOUTUBE_PRIVACY_STATUS
@@ -109,6 +202,7 @@ const runPhase7Upload = async () => {
     title,
     privacyStatus,
     tags,
+    metadataSource,
     sourceVideo: path.relative(PROJECT_ROOT, videoFile),
     sourcePhase3Json: path.relative(PROJECT_ROOT, phase3File),
     youtubeResponse: response.data || null,

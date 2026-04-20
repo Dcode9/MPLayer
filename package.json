@@ -8,6 +8,8 @@
     "phase5:render": "node scripts/phase5-render.js",
     "phase5:render:16x9": "node scripts/phase5-render-16x9.js",
     "phase5:render:16x9:logo": "node scripts/phase5-render-16x9-logo.js",
+    "phase5:render:4k": "node scripts/phase5-render-4k.js",
+    "phase5:render:4k:logo": "node scripts/phase5-render-4k-logo.js",
     "phase7:upload": "node scripts/phase7-upload.js",
     "render:test": "node scripts/render-test.js",
     "remotion:studio": "remotion studio remotion/index.jsx"

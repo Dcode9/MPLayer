@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       song_query:
-        description: Song query (used only when song_id is empty)
+        description: Song query (leave empty to auto-pick a trending query)
         required: false
-        default: Aaj Ki Raat
+        default: ''
         type: string
       song_id:
         description: Optional direct JioSaavn song ID
@@ -21,6 +21,8 @@ on:
         options:
           - 16x9-logo
           - 16x9-clean
+          - 4k-logo
+          - 4k-clean
       max_seconds:
         description: Clip duration cap (0 means full song)
         required: false
@@ -83,8 +85,10 @@ jobs:
           echo "[phase-7] Starting Phase 3"
           if [ -n "$SONG_ID" ]; then
             npm run phase3:build -- --song-id="$SONG_ID" --out=data/phase3-lyrics.json
-          else
+          elif [ -n "$SONG_QUERY" ]; then
             npm run phase3:build -- --query="$SONG_QUERY" --out=data/phase3-lyrics.json
+          else
+            npm run phase3:build -- --auto-trending --out=data/phase3-lyrics.json
           fi
 
       - name: Phase 5 - Render video
@@ -100,6 +104,10 @@ jobs:
 
           if [ "$RENDER_PRESET" = "16x9-clean" ]; then
             npm run phase5:render:16x9 -- --lyrics=data/phase3-lyrics.json --out=output/phase7-video.mp4 --max-seconds="$PHASE5_MAX_SECONDS"
+          elif [ "$RENDER_PRESET" = "4k-clean" ]; then
+            npm run phase5:render:4k -- --lyrics=data/phase3-lyrics.json --out=output/phase7-video.mp4 --max-seconds="$PHASE5_MAX_SECONDS"
+          elif [ "$RENDER_PRESET" = "4k-logo" ]; then
+            npm run phase5:render:4k:logo -- --lyrics=data/phase3-lyrics.json --out=output/phase7-video.mp4 --max-seconds="$PHASE5_MAX_SECONDS"
           else
             npm run phase5:render:16x9:logo -- --lyrics=data/phase3-lyrics.json --out=output/phase7-video.mp4 --max-seconds="$PHASE5_MAX_SECONDS"
           fi
