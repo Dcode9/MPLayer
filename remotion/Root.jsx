@@ -4,8 +4,8 @@ import {LyricsTemplateVideo} from './LyricsTemplateVideo';
 import templateSongData from './template-song-data.json';
 
 const FPS = 30;
-const WIDTH_16X9 = 1920;
-const HEIGHT_16X9 = 1080;
+const WIDTH_4K = 3840;
+const HEIGHT_4K = 2160;
 const DEFAULT_DURATION_SECONDS = Number(templateSongData.song?.duration || 205);
 const DEFAULT_DURATION_FRAMES = Math.max(1, Math.round(DEFAULT_DURATION_SECONDS * FPS));
 
@@ -27,8 +27,8 @@ export const RemotionRoot = () => {
         component={LyricsTemplateVideo}
         durationInFrames={DEFAULT_DURATION_FRAMES}
         fps={FPS}
-        width={WIDTH_16X9}
-        height={HEIGHT_16X9}
+        width={WIDTH_4K}
+        height={HEIGHT_4K}
         defaultProps={defaultProps16x9Logo}
       />
 
@@ -37,8 +37,8 @@ export const RemotionRoot = () => {
         component={LyricsTemplateVideo}
         durationInFrames={DEFAULT_DURATION_FRAMES}
         fps={FPS}
-        width={WIDTH_16X9}
-        height={HEIGHT_16X9}
+        width={WIDTH_4K}
+        height={HEIGHT_4K}
         defaultProps={defaultProps16x9}
       />
 
@@ -47,8 +47,28 @@ export const RemotionRoot = () => {
         component={LyricsTemplateVideo}
         durationInFrames={DEFAULT_DURATION_FRAMES}
         fps={FPS}
-        width={WIDTH_16X9}
-        height={HEIGHT_16X9}
+        width={WIDTH_4K}
+        height={HEIGHT_4K}
+        defaultProps={defaultProps16x9Logo}
+      />
+
+      <Composition
+        id="LyricsTemplateVideo4K"
+        component={LyricsTemplateVideo}
+        durationInFrames={DEFAULT_DURATION_FRAMES}
+        fps={FPS}
+        width={WIDTH_4K}
+        height={HEIGHT_4K}
+        defaultProps={defaultProps16x9}
+      />
+
+      <Composition
+        id="LyricsTemplateVideo4KLogo"
+        component={LyricsTemplateVideo}
+        durationInFrames={DEFAULT_DURATION_FRAMES}
+        fps={FPS}
+        width={WIDTH_4K}
+        height={HEIGHT_4K}
         defaultProps={defaultProps16x9Logo}
       />
     </>
