@@ -84,7 +84,9 @@ const generateAutoMetadata = async ({songName, artistName}) => {
   ].join('\n');
 
   try {
-    const response = await fetch(`${POLLINATIONS_METADATA_URL}${encodeURIComponent(prompt)}`);
+    const response = await fetch(`${POLLINATIONS_METADATA_URL}${encodeURIComponent(prompt)}`, {
+      signal: AbortSignal.timeout(7000),
+    });
     if (!response.ok) {
       return null;
     }

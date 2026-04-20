@@ -38,7 +38,9 @@ const cloneJson = (value) => JSON.parse(JSON.stringify(value));
 
 const fetchTrendingSongQuery = async () => {
   try {
-    const response = await fetch(APPLE_MUSIC_TRENDING_URL);
+    const response = await fetch(APPLE_MUSIC_TRENDING_URL, {
+      signal: AbortSignal.timeout(5000),
+    });
     if (!response.ok) {
       return {query: TRENDING_FALLBACK_QUERY, source: 'fallback'};
     }
