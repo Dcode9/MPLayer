@@ -21,6 +21,8 @@ on:
         options:
           - 16x9-logo
           - 16x9-clean
+          - 4k-logo
+          - 4k-clean
       max_seconds:
         description: Clip duration cap in seconds (0 = full song)
         required: false
@@ -76,6 +78,10 @@ jobs:
 
           if [ "$RENDER_PRESET" = "16x9-clean" ]; then
             npm run phase5:render:16x9 -- --lyrics=data/phase3-lyrics.json --out=output/phase6-video.mp4 --max-seconds="$PHASE5_MAX_SECONDS"
+          elif [ "$RENDER_PRESET" = "4k-clean" ]; then
+            npm run phase5:render:4k -- --lyrics=data/phase3-lyrics.json --out=output/phase6-video.mp4 --max-seconds="$PHASE5_MAX_SECONDS"
+          elif [ "$RENDER_PRESET" = "4k-logo" ]; then
+            npm run phase5:render:4k:logo -- --lyrics=data/phase3-lyrics.json --out=output/phase6-video.mp4 --max-seconds="$PHASE5_MAX_SECONDS"
           else
             npm run phase5:render:16x9:logo -- --lyrics=data/phase3-lyrics.json --out=output/phase6-video.mp4 --max-seconds="$PHASE5_MAX_SECONDS"
           fi
