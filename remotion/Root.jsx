@@ -4,8 +4,8 @@ import {LyricsTemplateVideo} from './LyricsTemplateVideo';
 import templateSongData from './template-song-data.json';
 
 const FPS = 30;
-const WIDTH_16X9 = 1920;
-const HEIGHT_16X9 = 1080;
+const WIDTH_16X9 = 3840;
+const HEIGHT_16X9 = 2160;
 const DEFAULT_DURATION_SECONDS = Number(templateSongData.song?.duration || 205);
 const DEFAULT_DURATION_FRAMES = Math.max(1, Math.round(DEFAULT_DURATION_SECONDS * FPS));
 

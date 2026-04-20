@@ -13,8 +13,9 @@ import {useAudioData, visualizeAudio} from '@remotion/media-utils';
 
 const TRANSITION_DURATION_SECONDS = 0.9;
 const TRANSITION_EASING = Easing.bezier(0.25, 1, 0.5, 1);
-const LOGO_INTRO_SECONDS = 2.8;
-const LOGO_MOVE_SECONDS = 2.6;
+const LOGO_INTRO_SECONDS = 2.4;
+const LOGO_MOVE_SECONDS = 1.8;
+const LOGO_REVEAL_SECONDS = 0.75;
 
 const LINE_STATES = {
   current: {
@@ -132,6 +133,8 @@ const buildWavePath = ({waveIndex, width, height, freqValues, bassNormalized, cu
 const getLogoAnimationState = ({frame, fps, width, height}) => {
   const introFrames = Math.max(1, Math.round(LOGO_INTRO_SECONDS * fps));
   const moveFrames = Math.max(1, Math.round(LOGO_MOVE_SECONDS * fps));
+  const introCompleteFrame = introFrames;
+  const moveCompleteFrame = introFrames + moveFrames;
 
   const introProgress = clamp(frame / introFrames, 0, 1);
   const moveProgress = clamp((frame - introFrames) / moveFrames, 0, 1);
@@ -173,65 +176,13 @@ const getLogoAnimationState = ({frame, fps, width, height}) => {
     opacity,
     plateOpacity: lerp(0.34, 0.22, moveEase),
     plateBlur: lerp(20, 12, moveEase),
+    introCompleteFrame,
+    moveCompleteFrame,
   };
 };
 
-const SvgIcon = ({size, fill = 'none', stroke = 'currentColor', strokeWidth = 2, children}) => {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill={fill}
-      stroke={stroke}
-      strokeWidth={strokeWidth}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      {children}
-    </svg>
-  );
-};
-
-const RefreshIcon = ({size = 20}) => {
-  return (
-    <SvgIcon size={size}>
-      <polyline points="23 4 23 10 17 10" />
-      <polyline points="1 20 1 14 7 14" />
-      <path d="M3.5 9a9 9 0 0 1 14.15-3.36L23 10" />
-      <path d="M20.5 15a9 9 0 0 1-14.15 3.36L1 14" />
-    </SvgIcon>
-  );
-};
-
-const RewindIcon = ({size = 24}) => {
-  return (
-    <SvgIcon size={size} fill="currentColor" stroke="none">
-      <path d="M11 18L3 12L11 6V18Z" />
-      <path d="M21 18L13 12L21 6V18Z" />
-    </SvgIcon>
-  );
-};
-
-const FastForwardIcon = ({size = 24}) => {
-  return (
-    <SvgIcon size={size} fill="currentColor" stroke="none">
-      <path d="M3 18L11 12L3 6V18Z" />
-      <path d="M13 18L21 12L13 6V18Z" />
-    </SvgIcon>
-  );
-};
-
-const PlayIcon = ({size = 28}) => {
-  return (
-    <SvgIcon size={size} fill="currentColor" stroke="none">
-      <path d="M8 5V19L19 12L8 5Z" />
-    </SvgIcon>
-  );
-};
-
 export const LyricsTemplateVideo = ({songData, showAnimatedLogo = false, logoSrc}) => {
-  const {fps, width, height, durationInFrames} = useVideoConfig();
+  const {fps, width, height} = useVideoConfig();
   const frame = useCurrentFrame();
 
   const parsedLyrics = useMemo(() => {
@@ -332,6 +283,16 @@ export const LyricsTemplateVideo = ({songData, showAnimatedLogo = false, logoSrc
     return getLogoAnimationState({frame, fps, width, height});
   }, [frame, fps, width, height]);
 
+  const contentOpacity = useMemo(() => {
+    if (!showAnimatedLogo) {
+      return 1;
+    }
+
+    const revealFrames = Math.max(1, Math.round(LOGO_REVEAL_SECONDS * fps));
+    const revealProgress = clamp((frame - logoState.moveCompleteFrame) / revealFrames, 0, 1);
+    return Easing.out(Easing.cubic)(revealProgress);
+  }, [frame, fps, logoState.moveCompleteFrame, showAnimatedLogo]);
+
   const getLineVisualState = (lineIndex) => {
     const targetStateName = getStateNameForIndex(lineIndex, currentLyricIndex);
     const targetState = LINE_STATES[targetStateName];
@@ -366,7 +327,9 @@ export const LyricsTemplateVideo = ({songData, showAnimatedLogo = false, logoSrc
     };
   };
 
-  const controlsBottom = height * 0.0926;
+  const backgroundOpacity = showAnimatedLogo ? contentOpacity : 1;
+  const wavesOpacity = 0.7 * (showAnimatedLogo ? contentOpacity : 1);
+  const textOpacity = showAnimatedLogo ? contentOpacity : 1;
 
   return (
     <AbsoluteFill
@@ -392,7 +355,7 @@ export const LyricsTemplateVideo = ({songData, showAnimatedLogo = false, logoSrc
             width: '100%',
             height: '100%',
             objectFit: 'cover',
-            opacity: 0.6,
+            opacity: 0.6 * backgroundOpacity,
             mixBlendMode: 'screen',
             transform: `scale(${bgScale})`,
             filter: `blur(${bgBlur}px) saturate(200%) brightness(0.7)`,
@@ -406,6 +369,7 @@ export const LyricsTemplateVideo = ({songData, showAnimatedLogo = false, logoSrc
           inset: 0,
           background:
             'radial-gradient(circle at center, rgba(0,0,0,0) 0%, rgba(0,0,0,0.8) 100%)',
+          opacity: backgroundOpacity,
         }}
       />
 
@@ -421,7 +385,7 @@ export const LyricsTemplateVideo = ({songData, showAnimatedLogo = false, logoSrc
           height: '100%',
           pointerEvents: 'none',
           zIndex: 10,
-          opacity: 0.7,
+          opacity: wavesOpacity,
         }}
       >
         <defs>
@@ -457,6 +421,7 @@ export const LyricsTemplateVideo = ({songData, showAnimatedLogo = false, logoSrc
           paddingRight: horizontalPadding,
           perspective: 1000,
           overflow: 'hidden',
+          opacity: textOpacity,
         }}
       >
         <div
@@ -539,82 +504,6 @@ export const LyricsTemplateVideo = ({songData, showAnimatedLogo = false, logoSrc
             </div>
           );
         })}
-      </div>
-
-      <div
-        style={{
-          position: 'absolute',
-          left: '50%',
-          bottom: controlsBottom,
-          transform: 'translateX(-50%)',
-          zIndex: 30,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 24,
-          padding: '16px 32px',
-          borderRadius: 999,
-          background: 'rgba(255,255,255,0.05)',
-          border: '1px solid rgba(255,255,255,0.1)',
-          backdropFilter: 'blur(24px)',
-          boxShadow: '0 25px 50px rgba(0,0,0,0.4)',
-          opacity: 0.2,
-        }}
-      >
-        <button
-          type="button"
-          style={{
-            border: 'none',
-            background: 'transparent',
-            color: 'rgba(255,255,255,0.7)',
-            padding: 8,
-          }}
-        >
-          <RefreshIcon size={20} />
-        </button>
-
-        <button
-          type="button"
-          style={{
-            border: 'none',
-            background: 'transparent',
-            color: 'rgba(255,255,255,0.7)',
-            padding: 8,
-          }}
-        >
-          <RewindIcon size={24} />
-        </button>
-
-        <div
-          style={{
-            width: 56,
-            height: 56,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            borderRadius: '50%',
-            background: '#ffffff',
-            color: '#000000',
-            boxShadow: '0 0 20px rgba(255,255,255,0.5)',
-          }}
-        >
-          {frame >= durationInFrames - 1 ? (
-            <PlayIcon size={28} />
-          ) : (
-            <PlayIcon size={28} />
-          )}
-        </div>
-
-        <button
-          type="button"
-          style={{
-            border: 'none',
-            background: 'transparent',
-            color: 'rgba(255,255,255,0.7)',
-            padding: 8,
-          }}
-        >
-          <FastForwardIcon size={24} />
-        </button>
       </div>
 
       {showAnimatedLogo ? (
