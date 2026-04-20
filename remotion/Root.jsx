@@ -11,11 +11,11 @@ const HEIGHT_4K = 2160;
 const DEFAULT_DURATION_SECONDS = Number(templateSongData.song?.duration || 205);
 const DEFAULT_DURATION_FRAMES = Math.max(1, Math.round(DEFAULT_DURATION_SECONDS * FPS));
 
-const defaultProps16x9 = {
+const defaultPropsClean = {
   songData: templateSongData,
 };
 
-const defaultProps16x9Logo = {
+const defaultPropsWithLogo = {
   songData: templateSongData,
   showAnimatedLogo: true,
   logoSrc: staticFile('assets/DTunes-transparent.svg'),
@@ -31,7 +31,7 @@ export const RemotionRoot = () => {
         fps={FPS}
         width={WIDTH_16X9}
         height={HEIGHT_16X9}
-        defaultProps={defaultProps16x9Logo}
+        defaultProps={defaultPropsWithLogo}
       />
 
       <Composition
@@ -41,7 +41,7 @@ export const RemotionRoot = () => {
         fps={FPS}
         width={WIDTH_16X9}
         height={HEIGHT_16X9}
-        defaultProps={defaultProps16x9}
+        defaultProps={defaultPropsClean}
       />
 
       <Composition
@@ -51,7 +51,7 @@ export const RemotionRoot = () => {
         fps={FPS}
         width={WIDTH_16X9}
         height={HEIGHT_16X9}
-        defaultProps={defaultProps16x9Logo}
+        defaultProps={defaultPropsWithLogo}
       />
 
       <Composition
@@ -61,7 +61,7 @@ export const RemotionRoot = () => {
         fps={FPS}
         width={WIDTH_4K}
         height={HEIGHT_4K}
-        defaultProps={defaultProps16x9}
+        defaultProps={defaultPropsClean}
       />
 
       <Composition
@@ -71,7 +71,7 @@ export const RemotionRoot = () => {
         fps={FPS}
         width={WIDTH_4K}
         height={HEIGHT_4K}
-        defaultProps={defaultProps16x9Logo}
+        defaultProps={defaultPropsWithLogo}
       />
     </>
   );
