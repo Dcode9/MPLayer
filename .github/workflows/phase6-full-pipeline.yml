@@ -18,14 +18,6 @@ on:
         required: false
         default: '30'
         type: string
-      strict_glm_fallback:
-        description: Fail Phase 4 if Pollinations GitHub model is unavailable and GLM is not configured
-        required: false
-        default: 'false'
-        type: choice
-        options:
-          - 'false'
-          - 'true'
 
 jobs:
   full-pipeline-test:
@@ -63,20 +55,7 @@ jobs:
             npm run phase3:build -- --query="$SONG_QUERY" --out=data/phase3-lyrics.json
           fi
 
-      - name: Phase 4 - Generate animation direction JSON
-        env:
-          POLLINATIONS_API: ${{ secrets.POLLINATIONS_API }}
-          POLLINATIONS_API_KEY: ${{ secrets.POLLINATIONS_API_KEY }}
-          GLM5_API_BASE_URL: ${{ secrets.GLM5_API_BASE_URL }}
-          GLM5_API_KEY: ${{ secrets.GLM5_API_KEY }}
-          GLM5_MODEL: ${{ secrets.GLM5_MODEL }}
-          PHASE4_STRICT_GLM_FALLBACK: ${{ inputs.strict_glm_fallback }}
-        run: |
-          set -e
-          echo "[phase-6] Starting Phase 4"
-          npm run phase4:direction -- --in=data/phase3-lyrics.json --out=data/phase4-direction.json
-
-      - name: Phase 5 - Render dynamic lyrics video
+      - name: Phase 5 - Render template lyrics video
         env:
           PHASE5_MAX_SECONDS: ${{ inputs.max_seconds }}
           PHASE5_RENDER_CONCURRENCY: 2
@@ -84,12 +63,12 @@ jobs:
         run: |
           set -e
           echo "[phase-6] Starting Phase 5"
-          npm run phase5:render -- --lyrics=data/phase3-lyrics.json --direction=data/phase4-direction.json --out=output/phase6-video.mp4 --max-seconds="$PHASE5_MAX_SECONDS"
+          npm run phase5:render -- --lyrics=data/phase3-lyrics.json --out=output/phase6-video.mp4 --max-seconds="$PHASE5_MAX_SECONDS"
 
       - name: Print output summary
         run: |
           set -e
-          ls -lh output/phase6-video.mp4 data/phase3-lyrics.json data/phase4-direction.json
+          ls -lh output/phase6-video.mp4 data/phase3-lyrics.json
           node -e "const {getVideoMetadata}=require('@remotion/renderer'); getVideoMetadata('output/phase6-video.mp4').then((m)=>{console.log(JSON.stringify({width:m.width,height:m.height,fps:m.fps,durationInSeconds:m.durationInSeconds},null,2));}).catch((e)=>{console.error(e);process.exit(1);});"
 
       - name: Upload Phase 6 artifacts
@@ -100,4 +79,3 @@ jobs:
           path: |
             output/phase6-video.mp4
             data/phase3-lyrics.json
-            data/phase4-direction.json

@@ -1,0 +1,27 @@
+{
+  "name": "mplayer-template-renderer",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Template-only lyrics visualiser rendered with Remotion",
+  "scripts": {
+    "phase3:build": "node scripts/phase3-build.js",
+    "phase5:render": "node scripts/phase5-render.js",
+    "phase5:render:16x9": "node scripts/phase5-render-16x9.js",
+    "phase5:render:16x9:logo": "node scripts/phase5-render-16x9-logo.js",
+    "phase7:upload": "node scripts/phase7-upload.js",
+    "render:test": "node scripts/render-test.js",
+    "remotion:studio": "remotion studio remotion/index.jsx"
+  },
+  "dependencies": {
+    "@remotion/bundler": "^4.0.0",
+    "@remotion/media-utils": "^4.0.0",
+    "@remotion/renderer": "^4.0.0",
+    "googleapis": "^139.0.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "remotion": "^4.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

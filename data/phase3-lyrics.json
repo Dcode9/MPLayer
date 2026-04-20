@@ -1,0 +1,247 @@
+{
+  "metadata": {
+    "generatedAt": "2026-04-20T13:37:22.416Z",
+    "phase": 3,
+    "timingMode": "synced",
+    "songSelectionMethod": "query-template",
+    "sourceApis": {
+      "jiosaavn": "https://jiosaavn-api-taupe-phi.vercel.app/api",
+      "lyrics": "lrclib",
+      "lyricsMatchMode": "direct-get"
+    },
+    "pipelineMode": "template-only",
+    "query": "Template sanity"
+  },
+  "song": {
+    "id": "WDLIjKuU",
+    "name": "Dracula",
+    "artist": "Tame Impala",
+    "album": "Deadbeat",
+    "duration": 205,
+    "language": "english",
+    "year": "2025",
+    "url": "https://www.jiosaavn.com/song/dracula/JywneB57QmY",
+    "audioUrl": "https://aac.saavncdn.com/331/c4ecd95a2289f114ae976e3c55ee1ff3_320.mp4",
+    "image": "https://c.saavncdn.com/331/Deadbeat-English-2025-20251014222336-500x500.jpg",
+    "hasLyrics": false,
+    "source": "jiosaavn"
+  },
+  "lyricsRaw": {
+    "provider": "lrclib",
+    "hasSyncedLyrics": true,
+    "hasPlainLyrics": true,
+    "reference": {
+      "id": 24449139,
+      "trackName": "Dracula",
+      "artistName": "Tame Impala",
+      "albumName": "Deadbeat"
+    }
+  },
+  "lines": [
+    {
+      "text": "The morning light is turning blue, the feeling is bizarre",
+      "start": 28.88,
+      "end": 33.04
+    },
+    {
+      "text": "The night is almost over, I still don't know where you are",
+      "start": 33.04,
+      "end": 37.2
+    },
+    {
+      "text": "The shadows, yeah, they keep me pretty like a movie star",
+      "start": 37.2,
+      "end": 41.61
+    },
+    {
+      "text": "Daylight makes me feel like Dracula",
+      "start": 41.61,
+      "end": 46.09
+    },
+    {
+      "text": "In the end I hope it's you and me",
+      "start": 46.09,
+      "end": 50.21
+    },
+    {
+      "text": "In the darkness I would never leave",
+      "start": 50.21,
+      "end": 53.37
+    },
+    {
+      "text": "You won't ever see me in the light of day",
+      "start": 53.37,
+      "end": 58.08
+    },
+    {
+      "text": "It's far too late",
+      "start": 58.08,
+      "end": 60.14
+    },
+    {
+      "text": "The time has come",
+      "start": 60.14,
+      "end": 62.24
+    },
+    {
+      "text": "I'm on the verge of caving in, I run back to the dark",
+      "start": 62.24,
+      "end": 66.31
+    },
+    {
+      "text": "Now I'm Mr. Charisma, fucking Pablo Escobar",
+      "start": 66.31,
+      "end": 70.44
+    },
+    {
+      "text": "My friends are saying \"Shut up, Kevin, just get in the car\"",
+      "start": 70.44,
+      "end": 74.87
+    },
+    {
+      "text": "I just wanna be right where you are",
+      "start": 74.87,
+      "end": 77.96
+    },
+    {
+      "text": "Oh, my love",
+      "start": 77.96,
+      "end": 79.65
+    },
+    {
+      "text": "In the end I hope it's you and me",
+      "start": 79.65,
+      "end": 83.72
+    },
+    {
+      "text": "In the darkness I would never leave",
+      "start": 83.72,
+      "end": 86.72
+    },
+    {
+      "text": "We both saw this moment coming from afar",
+      "start": 86.72,
+      "end": 91.34
+    },
+    {
+      "text": "Now here we are",
+      "start": 91.34,
+      "end": 93.66
+    },
+    {
+      "text": "Run from the sunlight, Dracula",
+      "start": 93.66,
+      "end": 97.9
+    },
+    {
+      "text": "Run from the sunlight, Dracula",
+      "start": 97.9,
+      "end": 102.07
+    },
+    {
+      "text": "Run from the sunlight, Dracula",
+      "start": 102.07,
+      "end": 106.22
+    },
+    {
+      "text": "Isn't the view spectacular?",
+      "start": 106.22,
+      "end": 128.8
+    },
+    {
+      "text": "But please",
+      "start": 128.8,
+      "end": 130.75
+    },
+    {
+      "text": "Do you think about what it might mean?",
+      "start": 130.75,
+      "end": 134.89
+    },
+    {
+      "text": "'Cos I dream about you in my sleep",
+      "start": 134.89,
+      "end": 139.1
+    },
+    {
+      "text": "Would you ever love someone like me?",
+      "start": 139.1,
+      "end": 143.34
+    },
+    {
+      "text": "Like me?",
+      "start": 143.34,
+      "end": 146.71
+    },
+    {
+      "text": "In the end I hope it's you and me",
+      "start": 146.71,
+      "end": 150.66
+    },
+    {
+      "text": "In the darkness I would never leave",
+      "start": 150.66,
+      "end": 153.73
+    },
+    {
+      "text": "We both saw this moment coming from afar",
+      "start": 153.73,
+      "end": 158.14
+    },
+    {
+      "text": "Now here we are",
+      "start": 158.14,
+      "end": 160.26
+    },
+    {
+      "text": "So run from the sunlight, Dracula",
+      "start": 160.26,
+      "end": 164.66
+    },
+    {
+      "text": "Run from the sunlight, Dracula",
+      "start": 164.66,
+      "end": 168.83
+    },
+    {
+      "text": "Run from the sunlight, Dracula",
+      "start": 168.83,
+      "end": 173.02
+    },
+    {
+      "text": "Isn't the view spectacular?",
+      "start": 173.02,
+      "end": 177.21
+    },
+    {
+      "text": "Run from the sunlight, Dracula",
+      "start": 177.21,
+      "end": 181.36
+    },
+    {
+      "text": "Run from the sunlight, Dracula",
+      "start": 181.36,
+      "end": 185.59
+    },
+    {
+      "text": "Isn't the view spectacular?",
+      "start": 185.59,
+      "end": 189.72
+    },
+    {
+      "text": "Run from the sunlight, Dracula",
+      "start": 189.72,
+      "end": 193.87
+    },
+    {
+      "text": "Run from the sunlight, Dracula",
+      "start": 193.87,
+      "end": 198.07
+    },
+    {
+      "text": "Isn't the view spectacular?",
+      "start": 198.07,
+      "end": 205
+    }
+  ]
+}

@@ -42,14 +42,6 @@ on:
           - private
           - unlisted
           - public
-      strict_glm_fallback:
-        description: Fail if Pollinations GitHub model is unavailable and GLM fallback is not configured
-        required: false
-        default: 'false'
-        type: choice
-        options:
-          - 'false'
-          - 'true'
 
 jobs:
   render-and-upload:
@@ -87,19 +79,6 @@ jobs:
             npm run phase3:build -- --query="$SONG_QUERY" --out=data/phase3-lyrics.json
           fi
 
-      - name: Phase 4 - Generate AI direction
-        env:
-          POLLINATIONS_API: ${{ secrets.POLLINATIONS_API }}
-          POLLINATIONS_API_KEY: ${{ secrets.POLLINATIONS_API_KEY }}
-          GLM5_API_BASE_URL: ${{ secrets.GLM5_API_BASE_URL }}
-          GLM5_API_KEY: ${{ secrets.GLM5_API_KEY }}
-          GLM5_MODEL: ${{ secrets.GLM5_MODEL }}
-          PHASE4_STRICT_GLM_FALLBACK: ${{ inputs.strict_glm_fallback }}
-        run: |
-          set -e
-          echo "[phase-7] Starting Phase 4"
-          npm run phase4:direction -- --in=data/phase3-lyrics.json --out=data/phase4-direction.json
-
       - name: Phase 5 - Render video
         env:
           PHASE5_MAX_SECONDS: ${{ inputs.max_seconds }}
@@ -108,7 +87,7 @@ jobs:
         run: |
           set -e
           echo "[phase-7] Starting Phase 5"
-          npm run phase5:render -- --lyrics=data/phase3-lyrics.json --direction=data/phase4-direction.json --out=output/phase7-video.mp4 --max-seconds="$PHASE5_MAX_SECONDS"
+          npm run phase5:render -- --lyrics=data/phase3-lyrics.json --out=output/phase7-video.mp4 --max-seconds="$PHASE5_MAX_SECONDS"
 
       - name: Phase 7 - Upload to YouTube
         env:
@@ -135,5 +114,4 @@ jobs:
           path: |
             output/phase7-video.mp4
             data/phase3-lyrics.json
-            data/phase4-direction.json
             data/phase7-youtube-upload.json

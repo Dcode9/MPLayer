@@ -1,0 +1,465 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { Play, Pause, FastForward, Rewind, RefreshCw } from 'lucide-react';
+
+// --- API Song Data ---
+const SONG_DATA = {
+  "metadata": {
+    "generatedAt": "2026-04-15T12:41:15.039Z",
+    "phase": 3,
+    "timingMode": "synced",
+    "songSelectionMethod": "search-best-match",
+    "sourceApis": {
+      "jiosaavn": "https://jiosaavn-api-taupe-phi.vercel.app/api",
+      "lyrics": "lrclib",
+      "lyricsMatchMode": "direct-get"
+    }
+  },
+  "song": {
+    "id": "WDLIjKuU",
+    "name": "Dracula",
+    "artist": "Tame Impala",
+    "album": "Deadbeat",
+    "duration": 205,
+    "language": "english",
+    "year": "2025",
+    "url": "https://www.jiosaavn.com/song/dracula/JywneB57QmY",
+    "audioUrl": "https://aac.saavncdn.com/331/c4ecd95a2289f114ae976e3c55ee1ff3_320.mp4",
+    "image": "https://c.saavncdn.com/331/Deadbeat-English-2025-20251014222336-500x500.jpg",
+    "hasLyrics": false,
+    "source": "jiosaavn"
+  },
+  "lyricsRaw": {
+    "provider": "lrclib",
+    "hasSyncedLyrics": true,
+    "hasPlainLyrics": true,
+    "reference": {
+      "id": 24449139,
+      "trackName": "Dracula",
+      "artistName": "Tame Impala",
+      "albumName": "Deadbeat"
+    }
+  },
+  "lines": [
+    { "text": "The morning light is turning blue, the feeling is bizarre", "start": 28.88, "end": 33.04 },
+    { "text": "The night is almost over, I still don't know where you are", "start": 33.04, "end": 37.2 },
+    { "text": "The shadows, yeah, they keep me pretty like a movie star", "start": 37.2, "end": 41.61 },
+    { "text": "Daylight makes me feel like Dracula", "start": 41.61, "end": 46.09 },
+    { "text": "In the end I hope it's you and me", "start": 46.09, "end": 50.21 },
+    { "text": "In the darkness I would never leave", "start": 50.21, "end": 53.37 },
+    { "text": "You won't ever see me in the light of day", "start": 53.37, "end": 58.08 },
+    { "text": "It's far too late", "start": 58.08, "end": 60.14 },
+    { "text": "The time has come", "start": 60.14, "end": 62.24 },
+    { "text": "I'm on the verge of caving in, I run back to the dark", "start": 62.24, "end": 66.31 },
+    { "text": "Now I'm Mr. Charisma, fucking Pablo Escobar", "start": 66.31, "end": 70.44 },
+    { "text": "My friends are saying \"Shut up, Kevin, just get in the car\"", "start": 70.44, "end": 74.87 },
+    { "text": "I just wanna be right where you are", "start": 74.87, "end": 77.96 },
+    { "text": "Oh, my love", "start": 77.96, "end": 79.65 },
+    { "text": "In the end I hope it's you and me", "start": 79.65, "end": 83.72 },
+    { "text": "In the darkness I would never leave", "start": 83.72, "end": 86.72 },
+    { "text": "We both saw this moment coming from afar", "start": 86.72, "end": 91.34 },
+    { "text": "Now here we are", "start": 91.34, "end": 93.66 },
+    { "text": "Run from the sunlight, Dracula", "start": 93.66, "end": 97.9 },
+    { "text": "Run from the sunlight, Dracula", "start": 97.9, "end": 102.07 },
+    { "text": "Run from the sunlight, Dracula", "start": 102.07, "end": 106.22 },
+    { "text": "Isn't the view spectacular?", "start": 106.22, "end": 128.8 },
+    { "text": "But please", "start": 128.8, "end": 130.75 },
+    { "text": "Do you think about what it might mean?", "start": 130.75, "end": 134.89 },
+    { "text": "'Cos I dream about you in my sleep", "start": 134.89, "end": 139.1 },
+    { "text": "Would you ever love someone like me?", "start": 139.1, "end": 143.34 },
+    { "text": "Like me?", "start": 143.34, "end": 146.71 },
+    { "text": "In the end I hope it's you and me", "start": 146.71, "end": 150.66 },
+    { "text": "In the darkness I would never leave", "start": 150.66, "end": 153.73 },
+    { "text": "We both saw this moment coming from afar", "start": 153.73, "end": 158.14 },
+    { "text": "Now here we are", "start": 158.14, "end": 160.26 },
+    { "text": "So run from the sunlight, Dracula", "start": 160.26, "end": 164.66 },
+    { "text": "Run from the sunlight, Dracula", "start": 164.66, "end": 168.83 },
+    { "text": "Run from the sunlight, Dracula", "start": 168.83, "end": 173.02 },
+    { "text": "Isn't the view spectacular?", "start": 173.02, "end": 177.21 },
+    { "text": "Run from the sunlight, Dracula", "start": 177.21, "end": 181.36 },
+    { "text": "Run from the sunlight, Dracula", "start": 181.36, "end": 185.59 },
+    { "text": "Isn't the view spectacular?", "start": 185.59, "end": 189.72 },
+    { "text": "Run from the sunlight, Dracula", "start": 189.72, "end": 193.87 },
+    { "text": "Run from the sunlight, Dracula", "start": 193.87, "end": 198.07 },
+    { "text": "Isn't the view spectacular?", "start": 198.07, "end": 205 }
+  ]
+};
+
+export default function LyricalVisualizer() {
+  // UI State
+  const [appState, setAppState] = useState('setup'); // 'setup', 'playing'
+  const [isPlaying, setIsPlaying] = useState(false);
+  
+  // Media State automatically mapped from API JSON
+  const audioSrc = SONG_DATA.song.audioUrl;
+  const albumArtSrc = SONG_DATA.song.image;
+  // Map the new 'start' properties directly to the 'time' property expected by our engine
+  const parsedLyrics = SONG_DATA.lines.map(line => ({ time: line.start, text: line.text, end: line.end }));
+  const [currentLyricIndex, setCurrentLyricIndex] = useState(-1);
+
+  // Refs for audio and animation
+  const audioRef = useRef(null);
+  const canvasRef = useRef(null);
+  const audioContextRef = useRef(null);
+  const analyserRef = useRef(null);
+  const sourceRef = useRef(null);
+  const animationRef = useRef(null);
+  const containerRef = useRef(null);
+
+  // Initialize Web Audio API
+  const initAudioContext = () => {
+    if (!audioContextRef.current) {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      audioContextRef.current = new AudioContext();
+      analyserRef.current = audioContextRef.current.createAnalyser();
+      analyserRef.current.fftSize = 256;
+      analyserRef.current.smoothingTimeConstant = 0.8;
+    }
+
+    if (audioRef.current && !sourceRef.current) {
+      sourceRef.current = audioContextRef.current.createMediaElementSource(audioRef.current);
+      sourceRef.current.connect(analyserRef.current);
+      analyserRef.current.connect(audioContextRef.current.destination);
+    }
+    
+    if (audioContextRef.current.state === 'suspended') {
+      audioContextRef.current.resume();
+    }
+  };
+
+  // The main Render Loop for Motion Graphics & Reactivity
+  const renderFrame = () => {
+    if (!analyserRef.current || !canvasRef.current || !audioRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width = window.innerWidth;
+    const height = canvas.height = window.innerHeight;
+
+    const bufferLength = analyserRef.current.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+    analyserRef.current.getByteFrequencyData(dataArray);
+
+    // Calculate Bass Energy (lower frequencies)
+    let bassSum = 0;
+    for (let i = 0; i < 10; i++) {
+      bassSum += dataArray[i];
+    }
+    const bassAvg = bassSum / 10;
+    const bassNormalized = bassAvg / 255; // 0.0 to 1.0
+
+    // 1. Update CSS Custom Properties for DOM Reactivity
+    if (containerRef.current) {
+      // Scale background based on bass
+      const scale = 1.1 + (bassNormalized * 0.15); 
+      // Add a slight blur pulse
+      const blur = 60 - (bassNormalized * 20);
+      // Dynamic text bounce scale
+      const textScale = 1 + (bassNormalized * 0.08);
+      
+      containerRef.current.style.setProperty('--bg-scale', scale);
+      containerRef.current.style.setProperty('--bg-blur', `${blur}px`);
+      containerRef.current.style.setProperty('--text-scale', textScale);
+    }
+
+    // 2. Draw Flowing Liquid Waves on Canvas
+    ctx.clearRect(0, 0, width, height);
+    
+    // Draw 3 overlapping waves
+    for (let wave = 0; wave < 3; wave++) {
+      ctx.beginPath();
+      ctx.moveTo(0, height);
+      
+      const waveHeight = height * 0.4;
+      const offset = wave * 20;
+      
+      for (let i = 0; i < bufferLength; i++) {
+        // Space out the frequency points across the width
+        const x = (i / (bufferLength - 1)) * width;
+        
+        // Map frequency data to y-coordinate, adding smooth sine waves for the "flow"
+        const freqValue = dataArray[i] / 255;
+        const time = performance.now() * 0.001;
+        
+        // Combine audio data with mathematical sine waves for a liquid look
+        const fluidMotion = Math.sin(time + x * 0.005 + wave) * 30;
+        const y = height - (freqValue * waveHeight) - fluidMotion - (bassNormalized * 50) + offset;
+
+        if (i === 0) ctx.lineTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      
+      ctx.lineTo(width, height);
+      ctx.lineTo(0, height);
+      ctx.closePath();
+
+      // Style the waves to look modern (glass/glow)
+      const gradient = ctx.createLinearGradient(0, height - waveHeight, 0, height);
+      if (wave === 0) gradient.addColorStop(0, `rgba(255, 255, 255, ${0.1 + bassNormalized * 0.2})`);
+      else if (wave === 1) gradient.addColorStop(0, `rgba(255, 255, 255, ${0.05 + bassNormalized * 0.1})`);
+      else gradient.addColorStop(0, `rgba(0, 0, 0, 0.2)`);
+      
+      gradient.addColorStop(1, 'rgba(0,0,0,0)');
+      
+      ctx.fillStyle = gradient;
+      ctx.fill();
+    }
+
+    // 3. Lyric Sync Logic
+    const currentTime = audioRef.current.currentTime;
+    let activeIndex = -1; // -1 means we are before the first lyric (Title screen)
+    for (let i = 0; i < parsedLyrics.length; i++) {
+      if (currentTime >= parsedLyrics[i].time) {
+        activeIndex = i;
+      } else {
+        break;
+      }
+    }
+    
+    if (activeIndex !== currentLyricIndex) {
+      setCurrentLyricIndex(activeIndex);
+    }
+
+    animationRef.current = requestAnimationFrame(renderFrame);
+  };
+
+  const togglePlay = () => {
+    if (!audioRef.current) return;
+    
+    initAudioContext();
+    
+    if (isPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play();
+      renderFrame();
+    }
+    setIsPlaying(!isPlaying);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
+      if (audioContextRef.current) audioContextRef.current.close();
+    };
+  }, []);
+
+  const handleAudioEnd = () => {
+    setIsPlaying(false);
+    setCurrentLyricIndex(-1);
+    if (animationRef.current) cancelAnimationFrame(animationRef.current);
+  };
+
+  // Setup View
+  if (appState === 'setup') {
+    return (
+      <div className="min-h-screen bg-gray-950 text-white flex flex-col items-center justify-center p-6 font-sans">
+        <div className="max-w-md w-full bg-gray-900/80 p-10 rounded-3xl border border-gray-800 shadow-2xl backdrop-blur-md flex flex-col items-center text-center space-y-6">
+          <div className="w-64 h-64 rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(168,85,247,0.3)] border border-gray-700 animate-pulse transition-all">
+            <img src={albumArtSrc} alt="Album Art" className="w-full h-full object-cover" />
+          </div>
+          <div>
+            <h1 className="text-4xl font-extrabold tracking-tight text-white mb-2">
+              {SONG_DATA.song.name}
+            </h1>
+            <p className="text-xl text-purple-400 font-semibold">{SONG_DATA.song.artist}</p>
+            <p className="text-sm text-gray-500 mt-2 tracking-widest uppercase">
+              {SONG_DATA.song.album} &bull; {SONG_DATA.song.year}
+            </p>
+          </div>
+
+          <button 
+            onClick={() => setAppState('playing')}
+            className="w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-3 transition-all duration-300 bg-gradient-to-r from-blue-600 to-purple-600 hover:scale-105 hover:shadow-[0_0_30px_rgba(168,85,247,0.4)] text-white mt-6"
+          >
+            <Play fill="currentColor" size={24} /> 
+            Start Visualizer
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // --- Visualizer View ---
+  return (
+    <div 
+      ref={containerRef}
+      className="relative w-full h-screen overflow-hidden bg-black text-white font-sans selection:bg-white/20"
+      style={{
+        '--bg-scale': '1.1',
+        '--bg-blur': '60px'
+      }}
+    >
+      {/* Dynamic Background Layer */}
+      {/* We use the album art, deeply blurred, and scale it based on audio data */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center transition-transform duration-75 ease-out opacity-60 mix-blend-screen"
+        style={{
+          backgroundImage: `url(${albumArtSrc})`,
+          filter: `blur(var(--bg-blur)) saturate(200%) brightness(0.7)`,
+          transform: `scale(var(--bg-scale))`
+        }}
+      />
+      
+      {/* Vignette Overlay for depth */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.8)_100%)] pointer-events-none" />
+
+      {/* Audio Reactive Canvas Overlay */}
+      <canvas 
+        ref={canvasRef} 
+        className="absolute bottom-0 left-0 w-full h-full pointer-events-none z-10 opacity-70"
+      />
+
+      {/* Fluid Motion Graphics Typography (Lyrics) */}
+      <div className="absolute inset-0 z-20 pointer-events-none px-4 md:px-12 perspective-1000 overflow-hidden">
+        
+        {/* Title Card (Acts as Lyric index -1) */}
+        <div className={`lyric-line flex flex-col items-center justify-center w-full ${
+          currentLyricIndex === -1 ? 'current-lyric' : 
+          currentLyricIndex === 0 ? 'previous-lyric' : 'hidden-top'
+        }`}>
+          <div className="beat-bounce flex flex-col items-center w-full">
+            <h2 className="text-5xl md:text-7xl lg:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-white/70 drop-shadow-[0_0_30px_rgba(255,255,255,0.3)] mb-4">
+              {SONG_DATA.song.name}
+            </h2>
+            <p className="text-2xl md:text-3xl text-purple-300 font-medium tracking-widest uppercase">
+              {SONG_DATA.song.artist}
+            </p>
+          </div>
+        </div>
+
+        {/* Mapped Lyrics */}
+        {parsedLyrics.map((lyric, index) => {
+          // Determine the CSS state class based on relative position to the current lyric
+          let stateClass = 'hidden-bottom';
+          if (index === currentLyricIndex) stateClass = 'current-lyric';
+          else if (index === currentLyricIndex - 1) stateClass = 'previous-lyric';
+          else if (index === currentLyricIndex + 1) stateClass = 'next-lyric';
+          else if (index < currentLyricIndex - 1) stateClass = 'hidden-top';
+          else if (index > currentLyricIndex + 1) stateClass = 'hidden-bottom';
+
+          return (
+            <div 
+              key={index} 
+              className={`lyric-line w-full px-4 text-4xl md:text-6xl lg:text-7xl font-black text-white ${stateClass}`}
+            >
+              <div className="beat-bounce">
+                {lyric.text}
+              </div>
+            </div>
+          );
+        })}
+
+      </div>
+
+      {/* Hidden Audio Element */}
+      <audio 
+        ref={audioRef} 
+        src={audioSrc} 
+        onEnded={handleAudioEnd}
+        crossOrigin="anonymous"
+      />
+
+      {/* Glassmorphism Controls (Bottom) */}
+      <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 z-30 flex items-center gap-6 px-8 py-4 bg-white/5 backdrop-blur-xl border border-white/10 rounded-full shadow-2xl transition-opacity duration-500 opacity-20 hover:opacity-100">
+        <button 
+          onClick={() => {
+            setAppState('setup');
+            if (audioRef.current) audioRef.current.pause();
+            setIsPlaying(false);
+          }}
+          className="text-white/70 hover:text-white transition-colors p-2"
+          title="Back to Setup"
+        >
+          <RefreshCw size={20} />
+        </button>
+
+        <button 
+          onClick={() => {
+            if (audioRef.current) audioRef.current.currentTime -= 5;
+            renderFrame();
+          }}
+          className="text-white/70 hover:text-white transition-colors p-2"
+        >
+          <Rewind size={24} fill="currentColor" />
+        </button>
+
+        <button 
+          onClick={togglePlay}
+          className="w-14 h-14 flex items-center justify-center bg-white text-black rounded-full hover:scale-110 transition-transform shadow-[0_0_20px_rgba(255,255,255,0.5)]"
+        >
+          {isPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" className="ml-1" />}
+        </button>
+
+        <button 
+          onClick={() => {
+            if (audioRef.current) audioRef.current.currentTime += 5;
+            renderFrame();
+          }}
+          className="text-white/70 hover:text-white transition-colors p-2"
+        >
+          <FastForward size={24} fill="currentColor" />
+        </button>
+      </div>
+
+      {/* Embedded CSS for Continuous Fluid Transitions */}
+      <style dangerouslySetInnerHTML={{__html: `
+        .perspective-1000 {
+          perspective: 1000px;
+        }
+        
+        /* Base styling for all typographic lines */
+        .lyric-line {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          text-align: center;
+          margin: 0;
+          /* The magic happens here: smooth transitions on EVERYTHING */
+          transition: all 0.9s cubic-bezier(0.25, 1, 0.5, 1);
+          transform-style: preserve-3d;
+          will-change: transform, opacity, filter;
+        }
+
+        /* Beat reactivity container inside the transitioned line */
+        .beat-bounce {
+          transform: scale(var(--text-scale, 1));
+          will-change: transform;
+        }
+
+        /* State Classes */
+        .current-lyric {
+          opacity: 1;
+          transform: translate(-50%, -50%) scale(1) rotateX(0deg);
+          filter: blur(0px);
+          text-shadow: 0 0 30px rgba(255,255,255,0.6);
+        }
+
+        .previous-lyric {
+          opacity: 0.35;
+          transform: translate(-50%, calc(-50% - 100px)) scale(0.6) rotateX(-20deg);
+          filter: blur(5px);
+        }
+
+        .next-lyric {
+          opacity: 0.35;
+          transform: translate(-50%, calc(-50% + 100px)) scale(0.6) rotateX(20deg);
+          filter: blur(5px);
+        }
+
+        .hidden-top {
+          opacity: 0;
+          transform: translate(-50%, calc(-50% - 200px)) scale(0.4) rotateX(-40deg);
+          filter: blur(20px);
+          pointer-events: none;
+        }
+
+        .hidden-bottom {
+          opacity: 0;
+          transform: translate(-50%, calc(-50% + 200px)) scale(0.4) rotateX(40deg);
+          filter: blur(20px);
+          pointer-events: none;
+        }
+      `}} />
+    </div>
+  );
+}
