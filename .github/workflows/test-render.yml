@@ -1,7 +1,21 @@
-name: Phase 2 Test Render
+name: Quick Test Render (16:9)
 
 on:
   workflow_dispatch:
+    inputs:
+      render_preset:
+        description: Render preset
+        required: false
+        default: 16x9-logo
+        type: choice
+        options:
+          - 16x9-logo
+          - 16x9-clean
+      max_seconds:
+        description: Clip duration cap in seconds
+        required: false
+        default: '12'
+        type: string
 
 jobs:
   render-test-video:
@@ -21,8 +35,27 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Render test video
-        run: npm run render:test
+      - name: Prepare folders
+        run: mkdir -p data output
+
+      - name: Build test lyrics input
+        run: npm run phase3:build -- --song-id=TEST_TEMPLATE --query="template test render" --out=data/test-lyrics.json
+
+      - name: Render test video (16:9)
+        env:
+          RENDER_PRESET: ${{ inputs.render_preset }}
+          PHASE5_MAX_SECONDS: ${{ inputs.max_seconds }}
+          PHASE5_RENDER_CONCURRENCY: 2
+          PHASE5_RENDER_CRF: 24
+        run: |
+          set -e
+          echo "[test-render] Render preset: $RENDER_PRESET"
+
+          if [ "$RENDER_PRESET" = "16x9-clean" ]; then
+            npm run phase5:render:16x9 -- --lyrics=data/test-lyrics.json --out=output/test-video.mp4 --max-seconds="$PHASE5_MAX_SECONDS"
+          else
+            npm run phase5:render:16x9:logo -- --lyrics=data/test-lyrics.json --out=output/test-video.mp4 --max-seconds="$PHASE5_MAX_SECONDS"
+          fi
 
       - name: Upload rendered video artifact
         uses: actions/upload-artifact@v4

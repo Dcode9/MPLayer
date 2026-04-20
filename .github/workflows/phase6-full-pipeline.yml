@@ -1,20 +1,28 @@
-name: Phase 6 Full Pipeline Test
+name: Phase 6 Render Test (16:9)
 
 on:
   workflow_dispatch:
     inputs:
       song_query:
-        description: Song query used when song_id is empty
+        description: Song query (used only when song_id is empty)
         required: false
         default: Aaj Ki Raat
         type: string
       song_id:
-        description: Optional direct JioSaavn song id
+        description: Optional direct JioSaavn song ID
         required: false
         default: ''
         type: string
+      render_preset:
+        description: Render preset
+        required: false
+        default: 16x9-logo
+        type: choice
+        options:
+          - 16x9-logo
+          - 16x9-clean
       max_seconds:
-        description: Clip duration cap for CI runtime stability
+        description: Clip duration cap in seconds (0 = full song)
         required: false
         default: '30'
         type: string
@@ -57,17 +65,27 @@ jobs:
 
       - name: Phase 5 - Render template lyrics video
         env:
+          RENDER_PRESET: ${{ inputs.render_preset }}
           PHASE5_MAX_SECONDS: ${{ inputs.max_seconds }}
           PHASE5_RENDER_CONCURRENCY: 2
           PHASE5_RENDER_CRF: 22
         run: |
           set -e
           echo "[phase-6] Starting Phase 5"
-          npm run phase5:render -- --lyrics=data/phase3-lyrics.json --out=output/phase6-video.mp4 --max-seconds="$PHASE5_MAX_SECONDS"
+          echo "[phase-6] Render preset: $RENDER_PRESET"
+
+          if [ "$RENDER_PRESET" = "16x9-clean" ]; then
+            npm run phase5:render:16x9 -- --lyrics=data/phase3-lyrics.json --out=output/phase6-video.mp4 --max-seconds="$PHASE5_MAX_SECONDS"
+          else
+            npm run phase5:render:16x9:logo -- --lyrics=data/phase3-lyrics.json --out=output/phase6-video.mp4 --max-seconds="$PHASE5_MAX_SECONDS"
+          fi
 
       - name: Print output summary
+        env:
+          RENDER_PRESET: ${{ inputs.render_preset }}
         run: |
           set -e
+          echo "[phase-6] Selected preset: $RENDER_PRESET"
           ls -lh output/phase6-video.mp4 data/phase3-lyrics.json
           node -e "const {getVideoMetadata}=require('@remotion/renderer'); getVideoMetadata('output/phase6-video.mp4').then((m)=>{console.log(JSON.stringify({width:m.width,height:m.height,fps:m.fps,durationInSeconds:m.durationInSeconds},null,2));}).catch((e)=>{console.error(e);process.exit(1);});"
 

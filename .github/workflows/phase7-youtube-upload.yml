@@ -1,18 +1,26 @@
-name: Phase 7 YouTube Upload
+name: Phase 7 Render + YouTube Upload (16:9)
 
 on:
   workflow_dispatch:
     inputs:
       song_query:
-        description: Song query used when song_id is empty
+        description: Song query (used only when song_id is empty)
         required: false
         default: Aaj Ki Raat
         type: string
       song_id:
-        description: Optional direct JioSaavn song id
+        description: Optional direct JioSaavn song ID
         required: false
         default: ''
         type: string
+      render_preset:
+        description: Render preset
+        required: false
+        default: 16x9-logo
+        type: choice
+        options:
+          - 16x9-logo
+          - 16x9-clean
       max_seconds:
         description: Clip duration cap (0 means full song)
         required: false
@@ -81,13 +89,20 @@ jobs:
 
       - name: Phase 5 - Render video
         env:
+          RENDER_PRESET: ${{ inputs.render_preset }}
           PHASE5_MAX_SECONDS: ${{ inputs.max_seconds }}
           PHASE5_RENDER_CONCURRENCY: 2
           PHASE5_RENDER_CRF: 22
         run: |
           set -e
           echo "[phase-7] Starting Phase 5"
-          npm run phase5:render -- --lyrics=data/phase3-lyrics.json --out=output/phase7-video.mp4 --max-seconds="$PHASE5_MAX_SECONDS"
+          echo "[phase-7] Render preset: $RENDER_PRESET"
+
+          if [ "$RENDER_PRESET" = "16x9-clean" ]; then
+            npm run phase5:render:16x9 -- --lyrics=data/phase3-lyrics.json --out=output/phase7-video.mp4 --max-seconds="$PHASE5_MAX_SECONDS"
+          else
+            npm run phase5:render:16x9:logo -- --lyrics=data/phase3-lyrics.json --out=output/phase7-video.mp4 --max-seconds="$PHASE5_MAX_SECONDS"
+          fi
 
       - name: Phase 7 - Upload to YouTube
         env:
