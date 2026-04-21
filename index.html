@@ -943,7 +943,7 @@
 
                         <div id="album-art-wrapper" class="relative w-12 h-12 flex-shrink-0 cursor-pointer rounded-xl overflow-hidden shadow-md ml-1 my-1">
                             <div id="album-art-glow"></div>
-                            <img id="curr-art-img" src="https://placehold.co/300/333/fff?text=Music" class="w-full h-full object-cover border border-white/20" crossorigin="anonymous">
+                            <img id="curr-art-img" src="./public/assets/DTunes-transparent.svg" class="w-full h-full object-cover border border-white/20" crossorigin="anonymous">
                         </div>
 
                         <div class="flex-1 min-w-0 flex flex-col justify-center cursor-pointer ml-3">
@@ -1058,6 +1058,8 @@
             escapeHtml: (text) => text ? text.toString().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;") : '',
             escapeJs: (text) => text ? text.toString().replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "\\n").replace(/\r/g, "\\r") : ''
         };
+
+        const FALLBACK_ART = './public/assets/DTunes-transparent.svg';
 
         const updateMarquees = () => {
             document.querySelectorAll('.marquee-container').forEach(container => {
@@ -1498,6 +1500,39 @@
         audio.setAttribute('webkit-playsinline', '');
         audio.preload = 'metadata';
         let isPlaybackPending = false;
+        let isAudioRecoveryPending = false;
+
+        const recoverFromAudioError = async () => {
+            if (!state.currentTrack || isAudioRecoveryPending) return;
+            isAudioRecoveryPending = true;
+
+            try {
+                const refreshed = await jiosaavnAPI.getSong(state.currentTrack.id);
+                if (refreshed?.url && refreshed.url !== state.currentTrack.url) {
+                    state.currentTrack.url = refreshed.url;
+                    audio.src = refreshed.url;
+                    if (state.playing) await audio.play();
+                    return;
+                }
+
+                // Rotate API endpoint once and retry before skipping to next track.
+                if (switchToNextApi()) {
+                    const retried = await jiosaavnAPI.getSong(state.currentTrack.id);
+                    if (retried?.url) {
+                        state.currentTrack.url = retried.url;
+                        audio.src = retried.url;
+                        if (state.playing) await audio.play();
+                        return;
+                    }
+                }
+
+                player.next();
+            } catch (e) {
+                player.next();
+            } finally {
+                isAudioRecoveryPending = false;
+            }
+        };
 
         window.playSongById = (storeId) => {
             const song = songStore.get(storeId);
@@ -1614,6 +1649,8 @@
             state.playing = false; ui.updatePlayBtn(); persist.save();
             if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
         });
+
+        audio.addEventListener('error', recoverFromAudioError);
 
         document.addEventListener('visibilitychange', () => {
             if ('mediaSession' in navigator && document.visibilityState === 'hidden' && state.playing) {
@@ -2105,7 +2142,7 @@
             createSongPillInner: (song) => {
                 return `
                     <div class="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 shadow-md border border-white/20 ml-1">
-                        <img src="${song.img}" onerror="this.src='https://placehold.co/40'" class="w-full h-full object-cover">
+                        <img src="${song.img}" onerror="this.src='${FALLBACK_ART}'" class="w-full h-full object-cover">
                     </div>
                     <div class="flex-1 min-w-0 flex flex-col justify-center ml-3">
                         <div class="marquee-container w-full"><div class="font-bold text-white text-sm marquee-text">${utils.escapeHtml(song.name)}</div></div>
@@ -2157,7 +2194,7 @@
             updateMetadata: (track) => {
                 document.getElementById('p-title').textContent = track.name; 
                 document.getElementById('p-artist').textContent = track.artist;
-                document.getElementById('curr-art-img').src = track.img || "https://placehold.co/300/333/fff?text=Music";
+                document.getElementById('curr-art-img').src = track.img || FALLBACK_ART;
                 const likeBtn = document.getElementById('p-like-btn');
                 const isLiked = state.likedIds.some(item => (typeof item === 'string' ? item === track.id : item.id === track.id));
                 likeBtn.className = isLiked ? 'text-red-500 transition flex-shrink-0 ml-2' : 'text-gray-400 hover:text-red-500 transition flex-shrink-0 ml-2';

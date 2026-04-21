@@ -1,4 +1,4 @@
-name: Phase 6 Render Test (16:9)
+name: Phase 6 Render Test (4K)
 
 on:
   workflow_dispatch:
@@ -16,16 +16,11 @@ on:
       render_preset:
         description: Render preset
         required: false
-        default: 16x9-logo
+        default: 4k-logo
         type: choice
         options:
-          - 16x9-logo
-          - 16x9-clean
-      max_seconds:
-        description: Clip duration cap in seconds (0 = full song)
-        required: false
-        default: '30'
-        type: string
+          - 4k-logo
+          - 4k-clean
 
 jobs:
   full-pipeline-test:
@@ -66,18 +61,17 @@ jobs:
       - name: Phase 5 - Render template lyrics video
         env:
           RENDER_PRESET: ${{ inputs.render_preset }}
-          PHASE5_MAX_SECONDS: ${{ inputs.max_seconds }}
           PHASE5_RENDER_CONCURRENCY: 2
-          PHASE5_RENDER_CRF: 22
+          PHASE5_RENDER_CRF: 20
         run: |
           set -e
           echo "[phase-6] Starting Phase 5"
           echo "[phase-6] Render preset: $RENDER_PRESET"
 
-          if [ "$RENDER_PRESET" = "16x9-clean" ]; then
-            npm run phase5:render:16x9 -- --lyrics=data/phase3-lyrics.json --out=output/phase6-video.mp4 --max-seconds="$PHASE5_MAX_SECONDS"
+          if [ "$RENDER_PRESET" = "4k-clean" ]; then
+            npm run phase5:render:4k -- --lyrics=data/phase3-lyrics.json --out=output/phase6-video.mp4
           else
-            npm run phase5:render:16x9:logo -- --lyrics=data/phase3-lyrics.json --out=output/phase6-video.mp4 --max-seconds="$PHASE5_MAX_SECONDS"
+            npm run phase5:render:4k:logo -- --lyrics=data/phase3-lyrics.json --out=output/phase6-video.mp4
           fi
 
       - name: Print output summary

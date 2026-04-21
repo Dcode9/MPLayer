@@ -5,7 +5,10 @@
   "description": "Template-only lyrics visualiser rendered with Remotion",
   "scripts": {
     "phase3:build": "node scripts/phase3-build.js",
+    "phase3:build:auto": "node scripts/phase3-build.js --mode=auto-trending",
     "phase5:render": "node scripts/phase5-render.js",
+    "phase5:render:4k": "node scripts/phase5-render-4k.js",
+    "phase5:render:4k:logo": "node scripts/phase5-render-4k-logo.js",
     "phase5:render:16x9": "node scripts/phase5-render-16x9.js",
     "phase5:render:16x9:logo": "node scripts/phase5-render-16x9-logo.js",
     "phase7:upload": "node scripts/phase7-upload.js",

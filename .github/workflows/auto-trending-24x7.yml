@@ -1,0 +1,88 @@
+name: Auto Trending Upload (24x7 4K)
+
+on:
+  schedule:
+    - cron: '0 */2 * * *'
+  workflow_dispatch:
+    inputs:
+      privacy_status:
+        description: YouTube privacy status
+        required: false
+        default: public
+        type: choice
+        options:
+          - private
+          - unlisted
+          - public
+
+jobs:
+  auto-trending-render-upload:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Prepare folders
+        run: mkdir -p data output
+
+      - name: Phase 3 - Auto pick trending song
+        env:
+          POLLINATIONS_TEXT_MODEL: glm
+        run: |
+          set -e
+          echo "[auto-24x7] Starting Phase 3 (auto-trending)"
+          npm run phase3:build -- --mode=auto-trending --out=data/phase3-lyrics.json
+
+      - name: Phase 5 - Render full song (4K logo)
+        env:
+          PHASE5_RENDER_CONCURRENCY: 2
+          PHASE5_RENDER_CRF: 20
+        run: |
+          set -e
+          echo "[auto-24x7] Starting Phase 5 (4k-logo)"
+          npm run phase5:render:4k:logo -- --lyrics=data/phase3-lyrics.json --out=output/auto-trending-video.mp4
+
+      - name: Phase 7 - Upload to YouTube
+        env:
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+          YOUTUBE_PRIVACY_STATUS: ${{ inputs.privacy_status }}
+          YOUTUBE_ENABLE_AI_METADATA: true
+          YOUTUBE_METADATA_MODEL: glm
+          YOUTUBE_GENERATE_THUMBNAIL: true
+          YOUTUBE_THUMBNAIL_MODEL: gptimage-large
+          PHASE7_VIDEO_FILE: output/auto-trending-video.mp4
+          PHASE7_PHASE3_JSON: data/phase3-lyrics.json
+          PHASE7_OUTPUT_JSON: data/auto-trending-upload.json
+          PHASE7_THUMBNAIL_FILE: output/auto-trending-thumbnail.jpg
+        run: |
+          set -e
+          export YOUTUBE_PRIVACY_STATUS="${YOUTUBE_PRIVACY_STATUS:-public}"
+          echo "[auto-24x7] Starting Phase 7 upload"
+          npm run phase7:upload
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: auto-trending-24x7
+          if-no-files-found: error
+          path: |
+            output/auto-trending-video.mp4
+            output/auto-trending-thumbnail.jpg
+            data/phase3-lyrics.json
+            data/song-history.json
+            data/auto-trending-upload.json

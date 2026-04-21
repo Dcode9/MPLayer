@@ -1,4 +1,4 @@
-name: Quick Test Render (16:9)
+name: Quick Test Render (4K)
 
 on:
   workflow_dispatch:
@@ -6,11 +6,11 @@ on:
       render_preset:
         description: Render preset
         required: false
-        default: 16x9-logo
+        default: 4k-logo
         type: choice
         options:
-          - 16x9-logo
-          - 16x9-clean
+          - 4k-logo
+          - 4k-clean
       max_seconds:
         description: Clip duration cap in seconds
         required: false
@@ -41,7 +41,7 @@ jobs:
       - name: Build test lyrics input
         run: npm run phase3:build -- --song-id=TEST_TEMPLATE --query="template test render" --out=data/test-lyrics.json
 
-      - name: Render test video (16:9)
+      - name: Render test video (4K)
         env:
           RENDER_PRESET: ${{ inputs.render_preset }}
           PHASE5_MAX_SECONDS: ${{ inputs.max_seconds }}
@@ -51,10 +51,10 @@ jobs:
           set -e
           echo "[test-render] Render preset: $RENDER_PRESET"
 
-          if [ "$RENDER_PRESET" = "16x9-clean" ]; then
-            npm run phase5:render:16x9 -- --lyrics=data/test-lyrics.json --out=output/test-video.mp4 --max-seconds="$PHASE5_MAX_SECONDS"
+          if [ "$RENDER_PRESET" = "4k-clean" ]; then
+            npm run phase5:render:4k -- --lyrics=data/test-lyrics.json --out=output/test-video.mp4 --max-seconds="$PHASE5_MAX_SECONDS"
           else
-            npm run phase5:render:16x9:logo -- --lyrics=data/test-lyrics.json --out=output/test-video.mp4 --max-seconds="$PHASE5_MAX_SECONDS"
+            npm run phase5:render:4k:logo -- --lyrics=data/test-lyrics.json --out=output/test-video.mp4 --max-seconds="$PHASE5_MAX_SECONDS"
           fi
 
       - name: Upload rendered video artifact

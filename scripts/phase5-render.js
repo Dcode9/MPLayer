@@ -21,8 +21,8 @@ const parsePositiveNumber = (value) => {
 const parseArgs = (argv) => {
   const args = {
     lyrics: path.join(PROJECT_ROOT, 'data', 'phase3-lyrics.json'),
-    out: path.join(PROJECT_ROOT, 'output', 'phase5-video.mp4'),
-    compositionId: 'LyricsTemplateVideo',
+    out: path.join(PROJECT_ROOT, 'output', 'phase5-video-4k-logo.mp4'),
+    compositionId: 'LyricsTemplateVideo4kLogo',
     maxSeconds: parsePositiveNumber(process.env.PHASE5_MAX_SECONDS || '0'),
     concurrency: Number(process.env.PHASE5_RENDER_CONCURRENCY || 2),
     crf: Number(process.env.PHASE5_RENDER_CRF || 22),

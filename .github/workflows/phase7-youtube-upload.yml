@@ -1,4 +1,4 @@
-name: Phase 7 Render + YouTube Upload (16:9)
+name: Phase 7 Render + YouTube Upload (4K)
 
 on:
   workflow_dispatch:
@@ -16,16 +16,11 @@ on:
       render_preset:
         description: Render preset
         required: false
-        default: 16x9-logo
+        default: 4k-logo
         type: choice
         options:
-          - 16x9-logo
-          - 16x9-clean
-      max_seconds:
-        description: Clip duration cap (0 means full song)
-        required: false
-        default: '30'
-        type: string
+          - 4k-logo
+          - 4k-clean
       youtube_title:
         description: Optional YouTube title override
         required: false
@@ -90,18 +85,17 @@ jobs:
       - name: Phase 5 - Render video
         env:
           RENDER_PRESET: ${{ inputs.render_preset }}
-          PHASE5_MAX_SECONDS: ${{ inputs.max_seconds }}
           PHASE5_RENDER_CONCURRENCY: 2
-          PHASE5_RENDER_CRF: 22
+          PHASE5_RENDER_CRF: 20
         run: |
           set -e
           echo "[phase-7] Starting Phase 5"
           echo "[phase-7] Render preset: $RENDER_PRESET"
 
-          if [ "$RENDER_PRESET" = "16x9-clean" ]; then
-            npm run phase5:render:16x9 -- --lyrics=data/phase3-lyrics.json --out=output/phase7-video.mp4 --max-seconds="$PHASE5_MAX_SECONDS"
+          if [ "$RENDER_PRESET" = "4k-clean" ]; then
+            npm run phase5:render:4k -- --lyrics=data/phase3-lyrics.json --out=output/phase7-video.mp4
           else
-            npm run phase5:render:16x9:logo -- --lyrics=data/phase3-lyrics.json --out=output/phase7-video.mp4 --max-seconds="$PHASE5_MAX_SECONDS"
+            npm run phase5:render:4k:logo -- --lyrics=data/phase3-lyrics.json --out=output/phase7-video.mp4
           fi
 
       - name: Phase 7 - Upload to YouTube
@@ -113,9 +107,14 @@ jobs:
           YOUTUBE_DESCRIPTION: ${{ inputs.youtube_description }}
           YOUTUBE_TAGS: ${{ inputs.youtube_tags }}
           YOUTUBE_PRIVACY_STATUS: ${{ inputs.privacy_status }}
+          YOUTUBE_ENABLE_AI_METADATA: true
+          YOUTUBE_METADATA_MODEL: glm
+          YOUTUBE_GENERATE_THUMBNAIL: true
+          YOUTUBE_THUMBNAIL_MODEL: gptimage-large
           PHASE7_VIDEO_FILE: output/phase7-video.mp4
           PHASE7_PHASE3_JSON: data/phase3-lyrics.json
           PHASE7_OUTPUT_JSON: data/phase7-youtube-upload.json
+          PHASE7_THUMBNAIL_FILE: output/phase7-thumbnail.jpg
         run: |
           set -e
           echo "[phase-7] Starting YouTube upload"
@@ -128,5 +127,6 @@ jobs:
           if-no-files-found: error
           path: |
             output/phase7-video.mp4
+            output/phase7-thumbnail.jpg
             data/phase3-lyrics.json
             data/phase7-youtube-upload.json
