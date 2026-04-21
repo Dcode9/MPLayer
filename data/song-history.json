@@ -1,5 +1,16 @@
 {
-  "updatedAt": null,
-  "seenSongIds": [],
-  "recentSongs": []
+  "updatedAt": "2026-04-21T15:31:16.435Z",
+  "seenSongIds": [
+    "Sj7ZnLKL"
+  ],
+  "recentSongs": [
+    {
+      "id": "Sj7ZnLKL",
+      "name": "Saathiya",
+      "artist": "Darshan Raval",
+      "selectedAt": "2026-04-21T15:31:16.435Z",
+      "mode": "auto-trending",
+      "query": null
+    }
+  ]
 }
