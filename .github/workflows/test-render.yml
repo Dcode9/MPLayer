@@ -3,6 +3,16 @@ name: Quick Test Render (4K)
 on:
   workflow_dispatch:
     inputs:
+      song_query:
+        description: Song query (used only when song_id is empty)
+        required: false
+        default: Aaj Ki Raat
+        type: string
+      song_id:
+        description: Optional direct JioSaavn song ID
+        required: false
+        default: ''
+        type: string
       render_preset:
         description: Render preset
         required: false
@@ -12,9 +22,9 @@ on:
           - 4k-logo
           - 4k-clean
       max_seconds:
-        description: Clip duration cap in seconds
+        description: Clip duration cap in seconds (0 renders full song)
         required: false
-        default: '12'
+        default: '0'
         type: string
 
 jobs:
@@ -39,7 +49,16 @@ jobs:
         run: mkdir -p data output
 
       - name: Build test lyrics input
-        run: npm run phase3:build -- --song-id=TEST_TEMPLATE --query="template test render" --out=data/test-lyrics.json
+        env:
+          SONG_QUERY: ${{ inputs.song_query }}
+          SONG_ID: ${{ inputs.song_id }}
+        run: |
+          set -e
+          if [ -n "$SONG_ID" ]; then
+            npm run phase3:build -- --song-id="$SONG_ID" --out=data/test-lyrics.json
+          else
+            npm run phase3:build -- --query="$SONG_QUERY" --out=data/test-lyrics.json
+          fi
 
       - name: Render test video (4K)
         env:

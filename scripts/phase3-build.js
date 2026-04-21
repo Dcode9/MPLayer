@@ -279,27 +279,57 @@ const uniqueSongs = (songs) => {
   return result;
 };
 
+const normalizeSearchText = (value) => {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+};
+
 const scoreSongForQuery = (song, query) => {
-  const normalizedQuery = String(query || '').trim().toLowerCase();
+  const normalizedQuery = normalizeSearchText(query);
   if (!normalizedQuery) {
     return 0;
   }
 
-  const haystack = `${song?.name || ''} ${song?.artist || ''}`.toLowerCase();
-  const tokens = normalizedQuery.split(/\s+/).filter(Boolean);
+  const songName = normalizeSearchText(song?.name || '');
+  const artistName = normalizeSearchText(song?.artist || '');
+  const haystack = `${songName} ${artistName}`.trim();
+  const queryTokens = normalizedQuery.split(/\s+/).filter(Boolean);
+  const titleTokens = songName.split(/\s+/).filter(Boolean);
 
   let score = 0;
-  for (const token of tokens) {
-    if (haystack.includes(token)) {
-      score += 5;
+
+  if (songName === normalizedQuery) {
+    score += 120;
+  }
+
+  if (haystack === normalizedQuery) {
+    score += 80;
+  }
+
+  if (songName.startsWith(normalizedQuery)) {
+    score += 50;
+  }
+
+  if (songName.includes(normalizedQuery)) {
+    score += 36;
+  }
+
+  for (const token of queryTokens) {
+    if (titleTokens.includes(token)) {
+      score += 18;
+    } else if (songName.includes(token)) {
+      score += 10;
     }
-    if ((song?.name || '').toLowerCase().includes(token)) {
-      score += 8;
+
+    if (artistName.includes(token)) {
+      score += 5;
     }
   }
 
-  if ((song?.name || '').toLowerCase() === normalizedQuery) {
-    score += 20;
+  if (queryTokens.length === 1 && queryTokens[0].length <= 4 && titleTokens.includes(queryTokens[0])) {
+    score += 35;
   }
 
   return score;
@@ -459,17 +489,37 @@ const pickSong = async ({songId, query, mode, history, allowRepeat, autoPoolSize
   const scored = [...searchResults]
     .map((song) => ({song, score: scoreSongForQuery(song, query)}))
     .sort((a, b) => b.score - a.score)
-    .map((item) => item.song);
+    .filter((item) => item.song);
 
-  const chosen = chooseSong({candidates: scored, history, allowRepeat});
+  const rankedSongs = scored.map((item) => item.song);
+  const topScore = scored[0]?.score || 0;
+
+  let chosen = rankedSongs[0] || null;
+  let songSelectionMethod = 'search-best-match';
+
+  if (!chosen) {
+    throw new Error(`No song match found for query: ${query}`);
+  }
+
+  // For explicit user queries, prioritize accuracy over repeat-avoidance.
+  if (topScore < 15) {
+    const historyAwareChoice = chooseSong({candidates: rankedSongs, history, allowRepeat});
+    if (historyAwareChoice) {
+      chosen = historyAwareChoice;
+      songSelectionMethod = 'search-history-aware-fallback';
+    }
+  } else if (!allowRepeat && history.seenSongIds.includes(chosen.id)) {
+    songSelectionMethod = 'search-best-match-repeat-allowed-for-accuracy';
+  }
+
   if (!chosen) {
     throw new Error(`No song match found for query: ${query}`);
   }
 
   return {
     song: chosen,
-    songSelectionMethod: 'search-best-match',
-    candidateCount: scored.length,
+    songSelectionMethod,
+    candidateCount: rankedSongs.length,
     queryUsed: query,
   };
 };
