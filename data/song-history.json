@@ -1,9 +1,18 @@
 {
-  "updatedAt": "2026-04-21T15:31:16.435Z",
+  "updatedAt": "2026-04-21T16:59:24.440Z",
   "seenSongIds": [
-    "Sj7ZnLKL"
+    "Sj7ZnLKL",
+    "rh1gIwY_"
   ],
   "recentSongs": [
+    {
+      "id": "rh1gIwY_",
+      "name": "Balam Pichkari",
+      "artist": "Pritam, Vishal Dadlani, Shalmali",
+      "selectedAt": "2026-04-21T16:59:24.440Z",
+      "mode": "auto-trending",
+      "query": null
+    },
     {
       "id": "Sj7ZnLKL",
       "name": "Saathiya",
