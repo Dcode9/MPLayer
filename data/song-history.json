@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-22T20:59:02.463Z",
+  "updatedAt": "2026-04-22T22:51:39.282Z",
   "seenSongIds": [
     "Sj7ZnLKL",
     "rh1gIwY_",
@@ -12,9 +12,18 @@
     "R7aU-mWz",
     "XOEJBpc2",
     "xfYv6XJM",
-    "Lw70IeUI"
+    "Lw70IeUI",
+    "FvL6kBnx"
   ],
   "recentSongs": [
+    {
+      "id": "FvL6kBnx",
+      "name": "Global Trend Beat",
+      "artist": "M TRENDING SOUNDS",
+      "selectedAt": "2026-04-22T22:51:39.282Z",
+      "mode": "auto-trending",
+      "query": null
+    },
     {
       "id": "Lw70IeUI",
       "name": "Global Headlines",
