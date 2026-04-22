@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-22T13:48:28.274Z",
+  "updatedAt": "2026-04-22T15:17:03.920Z",
   "seenSongIds": [
     "Sj7ZnLKL",
     "rh1gIwY_",
@@ -8,9 +8,18 @@
     "ojfyzd2S",
     "IKc2REl8",
     "xtX3So8U",
-    "rNG7yxOv"
+    "rNG7yxOv",
+    "R7aU-mWz"
   ],
   "recentSongs": [
+    {
+      "id": "R7aU-mWz",
+      "name": "Aawaara Angaara",
+      "artist": "A.R. Rahman, Faheem Abdullah, Irshad Kamil",
+      "selectedAt": "2026-04-22T15:17:03.920Z",
+      "mode": "auto-trending",
+      "query": null
+    },
     {
       "id": "rNG7yxOv",
       "name": "Ishq Jalakar - Karvaan",
