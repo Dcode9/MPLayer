@@ -1,14 +1,23 @@
 {
-  "updatedAt": "2026-04-22T02:26:10.849Z",
+  "updatedAt": "2026-04-22T05:59:14.314Z",
   "seenSongIds": [
     "Sj7ZnLKL",
     "rh1gIwY_",
     "ZsGGaRro",
     "1gHtmQ3x",
     "ojfyzd2S",
-    "IKc2REl8"
+    "IKc2REl8",
+    "xtX3So8U"
   ],
   "recentSongs": [
+    {
+      "id": "xtX3So8U",
+      "name": "Deewaana Deewaana",
+      "artist": "A.R. Rahman, Irshad Kamil",
+      "selectedAt": "2026-04-22T05:59:14.314Z",
+      "mode": "auto-trending",
+      "query": null
+    },
     {
       "id": "IKc2REl8",
       "name": "Khat",
