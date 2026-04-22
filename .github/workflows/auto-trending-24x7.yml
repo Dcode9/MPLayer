@@ -66,13 +66,13 @@ jobs:
             TARGET_BRANCH="${GITHUB_REF_NAME:-main}"
             git push origin "HEAD:${TARGET_BRANCH}"
 
-      - name: Phase 5 - Render full song (4K logo)
+      - name: Phase 5 - Render full song (1080p logo optimized)
         env:
           PHASE5_RENDER_CONCURRENCY: 2
           PHASE5_RENDER_CRF: 20
         run: |
           set -e
-          echo "[auto-24x7] Starting Phase 5 (4k-logo)"
+          echo "[auto-24x7] Starting Phase 5 (1080p-logo optimized for 4x faster rendering)"
           npm run phase5:render:4k:logo -- --lyrics=data/phase3-lyrics.json --out=output/auto-trending-video.mp4
 
       - name: Phase 7 - Upload to YouTube

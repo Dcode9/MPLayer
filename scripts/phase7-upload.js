@@ -139,12 +139,12 @@ const buildDefaultMetadata = (phase3Data) => {
   const artistName = cleanText(song.artist || 'Unknown Artist');
   const albumName = cleanText(song.album || '');
 
-  const title = `${songName} - ${artistName} | Official 4K Lyrics Video`;
+  const title = `${songName} - ${artistName} | Official 1080p Lyrics Video`;
 
   const hashtags = ['#lyrics', '#music', '#lyricvideo', '#dtunes'];
 
   const descriptionLines = [
-    `${songName} by ${artistName} - Official 4K lyric music video.`,
+    `${songName} by ${artistName} - Official 1080p lyric music video.`,
     albumName ? `Album: ${albumName}` : '',
     '',
     'Listen to more music on DVerse: https://play.dverse.fun',
@@ -159,13 +159,13 @@ const buildDefaultMetadata = (phase3Data) => {
     artistName,
     `${songName} lyrics`,
     `${songName} lyric video`,
-    `${songName} 4k lyrics`,
+    `${songName} 1080p lyrics`,
     `${artistName} lyrics`,
     `${songName} official lyric`,
     'lyrics',
     'lyric video',
     'music',
-    '4k music video',
+    '1080p music video',
     'dtunes',
     'play dverse',
   ]);
@@ -173,7 +173,7 @@ const buildDefaultMetadata = (phase3Data) => {
   const annotationPlan = [
     {
       atSeconds: 30,
-      text: 'Subscribe for daily 4K lyric videos',
+      text: 'Subscribe for daily 1080p lyric videos',
       action: 'subscribe',
     },
     {
@@ -200,7 +200,7 @@ const buildDefaultMetadata = (phase3Data) => {
 
   const thumbnailPrompt = [
     `${songName} by ${artistName}`,
-    'cinematic 4K lyric-video thumbnail',
+    'cinematic 1080p lyric-video thumbnail',
     'neon atmosphere, high contrast, artist-inspired colors',
     'clean typography zone, no watermark, youtube-ready',
   ].join(', ');

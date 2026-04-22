@@ -18,7 +18,7 @@ const parsePositiveNumber = (value) => {
 const parseArgs = (argv) => {
   const args = {
     lyrics: path.join(PROJECT_ROOT, 'data', 'phase3-lyrics.json'),
-    out: path.join(PROJECT_ROOT, 'output', 'phase5-video-4k-logo.mp4'),
+    out: path.join(PROJECT_ROOT, 'output', 'phase5-video-1080p-logo.mp4'),
     maxSeconds: parsePositiveNumber(process.env.PHASE5_MAX_SECONDS || '0'),
     concurrency: Number(process.env.PHASE5_RENDER_CONCURRENCY || 2),
     crf: Number(process.env.PHASE5_RENDER_CRF || 20),
@@ -47,14 +47,14 @@ const main = async () => {
     compositionId: 'LyricsTemplateVideo4kLogo',
   });
 
-  console.log('[phase5-4k-logo] Render complete');
-  console.log(`[phase5-4k-logo] Output: ${path.relative(PROJECT_ROOT, result.out)}`);
+  console.log('[phase5-1080p-logo] Render complete');
+  console.log(`[phase5-1080p-logo] Output: ${path.relative(PROJECT_ROOT, result.out)}`);
   console.log(
-    `[phase5-4k-logo] Video: ${result.width}x${result.height} @ ${result.fps}fps, ${result.durationInSeconds.toFixed(2)}s`,
+    `[phase5-1080p-logo] Video: ${result.width}x${result.height} @ ${result.fps}fps, ${result.durationInSeconds.toFixed(2)}s`,
   );
 };
 
 main().catch((error) => {
-  console.error(`[phase5-4k-logo] Failed: ${error.message || error}`);
+  console.error(`[phase5-1080p-logo] Failed: ${error.message || error}`);
   process.exit(1);
 });
