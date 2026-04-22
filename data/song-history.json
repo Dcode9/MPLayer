@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-22T11:41:37.612Z",
+  "updatedAt": "2026-04-22T13:48:28.274Z",
   "seenSongIds": [
     "Sj7ZnLKL",
     "rh1gIwY_",
@@ -7,9 +7,18 @@
     "1gHtmQ3x",
     "ojfyzd2S",
     "IKc2REl8",
-    "xtX3So8U"
+    "xtX3So8U",
+    "rNG7yxOv"
   ],
-  "recentSongs": [ 
+  "recentSongs": [
+    {
+      "id": "rNG7yxOv",
+      "name": "Ishq Jalakar - Karvaan",
+      "artist": "Irshad Kamil, Shashwat Sachdev, Shahzad Ali, Sahir Ludhianvi, Subhadeep Das Chowdhury, Armaan Khan, Roshan",
+      "selectedAt": "2026-04-22T13:48:28.274Z",
+      "mode": "auto-trending",
+      "query": null
+    },
     {
       "id": "xtX3So8U",
       "name": "Deewaana Deewaana",
