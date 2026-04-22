@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-22T17:05:55.834Z",
+  "updatedAt": "2026-04-22T19:19:04.566Z",
   "seenSongIds": [
     "Sj7ZnLKL",
     "rh1gIwY_",
@@ -10,9 +10,18 @@
     "xtX3So8U",
     "rNG7yxOv",
     "R7aU-mWz",
-    "XOEJBpc2"
+    "XOEJBpc2",
+    "xfYv6XJM"
   ],
   "recentSongs": [
+    {
+      "id": "xfYv6XJM",
+      "name": "GLOBAL TRENDING",
+      "artist": "Arthur Leal",
+      "selectedAt": "2026-04-22T19:19:04.566Z",
+      "mode": "auto-trending",
+      "query": null
+    },
     {
       "id": "XOEJBpc2",
       "name": "Andaaz e Karam",
