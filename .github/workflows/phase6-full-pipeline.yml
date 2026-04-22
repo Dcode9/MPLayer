@@ -1,4 +1,6 @@
-name: Phase 6 Render Test (4K)
+name: Phase 6 Render Test (1080p)
+
+run-name: Phase 6 1080p • ${{ inputs.song_query || inputs.song_id || 'auto' }}
 
 on:
   workflow_dispatch:
@@ -58,7 +60,7 @@ jobs:
             npm run phase3:build -- --query="$SONG_QUERY" --out=data/phase3-lyrics.json
           fi
 
-      - name: Phase 5 - Render template lyrics video
+      - name: Phase 5 - Render template lyrics video (1080p)
         env:
           RENDER_PRESET: ${{ inputs.render_preset }}
           PHASE5_RENDER_CONCURRENCY: 2

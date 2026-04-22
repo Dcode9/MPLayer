@@ -1,4 +1,6 @@
-name: Quick Test Render (4K)
+name: Quick Test Render (1080p)
+
+run-name: Quick Test 1080p • ${{ inputs.song_query || inputs.song_id || 'auto' }}
 
 on:
   workflow_dispatch:
@@ -60,7 +62,7 @@ jobs:
             npm run phase3:build -- --query="$SONG_QUERY" --out=data/test-lyrics.json
           fi
 
-      - name: Render test video (4K)
+      - name: Render test video (1080p)
         env:
           RENDER_PRESET: ${{ inputs.render_preset }}
           PHASE5_MAX_SECONDS: ${{ inputs.max_seconds }}

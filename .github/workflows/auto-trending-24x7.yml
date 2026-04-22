@@ -1,4 +1,6 @@
-name: Auto Trending Upload (24x7 4K)
+name: Auto Trending Upload (Every 2 Hours, 1080p)
+
+run-name: Auto Trending 1080p #${{ github.run_number }}
 
 on:
   schedule:
@@ -63,8 +65,8 @@ jobs:
           fi
 
           git commit -m "chore(history): update song history [skip ci]"
-            TARGET_BRANCH="${GITHUB_REF_NAME:-main}"
-            git push origin "HEAD:${TARGET_BRANCH}"
+          TARGET_BRANCH="${GITHUB_REF_NAME:-main}"
+          git push origin "HEAD:${TARGET_BRANCH}"
 
       - name: Phase 5 - Render full song (1080p logo optimized)
         env:
