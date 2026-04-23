@@ -943,7 +943,7 @@
 
                         <div id="album-art-wrapper" class="relative w-12 h-12 flex-shrink-0 cursor-pointer rounded-xl overflow-hidden shadow-md ml-1 my-1">
                             <div id="album-art-glow"></div>
-                            <img id="curr-art-img" src="/public/assets/DTunes-transparent.svg" class="w-full h-full object-cover border border-white/20" crossorigin="anonymous">
+                            <img id="curr-art-img" src="DTunes.svg" class="w-full h-full object-cover border border-white/20" crossorigin="anonymous">
                         </div>
 
                         <div class="flex-1 min-w-0 flex flex-col justify-center cursor-pointer ml-3">
@@ -1059,7 +1059,18 @@
             escapeJs: (text) => text ? text.toString().replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "\\n").replace(/\r/g, "\\r") : ''
         };
 
-        const FALLBACK_ART = '/public/assets/DTunes-transparent.svg';
+        const FALLBACK_ART_CANDIDATES = [
+            'DTunes.svg',
+            './DTunes.svg',
+            '/DTunes.svg',
+            'public/assets/DTunes-transparent.svg',
+            './public/assets/DTunes-transparent.svg',
+            '/public/assets/DTunes-transparent.svg',
+            'assets/DTunes-transparent.svg',
+            './assets/DTunes-transparent.svg',
+            '/assets/DTunes-transparent.svg'
+        ];
+        const FALLBACK_ART = FALLBACK_ART_CANDIDATES[0];
         const FALLBACK_ART_DATA_URI = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"><rect width="512" height="512" fill="#0b0e16"/><circle cx="256" cy="256" r="170" fill="#161b2b"/><path d="M220 164v198a48 48 0 1 1-24-41.5V164h24zm96-36v162a48 48 0 1 1-24-41.5V128h24z" fill="#f3f4f6"/></svg>')}`;
 
         const sanitizeImageUrl = (value) => {
@@ -1077,18 +1088,20 @@
                     return;
                 }
 
+                const nextIndex = Number(target.dataset.fallbackIndex || '0') + 1;
+                target.dataset.fallbackIndex = String(nextIndex);
+
+                if (nextIndex < FALLBACK_ART_CANDIDATES.length) {
+                    target.src = FALLBACK_ART_CANDIDATES[nextIndex];
+                    return;
+                }
+
                 if (target.dataset.fallbackLocked === '1') {
                     return;
                 }
 
-                if (target.dataset.fallbackTried === '1') {
-                    target.dataset.fallbackLocked = '1';
-                    target.src = FALLBACK_ART_DATA_URI;
-                    return;
-                }
-
-                target.dataset.fallbackTried = '1';
-                target.src = FALLBACK_ART;
+                target.dataset.fallbackLocked = '1';
+                target.src = FALLBACK_ART_DATA_URI;
             }, true);
         };
 

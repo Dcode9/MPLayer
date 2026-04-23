@@ -118,6 +118,9 @@ jobs:
           YOUTUBE_METADATA_MODEL: glm
           YOUTUBE_GENERATE_THUMBNAIL: true
           YOUTUBE_THUMBNAIL_MODEL: gptimage-large
+          YOUTUBE_THUMBNAIL_MODE: code
+          YOUTUBE_UPLOAD_RETRIES: 4
+          YOUTUBE_API_TIMEOUT_MS: 300000
           PHASE7_VIDEO_FILE: output/phase7-video.mp4
           PHASE7_PHASE3_JSON: data/phase3-lyrics.json
           PHASE7_OUTPUT_JSON: data/phase7-youtube-upload.json
@@ -125,7 +128,16 @@ jobs:
         run: |
           set -e
           echo "[phase-7] Starting YouTube upload"
-          npm run phase7:upload
+          ATTEMPTS=3
+          for i in $(seq 1 "$ATTEMPTS"); do
+            if npm run phase7:upload; then
+              echo "[phase-7] Upload succeeded on attempt $i"
+              exit 0
+            fi
+            echo "[phase-7] Upload attempt $i/$ATTEMPTS failed"
+          done
+          echo "[phase-7] Upload failed after $ATTEMPTS attempts"
+          exit 1
 
       - name: Upload Phase 7 artifacts
         uses: actions/upload-artifact@v4

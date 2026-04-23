@@ -48,12 +48,12 @@ jobs:
       - name: Prepare folders
         run: mkdir -p data output
 
-      - name: Phase 3 - Auto pick trending song
+      - name: Phase 3 - Auto pick famous song
         env:
-          POLLINATIONS_TEXT_MODEL: glm
+          POLLINATIONS_TEXT_MODEL: perplexity-reasoning
         run: |
           set -e
-          echo "[auto-24x7] Starting Phase 3 (auto-trending)"
+          echo "[auto-24x7] Starting Phase 3 (auto-famous approved)"
           npm run phase3:build -- --mode=auto-trending --out=data/phase3-lyrics.json
 
       - name: Persist song history
@@ -94,6 +94,9 @@ jobs:
           YOUTUBE_METADATA_MODEL: glm
           YOUTUBE_GENERATE_THUMBNAIL: true
           YOUTUBE_THUMBNAIL_MODEL: gptimage-large
+          YOUTUBE_THUMBNAIL_MODE: code
+          YOUTUBE_UPLOAD_RETRIES: 4
+          YOUTUBE_API_TIMEOUT_MS: 300000
           PHASE7_VIDEO_FILE: output/auto-trending-video.mp4
           PHASE7_PHASE3_JSON: data/phase3-lyrics.json
           PHASE7_OUTPUT_JSON: data/auto-trending-upload.json
@@ -102,7 +105,16 @@ jobs:
           set -e
           export YOUTUBE_PRIVACY_STATUS="${YOUTUBE_PRIVACY_STATUS:-public}"
           echo "[auto-24x7] Starting Phase 7 upload"
-          npm run phase7:upload
+          ATTEMPTS=3
+          for i in $(seq 1 "$ATTEMPTS"); do
+            if npm run phase7:upload; then
+              echo "[auto-24x7] Upload succeeded on attempt $i"
+              exit 0
+            fi
+            echo "[auto-24x7] Upload attempt $i/$ATTEMPTS failed"
+          done
+          echo "[auto-24x7] Upload failed after $ATTEMPTS attempts"
+          exit 1
 
       - name: Upload artifacts
         if: always()

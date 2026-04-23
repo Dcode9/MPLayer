@@ -18,13 +18,22 @@ const JIOSAAVN_API_ENDPOINTS = [
 const LRCLIB_SEARCH_URL = 'https://lrclib.net/api/search';
 const POLLINATIONS_TEXT_BASE_URL = 'https://text.pollinations.ai';
 
-const AUTO_QUERY_FALLBACKS = [
-  'global trending songs',
-  'top hindi songs',
-  'viral english songs',
-  'indie pop hits',
-  'old is gold classics',
-  'retro bollywood hits',
+const FAMOUS_SONG_QUERY_FALLBACKS = [
+  'Aaj Ki Raat Stree 2',
+  'Kesariya Arijit Singh',
+  'Tum Hi Ho Arijit Singh',
+  'Perfect Ed Sheeran',
+  'Shape of You Ed Sheeran',
+  'Blinding Lights The Weeknd',
+  'See You Again Wiz Khalifa',
+  'Let Her Go Passenger',
+  'Pasoori Ali Sethi',
+  'Calm Down Rema Selena Gomez',
+  'Maan Meri Jaan King',
+  'Excuses AP Dhillon',
+  'Brown Munde AP Dhillon',
+  'Satranga Arijit Singh',
+  'Heeriye Jasleen Royal',
 ];
 
 const parsePositiveNumber = (value) => {
@@ -68,7 +77,7 @@ const parseArgs = (argv) => {
     query: '',
     mode: 'query',
     allowRepeat: false,
-    pollinationsTextModel: process.env.POLLINATIONS_TEXT_MODEL || 'glm',
+    pollinationsTextModel: process.env.POLLINATIONS_TEXT_MODEL || 'perplexity-reasoning',
     autoPoolSize: parsePositiveNumber(process.env.PHASE3_AUTO_POOL_SIZE || '40') || 40,
   };
 
@@ -356,30 +365,80 @@ const parseJsonFromText = (rawText) => {
   return null;
 };
 
-const fetchAiTrendingQueries = async (model) => {
+const fetchAiFamousSongQueries = async (model) => {
   try {
     const prompt = [
-      'System: You are a music trend assistant.',
-      'Return valid JSON only with this exact schema:',
-      '{"queries":["query1","query2","query3","query4","query5"]}',
-      'Task: Provide five short search queries for globally popular songs and one retro-popular bucket for lyric videos.',
+      'System: You are a global music curator focused on truly famous songs with broad audience recognition.',
+      'Return strict JSON only with this schema:',
+      '{"songs":[{"title":"","artist":"","query":"","why":""}]}',
+      'Rules:',
+      '- Suggest 15 songs that are genuinely famous or evergreen (India + global mix).',
+      '- Prefer songs with high mainstream recognition, not niche/obscure picks.',
+      '- query must be usable directly in a music search API (title + artist).',
+      '- No commentary outside JSON.',
     ].join('\n');
 
-    const url = `${POLLINATIONS_TEXT_BASE_URL}/${encodeURIComponent(prompt)}?model=${encodeURIComponent(model || 'glm')}`;
-    const text = await fetchText(url, 25000);
+    const url = `${POLLINATIONS_TEXT_BASE_URL}/${encodeURIComponent(prompt)}?model=${encodeURIComponent(model || 'perplexity-reasoning')}`;
+    const text = await fetchText(url, 30000);
     const parsed = parseJsonFromText(text);
 
-    if (!parsed || !Array.isArray(parsed.queries)) {
+    if (!parsed || !Array.isArray(parsed.songs)) {
       return [];
     }
 
-    return parsed.queries
-      .map((query) => String(query || '').trim())
+    return parsed.songs
+      .map((entry) => ({
+        title: String(entry?.title || '').trim(),
+        artist: String(entry?.artist || '').trim(),
+        query: String(entry?.query || '').trim(),
+      }))
+      .filter((entry) => entry.query || (entry.title && entry.artist))
+      .map((entry) => entry.query || `${entry.title} ${entry.artist}`.trim())
       .filter(Boolean)
-      .slice(0, 8);
+      .slice(0, 20);
   } catch (error) {
     return [];
   }
+};
+
+const fetchApprovedFamousSongCandidates = async ({model, maxCandidates = 40}) => {
+  const candidateQueries = [];
+
+  const aiQueries = await fetchAiFamousSongQueries(model);
+  candidateQueries.push(...aiQueries);
+  candidateQueries.push(...FAMOUS_SONG_QUERY_FALLBACKS);
+
+  const uniqueQueries = [...new Set(candidateQueries.map((q) => String(q || '').trim()).filter(Boolean))];
+  const approved = [];
+  const seenSongIds = new Set();
+
+  for (const query of uniqueQueries) {
+    if (approved.length >= maxCandidates) {
+      break;
+    }
+
+    try {
+      const results = await searchSongs(query, 5);
+      if (!Array.isArray(results) || results.length === 0) {
+        continue;
+      }
+
+      const best = results
+        .map((song) => ({song, score: scoreSongForQuery(song, query)}))
+        .sort((a, b) => b.score - a.score)[0];
+
+      if (!best?.song || best.score < 35 || seenSongIds.has(best.song.id)) {
+        continue;
+      }
+
+      seenSongIds.add(best.song.id);
+      approved.push(best.song);
+    } catch (error) {
+      // Ignore per-query failures.
+    }
+  }
+
+  return approved;
 };
 
 const loadHistory = async (historyFile) => {
@@ -444,39 +503,20 @@ const pickSong = async ({songId, query, mode, history, allowRepeat, autoPoolSize
   }
 
   if (mode === 'auto-trending') {
-    const candidates = [];
+    const approvedCandidates = await fetchApprovedFamousSongCandidates({
+      model: pollinationsTextModel,
+      maxCandidates: autoPoolSize,
+    });
 
-    const trending = await getTrendingSongs();
-    candidates.push(...trending);
-
-    const aiQueries = await fetchAiTrendingQueries(pollinationsTextModel);
-    const queryPool = uniqueSongs(
-      aiQueries
-        .concat(AUTO_QUERY_FALLBACKS)
-        .map((item) => ({id: item, name: item, artist: '', audioUrl: ''})),
-    ).map((entry) => entry.id);
-
-    for (const autoQuery of queryPool) {
-      if (candidates.length >= autoPoolSize) {
-        break;
-      }
-      try {
-        const found = await searchSongs(autoQuery, 5);
-        candidates.push(...found);
-      } catch (error) {
-        // Ignore individual auto query failures.
-      }
-    }
-
-    const chosen = chooseSong({candidates, history, allowRepeat});
+    const chosen = chooseSong({candidates: approvedCandidates, history, allowRepeat});
     if (!chosen) {
-      throw new Error('Could not find a trending song candidate');
+      throw new Error('Could not find an approved famous-song candidate');
     }
 
     return {
       song: chosen,
-      songSelectionMethod: 'auto-trending',
-      candidateCount: uniqueSongs(candidates).length,
+      songSelectionMethod: `auto-famous-approved:${pollinationsTextModel || 'perplexity-reasoning'}`,
+      candidateCount: uniqueSongs(approvedCandidates).length,
       queryUsed: null,
     };
   }

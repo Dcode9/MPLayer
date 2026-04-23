@@ -4,6 +4,7 @@
 const fs = require('node:fs');
 const fsPromises = require('node:fs/promises');
 const path = require('node:path');
+const sharp = require('sharp');
 
 const {google} = require('googleapis');
 
@@ -19,6 +20,14 @@ const parseBoolean = (value, fallback = false) => {
   return normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on';
 };
 
+const parsePositiveInt = (value, fallback) => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return fallback;
+  }
+  return Math.floor(parsed);
+};
+
 const parseTags = (raw) => {
   return String(raw || '')
     .split(',')
@@ -28,6 +37,93 @@ const parseTags = (raw) => {
 };
 
 const cleanText = (value) => String(value || '').replace(/\s+/g, ' ').trim();
+
+const escapeXml = (value) => String(value || '')
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&apos;');
+
+const hashString = (value) => {
+  const raw = String(value || 'dtunes');
+  let hash = 0;
+  for (let index = 0; index < raw.length; index++) {
+    hash = (hash * 31 + raw.charCodeAt(index)) >>> 0;
+  }
+  return hash;
+};
+
+const pickThemePalette = (seed) => {
+  const palettes = [
+    {
+      bgStart: '#0b1220',
+      bgEnd: '#1f2937',
+      accent: '#22d3ee',
+      accentSoft: '#93c5fd',
+      text: '#f8fafc',
+      subText: '#cbd5e1',
+    },
+    {
+      bgStart: '#1a102f',
+      bgEnd: '#2b164f',
+      accent: '#f59e0b',
+      accentSoft: '#fcd34d',
+      text: '#fff7ed',
+      subText: '#fed7aa',
+    },
+    {
+      bgStart: '#081c15',
+      bgEnd: '#1b4332',
+      accent: '#52b788',
+      accentSoft: '#95d5b2',
+      text: '#f1faee',
+      subText: '#b7e4c7',
+    },
+    {
+      bgStart: '#1f1300',
+      bgEnd: '#3f2a14',
+      accent: '#fb7185',
+      accentSoft: '#fda4af',
+      text: '#fff1f2',
+      subText: '#fecdd3',
+    },
+  ];
+  return palettes[seed % palettes.length];
+};
+
+const splitHeadline = (value, maxChars = 22, maxLines = 3) => {
+  const words = cleanText(value).split(' ').filter(Boolean);
+  if (words.length === 0) {
+    return ['Lyrical Video'];
+  }
+
+  const lines = [];
+  let current = '';
+
+  for (const word of words) {
+    const next = current ? `${current} ${word}` : word;
+    if (next.length <= maxChars || current.length === 0) {
+      current = next;
+    } else {
+      lines.push(current);
+      current = word;
+      if (lines.length >= maxLines - 1) {
+        break;
+      }
+    }
+  }
+
+  if (current && lines.length < maxLines) {
+    lines.push(current);
+  }
+
+  if (lines.length === maxLines && words.join(' ').length > lines.join(' ').length) {
+    lines[maxLines - 1] = `${lines[maxLines - 1].slice(0, Math.max(0, maxChars - 1))}…`;
+  }
+
+  return lines;
+};
 
 const YOUTUBE_ALLOWED_CATEGORIES = new Set([
   '1',
@@ -446,20 +542,178 @@ const generateThumbnailIfNeeded = async ({metadata, outputPath, model, enabled})
     };
   }
 
-  const prompt = cleanText(metadata?.thumbnailPrompt || 'cinematic lyrical music thumbnail');
-  const url = `${POLLINATIONS_IMAGE_BASE_URL}/${encodeURIComponent(prompt)}?model=${encodeURIComponent(model || 'gptimage-large')}&width=1280&height=720&nologo=true`;
+  const createCodeThumbnail = async () => {
+    const seed = hashString(`${metadata?.title || ''}|${metadata?.thumbnailPrompt || ''}`);
+    const palette = pickThemePalette(seed);
 
-  const imageBuffer = await fetchBinary(url, 90000);
-  await fsPromises.mkdir(path.dirname(outputPath), {recursive: true});
-  await fsPromises.writeFile(outputPath, imageBuffer);
+    const songName = cleanText(metadata?.songName || '').slice(0, 120);
+    const artistName = cleanText(metadata?.artistName || '').slice(0, 80);
+    const albumName = cleanText(metadata?.albumName || '').slice(0, 60);
+    const year = cleanText(metadata?.songYear || '').slice(0, 8);
 
-  return {
-    filePath: outputPath,
-    usedAi: true,
-    reason: 'generated',
-    prompt,
-    url,
+    const titleLines = splitHeadline(songName || metadata?.title || 'Lyrical Video', 20, 3)
+      .map((line) => escapeXml(line));
+
+    const creditsRaw = [artistName, albumName, year].filter(Boolean).join(' • ');
+    const credits = escapeXml(creditsRaw || 'D\'Tunes Music');
+
+    const lineElements = titleLines
+      .map((line, index) => `<text x="80" y="${210 + (index * 92)}" font-family="Noto Sans, Arial, sans-serif" font-size="76" font-weight="800" fill="${palette.text}">${line}</text>`)
+      .join('');
+
+    const overlaySvg = `
+      <svg width="1280" height="720" viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="${palette.bgStart}"/>
+            <stop offset="100%" stop-color="${palette.bgEnd}"/>
+          </linearGradient>
+          <radialGradient id="orb" cx="0.85" cy="0.2" r="0.8">
+            <stop offset="0%" stop-color="${palette.accent}" stop-opacity="0.32"/>
+            <stop offset="100%" stop-color="${palette.accent}" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+        <rect width="1280" height="720" fill="url(#bg)"/>
+        <rect width="1280" height="720" fill="url(#orb)"/>
+        <rect x="72" y="110" width="20" height="510" rx="10" fill="${palette.accent}" opacity="0.95"/>
+        <text x="108" y="90" font-family="Noto Sans, Arial, sans-serif" font-size="38" font-weight="700" fill="${palette.accentSoft}">D'Tunes • Lyrical Video</text>
+        ${lineElements}
+        <text x="82" y="560" font-family="Noto Sans, Arial, sans-serif" font-size="34" font-weight="600" fill="${palette.subText}">${credits}</text>
+        <rect x="80" y="598" width="360" height="62" rx="16" fill="${palette.accent}" opacity="0.96"/>
+        <text x="106" y="640" font-family="Noto Sans, Arial, sans-serif" font-size="34" font-weight="800" fill="#081018">Ad-Free, Lyrical</text>
+      </svg>
+    `;
+
+    const composites = [
+      {
+        input: Buffer.from(overlaySvg),
+        left: 0,
+        top: 0,
+      },
+    ];
+
+    const coverUrl = cleanText(metadata?.songImage || '');
+    if (coverUrl) {
+      try {
+        const coverSize = 430;
+        const coverRaw = await fetchBinary(coverUrl, 35000);
+        const roundedMask = Buffer.from(
+          `<svg width="${coverSize}" height="${coverSize}"><rect x="0" y="0" width="${coverSize}" height="${coverSize}" rx="34" ry="34" fill="white"/></svg>`,
+        );
+        const framedCover = await sharp(coverRaw)
+          .resize(coverSize, coverSize, {fit: 'cover'})
+          .composite([{input: roundedMask, blend: 'dest-in'}])
+          .png()
+          .toBuffer();
+
+        const frameSvg = Buffer.from(`
+          <svg width="470" height="470" xmlns="http://www.w3.org/2000/svg">
+            <rect x="6" y="6" width="458" height="458" rx="40" ry="40" fill="none" stroke="${palette.accentSoft}" stroke-opacity="0.95" stroke-width="8"/>
+          </svg>
+        `);
+
+        composites.push({input: framedCover, left: 790, top: 145});
+        composites.push({input: frameSvg, left: 770, top: 125});
+      } catch (error) {
+        // Keep thumbnail generation resilient even if cover download fails.
+      }
+    }
+
+    await fsPromises.mkdir(path.dirname(outputPath), {recursive: true});
+    await sharp({
+      create: {
+        width: 1280,
+        height: 720,
+        channels: 3,
+        background: '#0b1220',
+      },
+    })
+      .composite(composites)
+      .jpeg({quality: 92, chromaSubsampling: '4:4:4'})
+      .toFile(outputPath);
+
+    return {
+      filePath: outputPath,
+      usedAi: false,
+      reason: 'generated-code-theme',
+      prompt: metadata?.thumbnailPrompt || '',
+      url: null,
+    };
   };
+
+  const createAiThumbnail = async () => {
+    const prompt = cleanText(metadata?.thumbnailPrompt || 'cinematic lyrical music thumbnail');
+    const url = `${POLLINATIONS_IMAGE_BASE_URL}/${encodeURIComponent(prompt)}?model=${encodeURIComponent(model || 'gptimage-large')}&width=1280&height=720&nologo=true`;
+    const imageBuffer = await fetchBinary(url, 90000);
+    await fsPromises.mkdir(path.dirname(outputPath), {recursive: true});
+    await fsPromises.writeFile(outputPath, imageBuffer);
+
+    return {
+      filePath: outputPath,
+      usedAi: true,
+      reason: 'generated-ai-model',
+      prompt,
+      url,
+    };
+  };
+
+  const mode = cleanText(process.env.YOUTUBE_THUMBNAIL_MODE || 'code').toLowerCase();
+  if (mode === 'ai') {
+    return createAiThumbnail();
+  }
+
+  return createCodeThumbnail();
+};
+
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const shouldRetryYoutubeError = (error) => {
+  const status = Number(error?.response?.status || 0);
+  const code = String(error?.code || '').toUpperCase();
+  const reasons = Array.isArray(error?.response?.data?.error?.errors)
+    ? error.response.data.error.errors.map((entry) => String(entry?.reason || '').toLowerCase())
+    : [];
+
+  if (status >= 500 || status === 429 || status === 408) {
+    return true;
+  }
+
+  if (['ETIMEDOUT', 'ECONNRESET', 'EAI_AGAIN', 'ENOTFOUND', 'ECONNABORTED'].includes(code)) {
+    return true;
+  }
+
+  return reasons.some((reason) => [
+    'backenderror',
+    'internalerror',
+    'ratelimitexceeded',
+    'userratelimitexceeded',
+    'quotaexceeded',
+    'uploadratelimitexceeded',
+  ].includes(reason));
+};
+
+const runWithRetry = async ({label, attempts, baseDelayMs, operation, shouldRetry}) => {
+  let lastError;
+
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      if (attempt > 1) {
+        console.log(`[phase7] Retry attempt ${attempt}/${attempts} for ${label}`);
+      }
+      return await operation(attempt);
+    } catch (error) {
+      lastError = error;
+      const retryable = shouldRetry(error);
+      if (!retryable || attempt >= attempts) {
+        break;
+      }
+      const waitMs = baseDelayMs * attempt;
+      console.warn(`[phase7] ${label} failed (attempt ${attempt}/${attempts}), retrying in ${waitMs}ms`);
+      await delay(waitMs);
+    }
+  }
+
+  throw lastError;
 };
 
 const runPhase7Upload = async () => {
@@ -486,6 +740,8 @@ const runPhase7Upload = async () => {
   const thumbnailModel = process.env.YOUTUBE_THUMBNAIL_MODEL || 'gptimage-large';
   const enableAiMetadata = parseBoolean(process.env.YOUTUBE_ENABLE_AI_METADATA, true);
   const enableThumbnailGeneration = parseBoolean(process.env.YOUTUBE_GENERATE_THUMBNAIL, true);
+  const youtubeUploadAttempts = parsePositiveInt(process.env.YOUTUBE_UPLOAD_RETRIES || '3', 3);
+  const youtubeApiTimeoutMs = parsePositiveInt(process.env.YOUTUBE_API_TIMEOUT_MS || '240000', 240000);
 
   const defaultMetadata = buildDefaultMetadata(phase3Data || {});
   const aiMetadataResult = enableAiMetadata
@@ -493,6 +749,14 @@ const runPhase7Upload = async () => {
     : {metadata: defaultMetadata, usedAi: false, rawText: 'AI metadata disabled'};
 
   const metadata = aiMetadataResult.metadata;
+
+  if (phase3Data?.song) {
+    metadata.songName = cleanText(phase3Data.song.name || '');
+    metadata.artistName = cleanText(phase3Data.song.artist || '');
+    metadata.albumName = cleanText(phase3Data.song.album || '');
+    metadata.songYear = cleanText(phase3Data.song.year || '');
+    metadata.songImage = cleanText(phase3Data.song.image || '');
+  }
 
   const title = cleanText(process.env.YOUTUBE_TITLE || metadata.title || defaultMetadata.title).slice(0, 100);
   const description = String(process.env.YOUTUBE_DESCRIPTION || metadata.description || defaultMetadata.description).trim();
@@ -518,6 +782,10 @@ const runPhase7Upload = async () => {
 
   oauth2Client.setCredentials({refresh_token: refreshToken});
 
+  google.options({
+    timeout: youtubeApiTimeoutMs,
+  });
+
   const youtube = google.youtube({
     version: 'v3',
     auth: oauth2Client,
@@ -535,21 +803,27 @@ const runPhase7Upload = async () => {
 
   let insertResponse;
   try {
-    insertResponse = await youtube.videos.insert({
-      part: ['snippet', 'status'],
-      requestBody: {
-        snippet: uploadSnippet,
-        status: {
-          privacyStatus,
-          embeddable: true,
-          publicStatsViewable: true,
-          selfDeclaredMadeForKids: false,
-          license: 'youtube',
+    insertResponse = await runWithRetry({
+      label: 'videos.insert',
+      attempts: youtubeUploadAttempts,
+      baseDelayMs: 2000,
+      shouldRetry: shouldRetryYoutubeError,
+      operation: async () => youtube.videos.insert({
+        part: ['snippet', 'status'],
+        requestBody: {
+          snippet: uploadSnippet,
+          status: {
+            privacyStatus,
+            embeddable: true,
+            publicStatsViewable: true,
+            selfDeclaredMadeForKids: false,
+            license: 'youtube',
+          },
         },
-      },
-      media: {
-        body: fs.createReadStream(videoFile),
-      },
+        media: {
+          body: fs.createReadStream(videoFile),
+        },
+      }),
     });
   } catch (error) {
     const apiErrors = error?.errors || error?.response?.data?.error?.errors || [];
@@ -569,21 +843,27 @@ const runPhase7Upload = async () => {
 
     console.warn('[phase7] INVALID_REQUEST_METADATA received; retrying with minimal safe snippet');
 
-    insertResponse = await youtube.videos.insert({
-      part: ['snippet', 'status'],
-      requestBody: {
-        snippet: safeRetrySnippet,
-        status: {
-          privacyStatus,
-          embeddable: true,
-          publicStatsViewable: true,
-          selfDeclaredMadeForKids: false,
-          license: 'youtube',
+    insertResponse = await runWithRetry({
+      label: 'videos.insert(minimal-snippet)',
+      attempts: youtubeUploadAttempts,
+      baseDelayMs: 2000,
+      shouldRetry: shouldRetryYoutubeError,
+      operation: async () => youtube.videos.insert({
+        part: ['snippet', 'status'],
+        requestBody: {
+          snippet: safeRetrySnippet,
+          status: {
+            privacyStatus,
+            embeddable: true,
+            publicStatsViewable: true,
+            selfDeclaredMadeForKids: false,
+            license: 'youtube',
+          },
         },
-      },
-      media: {
-        body: fs.createReadStream(videoFile),
-      },
+        media: {
+          body: fs.createReadStream(videoFile),
+        },
+      }),
     });
   }
 
@@ -625,11 +905,17 @@ const runPhase7Upload = async () => {
 
     if (thumbnailResult.filePath && (await fileExists(thumbnailResult.filePath))) {
       try {
-        await youtube.thumbnails.set({
-          videoId,
-          media: {
-            body: fs.createReadStream(thumbnailResult.filePath),
-          },
+        await runWithRetry({
+          label: 'thumbnails.set',
+          attempts: Math.max(2, youtubeUploadAttempts),
+          baseDelayMs: 1500,
+          shouldRetry: shouldRetryYoutubeError,
+          operation: async () => youtube.thumbnails.set({
+            videoId,
+            media: {
+              body: fs.createReadStream(thumbnailResult.filePath),
+            },
+          }),
         });
       } catch (error) {
         thumbnailResult.reason = `thumbnail-upload-failed: ${error.message || error}`;
@@ -639,17 +925,23 @@ const runPhase7Upload = async () => {
     const targetPlaylistId = cleanText(process.env.YOUTUBE_PLAYLIST_ID || '');
     if (targetPlaylistId) {
       try {
-        await youtube.playlistItems.insert({
-          part: ['snippet'],
-          requestBody: {
-            snippet: {
-              playlistId: targetPlaylistId,
-              resourceId: {
-                kind: 'youtube#video',
-                videoId,
+        await runWithRetry({
+          label: 'playlistItems.insert',
+          attempts: 2,
+          baseDelayMs: 1200,
+          shouldRetry: shouldRetryYoutubeError,
+          operation: async () => youtube.playlistItems.insert({
+            part: ['snippet'],
+            requestBody: {
+              snippet: {
+                playlistId: targetPlaylistId,
+                resourceId: {
+                  kind: 'youtube#video',
+                  videoId,
+                },
               },
             },
-          },
+          }),
         });
       } catch (error) {
         // Playlist insertion is optional.

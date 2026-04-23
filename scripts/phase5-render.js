@@ -86,6 +86,8 @@ const runPhase5Render = async ({lyrics, out, compositionId, maxSeconds, concurre
 
   await fs.mkdir(path.dirname(out), {recursive: true});
 
+  let lastProgressPercent = -1;
+
   await renderMedia({
     composition: finalComposition,
     serveUrl,
@@ -96,6 +98,27 @@ const runPhase5Render = async ({lyrics, out, compositionId, maxSeconds, concurre
     concurrency,
     crf,
     pixelFormat: 'yuv420p',
+    onProgress: (progressPayload) => {
+      let ratio = 0;
+
+      if (typeof progressPayload === 'number') {
+        ratio = progressPayload;
+      } else if (progressPayload && typeof progressPayload.progress === 'number') {
+        ratio = progressPayload.progress;
+      } else if (
+        progressPayload
+        && typeof progressPayload.renderedFrames === 'number'
+        && finalComposition.durationInFrames > 0
+      ) {
+        ratio = progressPayload.renderedFrames / finalComposition.durationInFrames;
+      }
+
+      const percent = Math.max(0, Math.min(100, Math.floor(ratio * 100)));
+      if (percent > lastProgressPercent && (percent % 5 === 0 || percent === 100)) {
+        lastProgressPercent = percent;
+        console.log(`[phase5] Render progress: ${percent}%`);
+      }
+    },
   });
 
   return {

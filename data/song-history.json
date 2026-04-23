@@ -1,20 +1,6 @@
 {
   "updatedAt": "2026-04-23T06:07:54.496Z",
   "seenSongIds": [
-    "Sj7ZnLKL",
-    "rh1gIwY_",
-    "ZsGGaRro",
-    "1gHtmQ3x",
-    "ojfyzd2S",
-    "IKc2REl8",
-    "xtX3So8U",
-    "rNG7yxOv",
-    "R7aU-mWz",
-    "XOEJBpc2",
-    "xfYv6XJM",
-    "Lw70IeUI",
-    "FvL6kBnx",
-    "Ke4f5vWB",
     "l0kp5ysT"
   ],
   "recentSongs": [
@@ -23,118 +9,6 @@
       "name": "Global Viral Beat 2K26",
       "artist": "M TRENDING SOUNDS",
       "selectedAt": "2026-04-23T06:07:54.496Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "Ke4f5vWB",
-      "name": "Global Alert Breaking News, Broadcast, Live",
-      "artist": "mega records",
-      "selectedAt": "2026-04-23T02:51:40.814Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "FvL6kBnx",
-      "name": "Global Trend Beat",
-      "artist": "M TRENDING SOUNDS",
-      "selectedAt": "2026-04-22T22:51:39.282Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "Lw70IeUI",
-      "name": "Global Headlines",
-      "artist": "mega records",
-      "selectedAt": "2026-04-22T20:59:02.463Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "xfYv6XJM",
-      "name": "GLOBAL TRENDING",
-      "artist": "Arthur Leal",
-      "selectedAt": "2026-04-22T19:19:04.566Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "XOEJBpc2",
-      "name": "Andaaz e Karam",
-      "artist": "Madhur Sharma, Moin, er",
-      "selectedAt": "2026-04-22T17:05:55.834Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "R7aU-mWz",
-      "name": "Aawaara Angaara",
-      "artist": "A.R. Rahman, Faheem Abdullah, Irshad Kamil",
-      "selectedAt": "2026-04-22T15:17:03.920Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "rNG7yxOv",
-      "name": "Ishq Jalakar - Karvaan",
-      "artist": "Irshad Kamil, Shashwat Sachdev, Shahzad Ali, Sahir Ludhianvi, Subhadeep Das Chowdhury, Armaan Khan, Roshan",
-      "selectedAt": "2026-04-22T13:48:28.274Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "xtX3So8U",
-      "name": "Deewaana Deewaana",
-      "artist": "A.R. Rahman, Irshad Kamil",
-      "selectedAt": "2026-04-22T05:59:14.314Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "IKc2REl8",
-      "name": "Khat",
-      "artist": "Navjot Ahuja",
-      "selectedAt": "2026-04-22T02:26:10.849Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "ojfyzd2S",
-      "name": "Sitaare (From \"Ikkis\")",
-      "artist": "Amitabh Bhattacharya, Arijit Singh, Sachin-Jigar",
-      "selectedAt": "2026-04-21T22:36:53.383Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "1gHtmQ3x",
-      "name": "Gehra Hua",
-      "artist": "Irshad Kamil, Arijit Singh, Shashwat Sachdev, Armaan Khan",
-      "selectedAt": "2026-04-21T20:51:39.077Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "ZsGGaRro",
-      "name": "Aayi Nai",
-      "artist": "Amitabh Bhattacharya, Sachin-Jigar, Pawan Singh, Simran Choudhary, Divya Kumar",
-      "selectedAt": "2026-04-21T19:09:40.585Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "rh1gIwY_",
-      "name": "Balam Pichkari",
-      "artist": "Pritam, Vishal Dadlani, Shalmali",
-      "selectedAt": "2026-04-21T16:59:24.440Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "Sj7ZnLKL",
-      "name": "Saathiya",
-      "artist": "Darshan Raval",
-      "selectedAt": "2026-04-21T15:31:16.435Z",
       "mode": "auto-trending",
       "query": null
     }
