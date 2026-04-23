@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-23T02:51:40.814Z",
+  "updatedAt": "2026-04-23T06:07:54.496Z",
   "seenSongIds": [
     "Sj7ZnLKL",
     "rh1gIwY_",
@@ -14,9 +14,18 @@
     "xfYv6XJM",
     "Lw70IeUI",
     "FvL6kBnx",
-    "Ke4f5vWB"
+    "Ke4f5vWB",
+    "l0kp5ysT"
   ],
   "recentSongs": [
+    {
+      "id": "l0kp5ysT",
+      "name": "Global Viral Beat 2K26",
+      "artist": "M TRENDING SOUNDS",
+      "selectedAt": "2026-04-23T06:07:54.496Z",
+      "mode": "auto-trending",
+      "query": null
+    },
     {
       "id": "Ke4f5vWB",
       "name": "Global Alert Breaking News, Broadcast, Live",
