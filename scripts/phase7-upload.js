@@ -29,6 +29,39 @@ const parseTags = (raw) => {
 
 const cleanText = (value) => String(value || '').replace(/\s+/g, ' ').trim();
 
+const YOUTUBE_ALLOWED_CATEGORIES = new Set([
+  '1',
+  '2',
+  '10',
+  '15',
+  '17',
+  '19',
+  '20',
+  '22',
+  '23',
+  '24',
+  '25',
+  '26',
+  '27',
+  '28',
+  '29',
+]);
+
+const COMMON_LANGUAGE_MAP = {
+  english: 'en',
+  hindi: 'hi',
+  hinglish: 'hi',
+  punjabi: 'pa',
+  tamil: 'ta',
+  telugu: 'te',
+  kannada: 'kn',
+  malayalam: 'ml',
+  bengali: 'bn',
+  marathi: 'mr',
+  gujarati: 'gu',
+  urdu: 'ur',
+};
+
 const fileExists = async (filePath) => {
   try {
     await fsPromises.access(filePath);
@@ -131,6 +164,71 @@ const uniqueTags = (items) => {
   }
 
   return output.slice(0, 30);
+};
+
+const sanitizeCategoryId = (value, fallback = '10') => {
+  const normalized = cleanText(value);
+  if (YOUTUBE_ALLOWED_CATEGORIES.has(normalized)) {
+    return normalized;
+  }
+  return fallback;
+};
+
+const sanitizeLanguageTag = (value, fallback = 'en') => {
+  const raw = cleanText(value).toLowerCase();
+  if (!raw) {
+    return fallback;
+  }
+
+  if (COMMON_LANGUAGE_MAP[raw]) {
+    return COMMON_LANGUAGE_MAP[raw];
+  }
+
+  // Accept simple IETF BCP-47 language tags such as en, hi, en-US.
+  if (/^[a-z]{2,3}(-[a-z0-9]{2,8})*$/i.test(raw)) {
+    return raw;
+  }
+
+  return fallback;
+};
+
+const sanitizeYoutubeTags = (tags, fallbackTags = []) => {
+  const normalized = uniqueTags(Array.isArray(tags) ? tags : fallbackTags)
+    .map((tag) => cleanText(tag).replace(/[\r\n#]/g, ''))
+    .filter(Boolean)
+    .map((tag) => tag.slice(0, 100));
+
+  const output = [];
+  let totalChars = 0;
+
+  for (const tag of normalized) {
+    const nextCost = tag.length + (output.length > 0 ? 1 : 0);
+    if (totalChars + nextCost > 450) {
+      break;
+    }
+    output.push(tag);
+    totalChars += nextCost;
+  }
+
+  return output;
+};
+
+const buildUploadSnippet = ({title, description, tags, categoryId, defaultLanguage, defaultAudioLanguage, defaults}) => {
+  const safeTitle = cleanText(title || defaults.title).slice(0, 100) || defaults.title;
+  const safeDescription = String(description || defaults.description || '').trim().slice(0, 5000);
+  const safeCategoryId = sanitizeCategoryId(categoryId, '10');
+  const safeDefaultLanguage = sanitizeLanguageTag(defaultLanguage, 'en');
+  const safeDefaultAudioLanguage = sanitizeLanguageTag(defaultAudioLanguage, safeDefaultLanguage);
+  const safeTags = sanitizeYoutubeTags(tags, defaults.tags);
+
+  return {
+    title: safeTitle,
+    description: safeDescription,
+    tags: safeTags,
+    categoryId: safeCategoryId,
+    defaultLanguage: safeDefaultLanguage,
+    defaultAudioLanguage: safeDefaultAudioLanguage,
+  };
 };
 
 const buildDefaultMetadata = (phase3Data) => {
@@ -375,11 +473,12 @@ const runPhase7Upload = async () => {
   const tagsFromInput = parseTags(process.env.YOUTUBE_TAGS || '');
   const tags = tagsFromInput.length > 0 ? tagsFromInput : metadata.tags;
 
-  const categoryId = cleanText(process.env.YOUTUBE_CATEGORY_ID || metadata.categoryId || '10') || '10';
-  const defaultLanguage = cleanText(process.env.YOUTUBE_DEFAULT_LANGUAGE || metadata.defaultLanguage || 'en') || 'en';
-  const defaultAudioLanguage = cleanText(
-    process.env.YOUTUBE_DEFAULT_AUDIO_LANGUAGE || metadata.defaultAudioLanguage || 'en',
-  ) || 'en';
+  const categoryId = sanitizeCategoryId(process.env.YOUTUBE_CATEGORY_ID || metadata.categoryId || '10', '10');
+  const defaultLanguage = sanitizeLanguageTag(process.env.YOUTUBE_DEFAULT_LANGUAGE || metadata.defaultLanguage || 'en', 'en');
+  const defaultAudioLanguage = sanitizeLanguageTag(
+    process.env.YOUTUBE_DEFAULT_AUDIO_LANGUAGE || metadata.defaultAudioLanguage || defaultLanguage,
+    defaultLanguage,
+  );
 
   const privacyStatus = ['private', 'public', 'unlisted'].includes(process.env.YOUTUBE_PRIVACY_STATUS || '')
     ? process.env.YOUTUBE_PRIVACY_STATUS
@@ -398,29 +497,69 @@ const runPhase7Upload = async () => {
     auth: oauth2Client,
   });
 
-  const insertResponse = await youtube.videos.insert({
-    part: ['snippet', 'status'],
-    requestBody: {
-      snippet: {
-        title,
-        description,
-        tags,
-        categoryId,
-        defaultLanguage,
-        defaultAudioLanguage,
-      },
-      status: {
-        privacyStatus,
-        embeddable: true,
-        publicStatsViewable: true,
-        selfDeclaredMadeForKids: false,
-        license: 'youtube',
-      },
-    },
-    media: {
-      body: fs.createReadStream(videoFile),
-    },
+  const uploadSnippet = buildUploadSnippet({
+    title,
+    description,
+    tags,
+    categoryId,
+    defaultLanguage,
+    defaultAudioLanguage,
+    defaults: defaultMetadata,
   });
+
+  let insertResponse;
+  try {
+    insertResponse = await youtube.videos.insert({
+      part: ['snippet', 'status'],
+      requestBody: {
+        snippet: uploadSnippet,
+        status: {
+          privacyStatus,
+          embeddable: true,
+          publicStatsViewable: true,
+          selfDeclaredMadeForKids: false,
+          license: 'youtube',
+        },
+      },
+      media: {
+        body: fs.createReadStream(videoFile),
+      },
+    });
+  } catch (error) {
+    const apiErrors = error?.errors || error?.response?.data?.error?.errors || [];
+    const hasInvalidMetadata = Array.isArray(apiErrors)
+      && apiErrors.some((entry) => String(entry?.reason || '').toUpperCase() === 'INVALID_REQUEST_METADATA');
+
+    if (!hasInvalidMetadata) {
+      throw error;
+    }
+
+    const safeRetrySnippet = {
+      title: cleanText(defaultMetadata.title).slice(0, 100) || 'Lyrics Video',
+      description: String(defaultMetadata.description || 'Official lyrics video').slice(0, 5000),
+      categoryId: '10',
+      tags: sanitizeYoutubeTags(defaultMetadata.tags, []),
+    };
+
+    console.warn('[phase7] INVALID_REQUEST_METADATA received; retrying with minimal safe snippet');
+
+    insertResponse = await youtube.videos.insert({
+      part: ['snippet', 'status'],
+      requestBody: {
+        snippet: safeRetrySnippet,
+        status: {
+          privacyStatus,
+          embeddable: true,
+          publicStatsViewable: true,
+          selfDeclaredMadeForKids: false,
+          license: 'youtube',
+        },
+      },
+      media: {
+        body: fs.createReadStream(videoFile),
+      },
+    });
+  }
 
   const videoId = insertResponse.data?.id || null;
 
@@ -498,10 +637,10 @@ const runPhase7Upload = async () => {
     title,
     description,
     privacyStatus,
-    tags,
-    categoryId,
-    defaultLanguage,
-    defaultAudioLanguage,
+    tags: uploadSnippet.tags,
+    categoryId: uploadSnippet.categoryId,
+    defaultLanguage: uploadSnippet.defaultLanguage,
+    defaultAudioLanguage: uploadSnippet.defaultAudioLanguage,
     sourceVideo: path.relative(PROJECT_ROOT, videoFile),
     sourcePhase3Json: path.relative(PROJECT_ROOT, phase3File),
     thumbnail: thumbnailResult.filePath
