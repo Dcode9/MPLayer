@@ -104,7 +104,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: auto-trending-24x7
-          if-no-files-found: warn
+          if-no-files-found: error
           path: |
             output/auto-trending-video.mp4
             output/auto-trending-thumbnail.jpg
