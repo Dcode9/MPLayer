@@ -117,7 +117,7 @@ const main = async () => {
   console.log(
     `[phase5] Video: ${result.width}x${result.height} @ ${result.fps}fps, ${result.durationInSeconds.toFixed(2)}s (${result.durationInFrames} frames)`,
   );
-  console.log('[phase5] Resolution: 1080p - optimized for 4x faster render time');
+  console.log('[phase5] Render profile: production HQ');
 };
 
 if (require.main === module) {

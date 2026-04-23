@@ -1,6 +1,6 @@
-name: Phase 7 Render + YouTube Upload (1080p)
+name: Phase 7 Render + YouTube Upload
 
-run-name: Phase 7 1080p Upload • ${{ inputs.song_query || inputs.song_id || 'auto' }}
+run-name: Phase 7 Upload • ${{ inputs.song_query || inputs.song_id || 'auto' }}
 
 on:
   workflow_dispatch:
@@ -68,6 +68,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install multilingual fonts
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fonts-noto-core fonts-noto-extra
+
       - name: Prepare folders
         run: mkdir -p data output
 
@@ -84,7 +89,7 @@ jobs:
             npm run phase3:build -- --query="$SONG_QUERY" --out=data/phase3-lyrics.json
           fi
 
-      - name: Phase 5 - Render video (1080p)
+      - name: Phase 5 - Render video
         env:
           RENDER_PRESET: ${{ inputs.render_preset }}
           PHASE5_RENDER_CONCURRENCY: 2

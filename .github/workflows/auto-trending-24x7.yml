@@ -1,10 +1,10 @@
-name: Auto Trending Upload (Every 2 Hours, 1080p)
+name: Auto Trending Upload (Twice Daily)
 
-run-name: Auto Trending 1080p #${{ github.run_number }}
+run-name: Auto Trending Upload #${{ github.run_number }}
 
 on:
   schedule:
-    - cron: '0 */2 * * *'
+    - cron: '0 */12 * * *'
   workflow_dispatch:
     inputs:
       privacy_status:
@@ -40,6 +40,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install multilingual fonts
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fonts-noto-core fonts-noto-extra
+
       - name: Prepare folders
         run: mkdir -p data output
 
@@ -68,13 +73,13 @@ jobs:
           TARGET_BRANCH="${GITHUB_REF_NAME:-main}"
           git push origin "HEAD:${TARGET_BRANCH}"
 
-      - name: Phase 5 - Render full song (1080p logo optimized)
+      - name: Phase 5 - Render full song
         env:
           PHASE5_RENDER_CONCURRENCY: 2
           PHASE5_RENDER_CRF: 20
         run: |
           set -e
-          echo "[auto-24x7] Starting Phase 5 (1080p-logo optimized for 4x faster rendering)"
+          echo "[auto-24x7] Starting Phase 5 render"
           npm run phase5:render:4k:logo -- --lyrics=data/phase3-lyrics.json --out=output/auto-trending-video.mp4
 
       - name: Phase 7 - Upload to YouTube

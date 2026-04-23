@@ -17,6 +17,33 @@ const LOGO_INTRO_SECONDS = 2.8;
 const LOGO_MOVE_SECONDS = 2.6;
 const SCENE_REVEAL_SECONDS = 0.8;
 
+const SCRIPT_FONT_PROFILES = {
+  latin: {
+    fontFamily:
+      '"Noto Sans", "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif',
+    direction: 'ltr',
+    unicodeBidi: 'plaintext',
+  },
+  devanagari: {
+    fontFamily:
+      '"Noto Sans Devanagari", "Mangal", "Nirmala UI", "Kohinoor Devanagari", sans-serif',
+    direction: 'ltr',
+    unicodeBidi: 'plaintext',
+  },
+  gurmukhi: {
+    fontFamily:
+      '"Noto Sans Gurmukhi", "Raavi", "Nirmala UI", "Kohinoor Gurmukhi", sans-serif',
+    direction: 'ltr',
+    unicodeBidi: 'plaintext',
+  },
+  arabic: {
+    fontFamily:
+      '"Noto Nastaliq Urdu", "Noto Naskh Arabic", "Noto Sans Arabic", "Segoe UI", serif',
+    direction: 'rtl',
+    unicodeBidi: 'plaintext',
+  },
+};
+
 const LINE_STATES = {
   current: {
     opacity: 1,
@@ -66,6 +93,24 @@ const clamp = (value, min, max) => {
 
 const lerp = (from, to, progress) => {
   return from + (to - from) * progress;
+};
+
+const detectScriptProfile = (text) => {
+  const value = String(text || '');
+
+  if (/[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]/.test(value)) {
+    return SCRIPT_FONT_PROFILES.arabic;
+  }
+
+  if (/[\u0A00-\u0A7F]/.test(value)) {
+    return SCRIPT_FONT_PROFILES.gurmukhi;
+  }
+
+  if (/[\u0900-\u097F]/.test(value)) {
+    return SCRIPT_FONT_PROFILES.devanagari;
+  }
+
+  return SCRIPT_FONT_PROFILES.latin;
 };
 
 const getCurrentLyricIndex = (lyrics, currentTime) => {
@@ -191,6 +236,9 @@ export const LyricsTemplateVideo = ({songData, showAnimatedLogo = false, logoSrc
   const songName = songData?.song?.name ?? '';
   const artistName = songData?.song?.artist ?? '';
   const resolvedLogoSrc = logoSrc || staticFile('assets/DTunes-transparent.svg');
+
+  const titleScriptProfile = useMemo(() => detectScriptProfile(songName), [songName]);
+  const artistScriptProfile = useMemo(() => detectScriptProfile(artistName), [artistName]);
 
   const audioData = useAudioData(audioSrc);
   const currentTime = frame / fps;
@@ -336,7 +384,7 @@ export const LyricsTemplateVideo = ({songData, showAnimatedLogo = false, logoSrc
         backgroundColor: '#000000',
         color: '#ffffff',
         overflow: 'hidden',
-        fontFamily: 'ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif',
+        fontFamily: '"Noto Sans", "Inter", "Segoe UI", Arial, sans-serif',
       }}
     >
       <Audio src={audioSrc} />
@@ -449,6 +497,7 @@ export const LyricsTemplateVideo = ({songData, showAnimatedLogo = false, logoSrc
           >
             <h2
               style={{
+                ...titleScriptProfile,
                 margin: 0,
                 marginBottom: 16,
                 fontSize: titleFontSize,
@@ -467,13 +516,14 @@ export const LyricsTemplateVideo = ({songData, showAnimatedLogo = false, logoSrc
 
             <p
               style={{
+                ...artistScriptProfile,
                 margin: 0,
                 fontSize: titleArtistFontSize,
                 lineHeight: 1.1,
                 color: 'rgb(216, 180, 254)',
                 fontWeight: 500,
-                letterSpacing: 4,
-                textTransform: 'uppercase',
+                letterSpacing: artistScriptProfile.direction === 'ltr' ? 4 : 0,
+                textTransform: artistScriptProfile.direction === 'ltr' ? 'uppercase' : 'none',
               }}
             >
               {artistName}
@@ -482,11 +532,13 @@ export const LyricsTemplateVideo = ({songData, showAnimatedLogo = false, logoSrc
         </div>
 
         {parsedLyrics.map((lyric, index) => {
+          const lyricProfile = detectScriptProfile(lyric.text);
           return (
             <div
               key={`${index}-${lyric.time}`}
               style={{
                 ...getLineStyle(index),
+                ...lyricProfile,
                 width: '100%',
                 paddingLeft: 16,
                 paddingRight: 16,
@@ -494,6 +546,7 @@ export const LyricsTemplateVideo = ({songData, showAnimatedLogo = false, logoSrc
                 lineHeight: 1.12,
                 fontWeight: 900,
                 color: '#ffffff',
+                whiteSpace: 'pre-wrap',
               }}
             >
               <div

@@ -236,18 +236,33 @@ const buildDefaultMetadata = (phase3Data) => {
   const songName = cleanText(song.name || 'Lyrics Video');
   const artistName = cleanText(song.artist || 'Unknown Artist');
   const albumName = cleanText(song.album || '');
+  const songYear = cleanText(song.year || '');
+  const sourceUrl = cleanText(song.url || '');
 
-  const title = `${songName} - ${artistName} | Official 1080p Lyrics Video`;
+  const title = `${songName} - ${artistName} | D'Tunes Lyrical Video`;
 
-  const hashtags = ['#lyrics', '#music', '#lyricvideo', '#dtunes'];
+  const hashtags = ['#lyrics', '#music', '#lyricvideo', '#dtunes', '#adfree'];
+
+  const creditsLines = [
+    'Credits:',
+    `Song: ${songName}`,
+    `Artist: ${artistName}`,
+    albumName ? `Album: ${albumName}` : '',
+    songYear ? `Year: ${songYear}` : '',
+    sourceUrl ? `Source: ${sourceUrl}` : '',
+    'All rights belong to the respective owners. D\'Tunes presents lyrical animation only.',
+  ].filter(Boolean);
+  const creditsBlock = creditsLines.join('\n');
 
   const descriptionLines = [
-    `${songName} by ${artistName} - Official 1080p lyric music video.`,
-    albumName ? `Album: ${albumName}` : '',
+    `D'Tunes Lyrical Video: ${songName} by ${artistName}.`,
+    'High Quality Lyrics Animations. Ad-Free, Lyrical.',
     '',
     'Listen to more music on DVerse: https://play.dverse.fun',
     '',
-    'Subscribe for daily lyric videos, trending songs, and timeless hits.',
+    'Subscribe for daily lyrical experiences, trending songs, and timeless hits.',
+    '',
+    ...creditsLines,
     '',
     hashtags.join(' '),
   ].filter(Boolean);
@@ -256,14 +271,14 @@ const buildDefaultMetadata = (phase3Data) => {
     songName,
     artistName,
     `${songName} lyrics`,
-    `${songName} lyric video`,
-    `${songName} 1080p lyrics`,
+    `${songName} lyrical video`,
+    `${songName} dtunes lyrics`,
     `${artistName} lyrics`,
-    `${songName} official lyric`,
+    `${songName} ad free lyrical`,
     'lyrics',
-    'lyric video',
+    'lyrical video',
     'music',
-    '1080p music video',
+    'high quality lyrics animation',
     'dtunes',
     'play dverse',
   ]);
@@ -271,7 +286,7 @@ const buildDefaultMetadata = (phase3Data) => {
   const annotationPlan = [
     {
       atSeconds: 30,
-      text: 'Subscribe for daily 1080p lyric videos',
+      text: 'Subscribe for daily D\'Tunes lyrical videos',
       action: 'subscribe',
     },
     {
@@ -297,10 +312,12 @@ const buildDefaultMetadata = (phase3Data) => {
   ];
 
   const thumbnailPrompt = [
-    `${songName} by ${artistName}`,
-    'cinematic 1080p lyric-video thumbnail',
-    'neon atmosphere, high contrast, artist-inspired colors',
-    'clean typography zone, no watermark, youtube-ready',
+    'YouTube thumbnail design for a D\'Tunes lyrical video',
+    `Song title centered and dominant: "${songName}"`,
+    `Credits text below title: "${artistName}${albumName ? ` • ${albumName}` : ''}${songYear ? ` • ${songYear}` : ''}"`,
+    'Must include exact text: "Ad-Free, Lyrical"',
+    'Consistent style: cinematic gradient background, modern typography, high contrast, clean composition',
+    'No explicit or copyrighted logos, no clutter, no watermark, 16:9, YouTube-ready',
   ].join(', ');
 
   return {
@@ -314,6 +331,7 @@ const buildDefaultMetadata = (phase3Data) => {
     annotationPlan,
     endScreenSuggestions,
     thumbnailPrompt,
+    creditsBlock,
   };
 };
 
@@ -323,6 +341,9 @@ const sanitizeMetadata = (metadata, defaults) => {
   let description = String(metadata?.description || defaults.description || '').trim();
   if (!description.includes('play.dverse.fun')) {
     description = `${description}\n\nListen to more music on DVerse: https://play.dverse.fun`.trim();
+  }
+  if (defaults.creditsBlock && !description.toLowerCase().includes('credits:')) {
+    description = `${description}\n\n${defaults.creditsBlock}`.trim();
   }
 
   const tags = uniqueTags([...(Array.isArray(metadata?.tags) ? metadata.tags : []), ...defaults.tags]);
@@ -372,14 +393,19 @@ const generateAiMetadata = async ({phase3Data, model}) => {
     '{"title":"","description":"","tags":[],"hashtags":[],"categoryId":"10","defaultLanguage":"en","defaultAudioLanguage":"en","thumbnailPrompt":"","annotationPlan":[{"atSeconds":30,"text":"","action":""}],"endScreenSuggestions":[{"slot":"left","idea":""}]}',
     'Rules:',
     '- Keep title under 100 chars and highly clickable.',
+    '- Brand positioning must be D\'Tunes Lyrical Video (High Quality Lyrics Animations).',
+    '- Never claim Original/Official song ownership; this is a lyrical animation presentation.',
     '- Description must include a natural CTA with https://play.dverse.fun',
+    '- Description must include ethical credits with song/artist/album/year/source where available.',
     '- Tags should target lyrical music discovery.',
     '- Hashtags max 6.',
-    '- Thumbnail prompt should be highly attractive and cinematic.',
+    '- Thumbnail prompt style must be consistent: centered song title, credits below, include exact text "Ad-Free, Lyrical".',
     '',
     `Song name: ${song.name || ''}`,
     `Artist: ${song.artist || ''}`,
     `Album: ${song.album || ''}`,
+    `Year: ${song.year || ''}`,
+    `Source URL: ${song.url || ''}`,
     `Language: ${song.language || ''}`,
     `Lyrics lines count: ${lines.length}`,
   ].join('\n');
@@ -536,7 +562,7 @@ const runPhase7Upload = async () => {
 
     const safeRetrySnippet = {
       title: cleanText(defaultMetadata.title).slice(0, 100) || 'Lyrics Video',
-      description: String(defaultMetadata.description || 'Official lyrics video').slice(0, 5000),
+      description: String(defaultMetadata.description || 'D\'Tunes lyrical video').slice(0, 5000),
       categoryId: '10',
       tags: sanitizeYoutubeTags(defaultMetadata.tags, []),
     };

@@ -1,6 +1,6 @@
-name: Quick Test Render (1080p)
+name: Quick Test Render
 
-run-name: Quick Test 1080p • ${{ inputs.song_query || inputs.song_id || 'auto' }}
+run-name: Quick Test Render • ${{ inputs.song_query || inputs.song_id || 'auto' }}
 
 on:
   workflow_dispatch:
@@ -47,6 +47,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install multilingual fonts
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fonts-noto-core fonts-noto-extra
+
       - name: Prepare folders
         run: mkdir -p data output
 
@@ -62,7 +67,7 @@ jobs:
             npm run phase3:build -- --query="$SONG_QUERY" --out=data/test-lyrics.json
           fi
 
-      - name: Render test video (1080p)
+      - name: Render test video
         env:
           RENDER_PRESET: ${{ inputs.render_preset }}
           PHASE5_MAX_SECONDS: ${{ inputs.max_seconds }}

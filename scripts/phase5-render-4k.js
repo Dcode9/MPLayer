@@ -18,7 +18,7 @@ const parsePositiveNumber = (value) => {
 const parseArgs = (argv) => {
   const args = {
     lyrics: path.join(PROJECT_ROOT, 'data', 'phase3-lyrics.json'),
-    out: path.join(PROJECT_ROOT, 'output', 'phase5-video-1080p.mp4'),
+    out: path.join(PROJECT_ROOT, 'output', 'phase5-video-hq.mp4'),
     maxSeconds: parsePositiveNumber(process.env.PHASE5_MAX_SECONDS || '0'),
     concurrency: Number(process.env.PHASE5_RENDER_CONCURRENCY || 2),
     crf: Number(process.env.PHASE5_RENDER_CRF || 20),
@@ -47,14 +47,14 @@ const main = async () => {
     compositionId: 'LyricsTemplateVideo4k',
   });
 
-  console.log('[phase5-1080p] Render complete');
-  console.log(`[phase5-1080p] Output: ${path.relative(PROJECT_ROOT, result.out)}`);
+  console.log('[phase5-hq] Render complete');
+  console.log(`[phase5-hq] Output: ${path.relative(PROJECT_ROOT, result.out)}`);
   console.log(
-    `[phase5-1080p] Video: ${result.width}x${result.height} @ ${result.fps}fps, ${result.durationInSeconds.toFixed(2)}s`,
+    `[phase5-hq] Video: ${result.width}x${result.height} @ ${result.fps}fps, ${result.durationInSeconds.toFixed(2)}s`,
   );
 };
 
 main().catch((error) => {
-  console.error(`[phase5-1080p] Failed: ${error.message || error}`);
+  console.error(`[phase5-hq] Failed: ${error.message || error}`);
   process.exit(1);
 });
