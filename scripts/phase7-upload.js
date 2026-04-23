@@ -541,6 +541,47 @@ const runPhase7Upload = async () => {
   };
 };
 
+const summarizeUploadError = (error) => {
+  const responseStatus = error?.response?.status || null;
+  const responseStatusText = error?.response?.statusText || null;
+  const responseErrors = Array.isArray(error?.response?.data?.error?.errors)
+    ? error.response.data.error.errors.map((item) => ({
+      reason: cleanText(item?.reason || ''),
+      message: cleanText(item?.message || ''),
+      domain: cleanText(item?.domain || ''),
+    }))
+    : [];
+
+  return {
+    message: cleanText(error?.message || 'Unknown upload error'),
+    code: cleanText(error?.code || ''),
+    status: responseStatus,
+    statusText: responseStatusText,
+    errors: responseErrors,
+    stack: typeof error?.stack === 'string' ? error.stack.split('\n').slice(0, 12).join('\n') : null,
+  };
+};
+
+const writeFailureOutput = async (summary) => {
+  const outputFile = path.resolve(process.env.PHASE7_OUTPUT_JSON || path.join(PROJECT_ROOT, 'data', 'phase7-youtube-upload.json'));
+  const videoFile = path.resolve(process.env.PHASE7_VIDEO_FILE || path.join(PROJECT_ROOT, 'output', 'phase7-video.mp4'));
+  const phase3File = path.resolve(process.env.PHASE7_PHASE3_JSON || path.join(PROJECT_ROOT, 'data', 'phase3-lyrics.json'));
+
+  const payload = {
+    uploadedAt: new Date().toISOString(),
+    videoId: null,
+    success: false,
+    sourceVideo: path.relative(PROJECT_ROOT, videoFile),
+    sourcePhase3Json: path.relative(PROJECT_ROOT, phase3File),
+    error: summary,
+  };
+
+  await fsPromises.mkdir(path.dirname(outputFile), {recursive: true});
+  await fsPromises.writeFile(outputFile, `${JSON.stringify(payload, null, 2)}\n`, 'utf-8');
+
+  return outputFile;
+};
+
 const main = async () => {
   const result = await runPhase7Upload();
   console.log('[phase7] Upload complete');
@@ -553,8 +594,31 @@ const main = async () => {
 
 if (require.main === module) {
   main().catch((error) => {
-    console.error(`[phase7] Failed: ${error.message || error}`);
-    process.exit(1);
+    const summary = summarizeUploadError(error);
+
+    console.error(`[phase7] Failed: ${summary.message}`);
+    if (summary.status) {
+      console.error(`[phase7] HTTP status: ${summary.status}${summary.statusText ? ` ${summary.statusText}` : ''}`);
+    }
+    if (summary.code) {
+      console.error(`[phase7] Error code: ${summary.code}`);
+    }
+    if (summary.errors.length > 0) {
+      console.error(`[phase7] API errors: ${JSON.stringify(summary.errors)}`);
+    }
+    if (summary.stack) {
+      console.error(summary.stack);
+    }
+
+    writeFailureOutput(summary)
+      .then((outputFile) => {
+        console.error(`[phase7] Failure output written to: ${path.relative(PROJECT_ROOT, outputFile)}`);
+        process.exit(1);
+      })
+      .catch((writeError) => {
+        console.error(`[phase7] Failed to write failure output: ${writeError.message || writeError}`);
+        process.exit(1);
+      });
   });
 }
 

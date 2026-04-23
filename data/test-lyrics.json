@@ -1,19 +1,19 @@
 {
   "metadata": {
-    "generatedAt": "2026-04-23T09:12:34.275Z",
+    "generatedAt": "2026-04-20T13:55:27.501Z",
     "phase": 3,
     "timingMode": "synced",
-    "songSelectionMethod": "direct-id-fallback",
+    "songSelectionMethod": "direct-id-template",
     "sourceApis": {
       "jiosaavn": "https://jiosaavn-api-taupe-phi.vercel.app/api",
       "lyrics": "lrclib",
       "lyricsMatchMode": "direct-get"
     },
-    "pipelineMode": "fallback-template",
+    "pipelineMode": "template-only",
     "query": "template test render"
   },
   "song": {
-    "id": "WDLIjKuU",
+    "id": "TEST_TEMPLATE",
     "name": "Dracula",
     "artist": "Tame Impala",
     "album": "Deadbeat",

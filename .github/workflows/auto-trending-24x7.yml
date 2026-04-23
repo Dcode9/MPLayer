@@ -78,6 +78,8 @@ jobs:
           npm run phase5:render:4k:logo -- --lyrics=data/phase3-lyrics.json --out=output/auto-trending-video.mp4
 
       - name: Phase 7 - Upload to YouTube
+        id: phase7_upload
+        continue-on-error: true
         env:
           YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
           YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
@@ -98,13 +100,20 @@ jobs:
           npm run phase7:upload
 
       - name: Upload artifacts
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: auto-trending-24x7
-          if-no-files-found: error
+          if-no-files-found: warn
           path: |
             output/auto-trending-video.mp4
             output/auto-trending-thumbnail.jpg
             data/phase3-lyrics.json
             data/song-history.json
             data/auto-trending-upload.json
+
+      - name: Fail job if YouTube upload failed
+        if: steps.phase7_upload.outcome == 'failure'
+        run: |
+          echo "::error::Phase 7 upload failed. Render artifacts were still saved."
+          exit 1
