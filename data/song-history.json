@@ -1,9 +1,18 @@
 {
-  "updatedAt": "2026-04-23T06:07:54.496Z",
+  "updatedAt": "2026-04-24T02:27:10.477Z",
   "seenSongIds": [
-    "l0kp5ysT"
+    "l0kp5ysT",
+    "Vq112z6X"
   ],
   "recentSongs": [
+    {
+      "id": "Vq112z6X",
+      "name": "Aaj Ki Raat (From \"Stree 2\")",
+      "artist": "Amitabh Bhattacharya, Sachin-Jigar, Madhubanti Bagchi, Divya Kumar",
+      "selectedAt": "2026-04-24T02:27:10.477Z",
+      "mode": "auto-trending",
+      "query": null
+    },
     {
       "id": "l0kp5ysT",
       "name": "Global Viral Beat 2K26",
