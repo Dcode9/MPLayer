@@ -1,14 +1,23 @@
 {
-  "updatedAt": "2026-04-26T02:31:13.285Z",
+  "updatedAt": "2026-04-26T13:02:02.042Z",
   "seenSongIds": [
     "l0kp5ysT",
     "Vq112z6X",
     "LdMwym23",
     "gQ2VJt2n",
     "aRZbUYD7",
-    "6o8JoQ8b"
+    "6o8JoQ8b",
+    "wwSCc15h"
   ],
   "recentSongs": [
+    {
+      "id": "wwSCc15h",
+      "name": "Shape of You",
+      "artist": "Ed Sheeran",
+      "selectedAt": "2026-04-26T13:02:02.042Z",
+      "mode": "auto-trending",
+      "query": null
+    },
     {
       "id": "6o8JoQ8b",
       "name": "Perfect",
