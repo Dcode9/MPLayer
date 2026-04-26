@@ -1,13 +1,22 @@
 {
-  "updatedAt": "2026-04-25T12:59:42.883Z",
+  "updatedAt": "2026-04-26T02:31:13.285Z",
   "seenSongIds": [
     "l0kp5ysT",
     "Vq112z6X",
     "LdMwym23",
     "gQ2VJt2n",
-    "aRZbUYD7"
+    "aRZbUYD7",
+    "6o8JoQ8b"
   ],
   "recentSongs": [
+    {
+      "id": "6o8JoQ8b",
+      "name": "Perfect",
+      "artist": "Ed Sheeran",
+      "selectedAt": "2026-04-26T02:31:13.285Z",
+      "mode": "auto-trending",
+      "query": null
+    },
     {
       "id": "aRZbUYD7",
       "name": "Tum Hi Ho",
