@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-27T02:33:35.170Z",
+  "updatedAt": "2026-04-27T13:47:56.239Z",
   "seenSongIds": [
     "l0kp5ysT",
     "Vq112z6X",
@@ -8,9 +8,18 @@
     "aRZbUYD7",
     "6o8JoQ8b",
     "wwSCc15h",
-    "fW-Mxsnu"
+    "fW-Mxsnu",
+    "pizXlfUB"
   ],
   "recentSongs": [
+    {
+      "id": "pizXlfUB",
+      "name": "Blinding Lights",
+      "artist": "The Weeknd",
+      "selectedAt": "2026-04-27T13:47:56.239Z",
+      "mode": "auto-trending",
+      "query": null
+    },
     {
       "id": "fW-Mxsnu",
       "name": "Blinding Lights",
