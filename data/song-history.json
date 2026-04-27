@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-26T13:02:02.042Z",
+  "updatedAt": "2026-04-27T02:33:35.170Z",
   "seenSongIds": [
     "l0kp5ysT",
     "Vq112z6X",
@@ -7,9 +7,18 @@
     "gQ2VJt2n",
     "aRZbUYD7",
     "6o8JoQ8b",
-    "wwSCc15h"
+    "wwSCc15h",
+    "fW-Mxsnu"
   ],
   "recentSongs": [
+    {
+      "id": "fW-Mxsnu",
+      "name": "Blinding Lights",
+      "artist": "The Weeknd",
+      "selectedAt": "2026-04-27T02:33:35.170Z",
+      "mode": "auto-trending",
+      "query": null
+    },
     {
       "id": "wwSCc15h",
       "name": "Shape of You",
