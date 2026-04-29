@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-28T14:00:38.231Z",
+  "updatedAt": "2026-04-29T02:41:15.220Z",
   "seenSongIds": [
     "l0kp5ysT",
     "Vq112z6X",
@@ -11,9 +11,18 @@
     "fW-Mxsnu",
     "pizXlfUB",
     "gN81QnmL",
-    "icJam_5l"
+    "icJam_5l",
+    "foOKLpHB"
   ],
   "recentSongs": [
+    {
+      "id": "foOKLpHB",
+      "name": "See You Again (Wiz Khalifa Covers)",
+      "artist": "Once Jamison",
+      "selectedAt": "2026-04-29T02:41:15.220Z",
+      "mode": "auto-trending",
+      "query": null
+    },
     {
       "id": "icJam_5l",
       "name": "Shape of You",
