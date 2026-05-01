@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-01T02:48:31.655Z",
+  "updatedAt": "2026-05-01T13:15:05.302Z",
   "seenSongIds": [
     "l0kp5ysT",
     "Vq112z6X",
@@ -16,9 +16,18 @@
     "qPBSIDVf",
     "pW-kkdqr",
     "3HLgAVmB",
-    "U8S63knt"
+    "U8S63knt",
+    "lAvhMilw"
   ],
   "recentSongs": [
+    {
+      "id": "lAvhMilw",
+      "name": "Calm Down",
+      "artist": "Rema, Selena Gomez",
+      "selectedAt": "2026-05-01T13:15:05.302Z",
+      "mode": "auto-trending",
+      "query": null
+    },
     {
       "id": "U8S63knt",
       "name": "Pasoori (Originally Performed by Shae Gill & Ali Sethi)",
