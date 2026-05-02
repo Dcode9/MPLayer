@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-02T02:30:41.951Z",
+  "updatedAt": "2026-05-02T13:05:29.511Z",
   "seenSongIds": [
     "l0kp5ysT",
     "Vq112z6X",
@@ -18,9 +18,18 @@
     "3HLgAVmB",
     "U8S63knt",
     "lAvhMilw",
-    "fy1SYD17"
+    "fy1SYD17",
+    "IrEzzCfb"
   ],
   "recentSongs": [
+    {
+      "id": "IrEzzCfb",
+      "name": "Maan Meri Jaan",
+      "artist": "King",
+      "selectedAt": "2026-05-02T13:05:29.511Z",
+      "mode": "auto-trending",
+      "query": null
+    },
     {
       "id": "fy1SYD17",
       "name": "Calm Down",
