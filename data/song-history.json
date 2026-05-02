@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-01T13:15:05.302Z",
+  "updatedAt": "2026-05-02T02:30:41.951Z",
   "seenSongIds": [
     "l0kp5ysT",
     "Vq112z6X",
@@ -17,9 +17,18 @@
     "pW-kkdqr",
     "3HLgAVmB",
     "U8S63knt",
-    "lAvhMilw"
+    "lAvhMilw",
+    "fy1SYD17"
   ],
   "recentSongs": [
+    {
+      "id": "fy1SYD17",
+      "name": "Calm Down",
+      "artist": "Rema, Selena Gomez",
+      "selectedAt": "2026-05-02T02:30:41.951Z",
+      "mode": "auto-trending",
+      "query": null
+    },
     {
       "id": "lAvhMilw",
       "name": "Calm Down",
