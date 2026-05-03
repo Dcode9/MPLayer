@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-03T02:40:12.635Z",
+  "updatedAt": "2026-05-03T13:04:33.151Z",
   "seenSongIds": [
     "l0kp5ysT",
     "Vq112z6X",
@@ -23,6 +23,14 @@
     "cC-Y-oZD"
   ],
   "recentSongs": [
+    {
+      "id": "Vq112z6X",
+      "name": "Aaj Ki Raat (From \"Stree 2\")",
+      "artist": "Amitabh Bhattacharya, Sachin-Jigar, Madhubanti Bagchi, Divya Kumar",
+      "selectedAt": "2026-05-03T13:04:33.151Z",
+      "mode": "auto-trending",
+      "query": null
+    },
     {
       "id": "cC-Y-oZD",
       "name": "AP Dhillon x Gminxr x Brown Munde Type Beat",
