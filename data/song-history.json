@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-02T13:05:29.511Z",
+  "updatedAt": "2026-05-03T02:40:12.635Z",
   "seenSongIds": [
     "l0kp5ysT",
     "Vq112z6X",
@@ -19,9 +19,18 @@
     "U8S63knt",
     "lAvhMilw",
     "fy1SYD17",
-    "IrEzzCfb"
+    "IrEzzCfb",
+    "cC-Y-oZD"
   ],
   "recentSongs": [
+    {
+      "id": "cC-Y-oZD",
+      "name": "AP Dhillon x Gminxr x Brown Munde Type Beat",
+      "artist": "AMRITBEATX",
+      "selectedAt": "2026-05-03T02:40:12.635Z",
+      "mode": "auto-trending",
+      "query": null
+    },
     {
       "id": "IrEzzCfb",
       "name": "Maan Meri Jaan",
