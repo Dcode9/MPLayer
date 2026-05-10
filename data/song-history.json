@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-10T02:42:58.986Z",
+  "updatedAt": "2026-05-10T13:13:23.838Z",
   "seenSongIds": [
     "l0kp5ysT",
     "Vq112z6X",
@@ -24,6 +24,14 @@
     "DM6rqG52"
   ],
   "recentSongs": [
+    {
+      "id": "Vq112z6X",
+      "name": "Aaj Ki Raat (From \"Stree 2\")",
+      "artist": "Amitabh Bhattacharya, Sachin-Jigar, Madhubanti Bagchi, Divya Kumar",
+      "selectedAt": "2026-05-10T13:13:23.838Z",
+      "mode": "auto-trending",
+      "query": null
+    },
     {
       "id": "gN81QnmL",
       "name": "Tum Hi Ho",
