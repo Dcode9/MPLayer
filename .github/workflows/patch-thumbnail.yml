@@ -10,136 +10,128 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Apply near-black thumbnail patch
+      - name: Restore phase3 if placeholder + strict title scoring
+        run: |
+          set -euo pipefail
+          if grep -q 'PLACEHOLDER' scripts/phase3-build.js 2>/dev/null || ! grep -q 'scoreSongForQuery' scripts/phase3-build.js; then
+            echo Restoring phase3-build.js
+            git show 3c78e595f8cc0b97d2d13e2d3f97f2b926d38a20:scripts/phase3-build.js > scripts/phase3-build.js || true
+            if ! grep -q 'scoreSongForQuery' scripts/phase3-build.js; then
+              git show 1fc37a64a976a7faab324e3328f6ff9bcf92c0a6:scripts/phase3-build.js > scripts/phase3-build.js
+            fi
+          fi
+          python3 << 'PY'
+          from pathlib import Path
+          import re
+          path = Path('scripts/phase3-build.js')
+          t = path.read_text()
+          if 'scoreSongForQuery' not in t:
+              raise SystemExit('phase3 missing scoreSongForQuery')
+          pattern = r'const scoreSongForQuery = \(song, query\) => \{[\s\S]*?\n\};\n\nconst parseJsonFromText'
+          replacement = '''const scoreSongForQuery = (song, query) => {
+  const normalizedQuery = normalizeSearchText(query);
+  if (!normalizedQuery) {
+    return 0;
+  }
+
+  const songName = normalizeSearchText(song?.name || '');
+  const artistName = normalizeSearchText(song?.artist || '');
+  const albumName = normalizeSearchText(song?.album || '');
+  const haystack = `${songName} ${artistName}`.trim();
+  const queryTokens = normalizedQuery.split(/\s+/).filter(Boolean);
+  const titleTokens = songName.split(/\s+/).filter(Boolean);
+  const primaryToken = queryTokens[0] || '';
+
+  let score = 0;
+
+  if (songName === normalizedQuery) {
+    score += 500;
+  } else if (titleTokens.join(' ') === queryTokens.slice(0, titleTokens.length).join(' ')) {
+    score += 420;
+  } else if (primaryToken && songName === primaryToken) {
+    score += 400;
+  } else if (primaryToken && titleTokens[0] === primaryToken && titleTokens.length <= queryTokens.length + 1) {
+    score += 320;
+  }
+
+  if (haystack === normalizedQuery) {
+    score += 80;
+  }
+
+  if (songName.startsWith(normalizedQuery) || (primaryToken && songName.startsWith(primaryToken))) {
+    score += 50;
+  }
+
+  if (songName.includes(normalizedQuery)) {
+    score += 36;
+  }
+
+  for (const token of queryTokens) {
+    if (titleTokens.includes(token)) {
+      score += 22;
+    } else if (songName.includes(token)) {
+      score += 10;
+    }
+    if (artistName.includes(token)) {
+      score += 4;
+    }
+  }
+
+  if (primaryToken && primaryToken.length >= 4 && !songName.includes(primaryToken) && !titleTokens.includes(primaryToken)) {
+    if (albumName.includes(primaryToken)) {
+      score -= 200;
+    } else {
+      score -= 120;
+    }
+  }
+
+  const versionHints = ['dhun', 'theme', 'instrumental', 'karaoke', 'bgm', 'score', 'ost', 'reprise'];
+  if (versionHints.some((h) => titleTokens.includes(h)) && primaryToken && !versionHints.includes(primaryToken)) {
+    score -= 150;
+  }
+
+  if (queryTokens.length === 1 && queryTokens[0].length <= 4 && titleTokens.includes(queryTokens[0])) {
+    score += 35;
+  }
+
+  if (queryTokens.length <= 2 && titleTokens.length > queryTokens.length + 2) {
+    score -= 25;
+  }
+
+  return score;
+};
+
+const parseJsonFromText'''
+          new_t, n = re.subn(pattern, replacement, t, count=1)
+          if n != 1:
+              raise SystemExit(f'replace failed n={n}')
+          new_t = new_t.replace('best.score < 35', 'best.score < 80')
+          new_t = new_t.replace('topScore < 15', 'topScore < 50')
+          path.write_text(new_t)
+          print('phase3 OK', path.stat().st_size)
+          PY
+
+      - name: Faster render env + lighter audio viz
         run: |
           set -euo pipefail
           python3 << 'PY'
           from pathlib import Path
-          path = Path('scripts/phase7-upload.js')
-          text = path.read_text()
-
-          old_palette = '''const pickThemePalette = (seed) => {
-            const palettes = [
-              {
-                bgStart: '#0b1220',
-                bgEnd: '#1f2937',
-                accent: '#22d3ee',
-                accentSoft: '#93c5fd',
-                text: '#f8fafc',
-                subText: '#cbd5e1',
-              },
-              {
-                bgStart: '#1a102f',
-                bgEnd: '#2b164f',
-                accent: '#f59e0b',
-                accentSoft: '#fcd34d',
-                text: '#fff7ed',
-                subText: '#fed7aa',
-              },
-              {
-                bgStart: '#081c15',
-                bgEnd: '#1b4332',
-                accent: '#52b788',
-                accentSoft: '#95d5b2',
-                text: '#f1faee',
-                subText: '#b7e4c7',
-              },
-              {
-                bgStart: '#1f1300',
-                bgEnd: '#3f2a14',
-                accent: '#fb7185',
-                accentSoft: '#fda4af',
-                text: '#fff1f2',
-                subText: '#fecdd3',
-              },
-            ];
-            return palettes[seed % palettes.length];
-          };'''
-
-          new_palette = '''const pickThemePalette = (seed) => {
-            // Near-black minimal palettes for D'Tunes identity
-            const palettes = [
-              {
-                bgStart: '#05070c',
-                bgEnd: '#0e1218',
-                accent: '#67e8f9',
-                accentSoft: '#a5f3fc',
-                text: '#f8fafc',
-                subText: '#94a3b8',
-              },
-              {
-                bgStart: '#07070b',
-                bgEnd: '#12121a',
-                accent: '#c4b5fd',
-                accentSoft: '#ddd6fe',
-                text: '#f8fafc',
-                subText: '#a1a1aa',
-              },
-              {
-                bgStart: '#06080c',
-                bgEnd: '#10151c',
-                accent: '#7dd3fc',
-                accentSoft: '#bae6fd',
-                text: '#f1f5f9',
-                subText: '#94a3b8',
-              },
-              {
-                bgStart: '#08060a',
-                bgEnd: '#141018',
-                accent: '#f0abfc',
-                accentSoft: '#f5d0fe',
-                text: '#fafafa',
-                subText: '#a3a3a3',
-              },
-            ];
-            return palettes[seed % palettes.length];
-          };'''
-
-          if old_palette not in text:
-              raise SystemExit('palette block not found')
-          text = text.replace(old_palette, new_palette)
-
-          # Left title / right album layout markers
-          text = text.replace(
-              "const titleLines = splitHeadline(songName || metadata?.title || 'Lyrical Video', 20, 3)",
-              "const titleLines = splitHeadline(songName || metadata?.title || 'Lyrical Video', 18, 3)",
-          )
-          text = text.replace(
-              'font-size="76" font-weight="800" fill="${palette.text}"',
-              'font-size="70" font-weight="800" fill="${palette.text}"',
-          )
-          text = text.replace('x="80" y="${210 + (index * 92)}"', 'x="72" y="${230 + (index * 88)}"')
-          text = text.replace(
-              '<text x="108" y="90" font-family="Noto Sans, Arial, sans-serif" font-size="38" font-weight="700" fill="${palette.accentSoft}">D\'Tunes • Lyrical Video</text>',
-              '<text x="72" y="88" font-family="Noto Sans, Arial, sans-serif" font-size="32" font-weight="700" fill="${palette.accentSoft}">D\'Tunes • Lyrical</text>',
-          )
-          text = text.replace(
-              '<text x="82" y="560" font-family="Noto Sans, Arial, sans-serif" font-size="34" font-weight="600" fill="${palette.subText}">${credits}</text>',
-              '<text x="72" y="520" font-family="Noto Sans, Arial, sans-serif" font-size="30" font-weight="600" fill="${palette.subText}">${credits}</text>',
-          )
-          text = text.replace(
-              '<rect x="80" y="598" width="360" height="62" rx="16" fill="${palette.accent}" opacity="0.96"/>',
-              '<rect x="72" y="560" width="300" height="54" rx="14" fill="${palette.accent}" opacity="0.95"/>',
-          )
-          text = text.replace(
-              '<text x="106" y="640" font-family="Noto Sans, Arial, sans-serif" font-size="34" font-weight="800" fill="#081018">Ad-Free, Lyrical</text>',
-              '<text x="94" y="596" font-family="Noto Sans, Arial, sans-serif" font-size="28" font-weight="800" fill="#0a0a0f">Ad-Free, Lyrical</text>',
-          )
-          # Remove left accent bar (old design)
-          text = text.replace(
-              '<rect x="72" y="110" width="20" height="510" rx="10" fill="${palette.accent}" opacity="0.95"/>\n        ',
-              '',
-          )
-          text = text.replace("const coverSize = 430;", "const coverSize = 460;")
-          text = text.replace(
-              'composites.push({input: framedCover, left: 790, top: 145});\n        composites.push({input: frameSvg, left: 770, top: 125});',
-              'composites.push({input: framedCover, left: 760, top: 130});\n        composites.push({input: frameSvg, left: 740, top: 110});',
-          )
-          text = text.replace("background: '#0b1220'", "background: '#06080c'")
-
-          path.write_text(text)
-          print('Patched successfully, bytes:', len(text))
+          wf = Path('.github/workflows/phase7-youtube-upload.yml')
+          w = wf.read_text()
+          w = w.replace('PHASE5_RENDER_CONCURRENCY: 2', 'PHASE5_RENDER_CONCURRENCY: 4')
+          w = w.replace('PHASE5_RENDER_CRF: 20', 'PHASE5_RENDER_CRF: 23')
+          if 'PHASE5_X264_PRESET' not in w:
+              w = w.replace('PHASE5_RENDER_CRF: 23', 'PHASE5_RENDER_CRF: 23\n          PHASE5_X264_PRESET: veryfast')
+          wf.write_text(w)
+          rem = Path('remotion/LyricsTemplateVideo.jsx')
+          r = rem.read_text()
+          r = r.replace('numberOfSamples: 128', 'numberOfSamples: 64')
+          r = r.replace('return new Array(128).fill(0);', 'return new Array(64).fill(0);')
+          rem.write_text(r)
+          print('render env + audio OK')
           PY
 
       - name: Commit
@@ -147,10 +139,10 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add scripts/phase7-upload.js
+          git add scripts/phase3-build.js remotion/LyricsTemplateVideo.jsx .github/workflows/phase7-youtube-upload.yml
           if git diff --cached --quiet; then
-            echo "No changes after patch"
+            echo No changes
             exit 0
           fi
-          git commit -m "feat(dtunes): near-black minimal thumbnail (left title, right album art)"
+          git commit -m "fix(phase3): exact title match; perf: concurrency 4, CRF 23, lighter audio viz"
           git push origin HEAD:main
