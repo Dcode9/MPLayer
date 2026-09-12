@@ -1,0 +1,37 @@
+name: Restore phase7-upload.js
+
+on:
+  workflow_dispatch:
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Restore phase7-upload.js from good commit
+        run: |
+          set -euo pipefail
+          GOOD_SHA="1fc37a64a976a7faab324e3328f6ff9bcf92c0a6"
+          git show "${GOOD_SHA}:scripts/phase7-upload.js" > scripts/phase7-upload.js
+          echo "Restored bytes: $(wc -c < scripts/phase7-upload.js)"
+          head -5 scripts/phase7-upload.js
+          tail -5 scripts/phase7-upload.js
+
+      - name: Commit and push if changed
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/phase7-upload.js
+          if git diff --cached --quiet; then
+            echo "No changes"
+            exit 0
+          fi
+          git commit -m "restore: phase7-upload.js from ${GOOD_SHA:-1fc37a64} [skip ci]"
+          git push origin HEAD:main
