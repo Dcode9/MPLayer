@@ -55,38 +55,39 @@ const hashString = (value) => {
 };
 
 const pickThemePalette = (seed) => {
+  // Near-black minimal palettes for D'Tunes identity
   const palettes = [
     {
-      bgStart: '#0b1220',
-      bgEnd: '#1f2937',
-      accent: '#22d3ee',
-      accentSoft: '#93c5fd',
+      bgStart: '#05070c',
+      bgEnd: '#0e1218',
+      accent: '#67e8f9',
+      accentSoft: '#a5f3fc',
       text: '#f8fafc',
-      subText: '#cbd5e1',
+      subText: '#94a3b8',
     },
     {
-      bgStart: '#1a102f',
-      bgEnd: '#2b164f',
-      accent: '#f59e0b',
-      accentSoft: '#fcd34d',
-      text: '#fff7ed',
-      subText: '#fed7aa',
+      bgStart: '#07070b',
+      bgEnd: '#12121a',
+      accent: '#c4b5fd',
+      accentSoft: '#ddd6fe',
+      text: '#f8fafc',
+      subText: '#a1a1aa',
     },
     {
-      bgStart: '#081c15',
-      bgEnd: '#1b4332',
-      accent: '#52b788',
-      accentSoft: '#95d5b2',
-      text: '#f1faee',
-      subText: '#b7e4c7',
+      bgStart: '#06080c',
+      bgEnd: '#10151c',
+      accent: '#7dd3fc',
+      accentSoft: '#bae6fd',
+      text: '#f1f5f9',
+      subText: '#94a3b8',
     },
     {
-      bgStart: '#1f1300',
-      bgEnd: '#3f2a14',
-      accent: '#fb7185',
-      accentSoft: '#fda4af',
-      text: '#fff1f2',
-      subText: '#fecdd3',
+      bgStart: '#08060a',
+      bgEnd: '#141018',
+      accent: '#f0abfc',
+      accentSoft: '#f5d0fe',
+      text: '#fafafa',
+      subText: '#a3a3a3',
     },
   ];
   return palettes[seed % palettes.length];
@@ -551,14 +552,14 @@ const generateThumbnailIfNeeded = async ({metadata, outputPath, model, enabled})
     const albumName = cleanText(metadata?.albumName || '').slice(0, 60);
     const year = cleanText(metadata?.songYear || '').slice(0, 8);
 
-    const titleLines = splitHeadline(songName || metadata?.title || 'Lyrical Video', 20, 3)
+    const titleLines = splitHeadline(songName || metadata?.title || 'Lyrical Video', 18, 3)
       .map((line) => escapeXml(line));
 
     const creditsRaw = [artistName, albumName, year].filter(Boolean).join(' • ');
     const credits = escapeXml(creditsRaw || 'D\'Tunes Music');
 
     const lineElements = titleLines
-      .map((line, index) => `<text x="80" y="${210 + (index * 92)}" font-family="Noto Sans, Arial, sans-serif" font-size="76" font-weight="800" fill="${palette.text}">${line}</text>`)
+      .map((line, index) => `<text x="72" y="${230 + (index * 88)}" font-family="Noto Sans, Arial, sans-serif" font-size="70" font-weight="800" fill="${palette.text}">${line}</text>`)
       .join('');
 
     const overlaySvg = `
@@ -575,12 +576,11 @@ const generateThumbnailIfNeeded = async ({metadata, outputPath, model, enabled})
         </defs>
         <rect width="1280" height="720" fill="url(#bg)"/>
         <rect width="1280" height="720" fill="url(#orb)"/>
-        <rect x="72" y="110" width="20" height="510" rx="10" fill="${palette.accent}" opacity="0.95"/>
-        <text x="108" y="90" font-family="Noto Sans, Arial, sans-serif" font-size="38" font-weight="700" fill="${palette.accentSoft}">D'Tunes • Lyrical Video</text>
+        <text x="72" y="88" font-family="Noto Sans, Arial, sans-serif" font-size="32" font-weight="700" fill="${palette.accentSoft}">D'Tunes • Lyrical</text>
         ${lineElements}
-        <text x="82" y="560" font-family="Noto Sans, Arial, sans-serif" font-size="34" font-weight="600" fill="${palette.subText}">${credits}</text>
-        <rect x="80" y="598" width="360" height="62" rx="16" fill="${palette.accent}" opacity="0.96"/>
-        <text x="106" y="640" font-family="Noto Sans, Arial, sans-serif" font-size="34" font-weight="800" fill="#081018">Ad-Free, Lyrical</text>
+        <text x="72" y="520" font-family="Noto Sans, Arial, sans-serif" font-size="30" font-weight="600" fill="${palette.subText}">${credits}</text>
+        <rect x="72" y="560" width="300" height="54" rx="14" fill="${palette.accent}" opacity="0.95"/>
+        <text x="94" y="596" font-family="Noto Sans, Arial, sans-serif" font-size="28" font-weight="800" fill="#0a0a0f">Ad-Free, Lyrical</text>
       </svg>
     `;
 
@@ -595,7 +595,7 @@ const generateThumbnailIfNeeded = async ({metadata, outputPath, model, enabled})
     const coverUrl = cleanText(metadata?.songImage || '');
     if (coverUrl) {
       try {
-        const coverSize = 430;
+        const coverSize = 460;
         const coverRaw = await fetchBinary(coverUrl, 35000);
         const roundedMask = Buffer.from(
           `<svg width="${coverSize}" height="${coverSize}"><rect x="0" y="0" width="${coverSize}" height="${coverSize}" rx="34" ry="34" fill="white"/></svg>`,
@@ -612,8 +612,8 @@ const generateThumbnailIfNeeded = async ({metadata, outputPath, model, enabled})
           </svg>
         `);
 
-        composites.push({input: framedCover, left: 790, top: 145});
-        composites.push({input: frameSvg, left: 770, top: 125});
+        composites.push({input: framedCover, left: 760, top: 130});
+        composites.push({input: frameSvg, left: 740, top: 110});
       } catch (error) {
         // Keep thumbnail generation resilient even if cover download fails.
       }
@@ -625,7 +625,7 @@ const generateThumbnailIfNeeded = async ({metadata, outputPath, model, enabled})
         width: 1280,
         height: 720,
         channels: 3,
-        background: '#0b1220',
+        background: '#06080c',
       },
     })
       .composite(composites)
