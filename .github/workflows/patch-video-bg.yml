@@ -11,18 +11,59 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Restore phase3 from raw GitHub
+      - name: Stricter match scores + faster render
         run: |
           set -euo pipefail
-          curl -fsSL "https://raw.githubusercontent.com/Dcode9/MPLayer/1fc37a64a976a7faab324e3328f6ff9bcf92c0a6/scripts/phase3-build.js" -o scripts/phase3-build.js
-          wc -c scripts/phase3-build.js
-          grep -q scoreSongForQuery scripts/phase3-build.js
+          # Prefer exact song title over album-only hits
+          sed -i "s/score += 120;/score += 500;/" scripts/phase3-build.js
+          sed -i "s/score += 80;/score += 120;/" scripts/phase3-build.js
+          sed -i "s/best.score < 35/best.score < 80/" scripts/phase3-build.js
+          sed -i "s/topScore < 15/topScore < 50/" scripts/phase3-build.js
 
-      - name: Commit restore
+          # Penalize version tracks like dhun/theme when matching a title query
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('scripts/phase3-build.js')
+          t = p.read_text()
+          needle = "  if (queryTokens.length === 1 && queryTokens[0].length <= 4 && titleTokens.includes(queryTokens[0])) {\n    score += 35;\n  }\n\n  return score;"
+          insert = """  if (queryTokens.length === 1 && queryTokens[0].length <= 4 && titleTokens.includes(queryTokens[0])) {
+    score += 35;
+  }
+
+  const versionHints = ['dhun', 'theme', 'instrumental', 'karaoke', 'bgm', 'score', 'ost', 'reprise'];
+  const primary = queryTokens[0] || '';
+  if (primary && versionHints.some((h) => titleTokens.includes(h)) && !versionHints.includes(primary)) {
+    score -= 200;
+  }
+  if (primary && primary.length >= 4 && !songName.includes(primary) && !titleTokens.includes(primary)) {
+    score -= 180;
+  }
+
+  return score;"""
+          if needle not in t:
+              raise SystemExit('needle not found')
+          p.write_text(t.replace(needle, insert, 1))
+          print('score penalties added')
+          PY
+
+          # Faster CI render
+          sed -i 's/PHASE5_RENDER_CONCURRENCY: 2/PHASE5_RENDER_CONCURRENCY: 4/' .github/workflows/phase7-youtube-upload.yml
+          sed -i 's/PHASE5_RENDER_CRF: 20/PHASE5_RENDER_CRF: 23/' .github/workflows/phase7-youtube-upload.yml
+          if ! grep -q PHASE5_X264_PRESET .github/workflows/phase7-youtube-upload.yml; then
+            sed -i '/PHASE5_RENDER_CRF: 23/a\          PHASE5_X264_PRESET: veryfast' .github/workflows/phase7-youtube-upload.yml
+          fi
+
+          # Lighter audio visualization
+          sed -i 's/numberOfSamples: 128/numberOfSamples: 64/' remotion/LyricsTemplateVideo.jsx
+          sed -i 's/new Array(128)/new Array(64)/' remotion/LyricsTemplateVideo.jsx
+
+          echo done
+
+      - name: Commit
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add scripts/phase3-build.js
-          git commit -m "restore: phase3-build.js from good commit" || exit 0
+          git add scripts/phase3-build.js remotion/LyricsTemplateVideo.jsx .github/workflows/phase7-youtube-upload.yml
+          git commit -m "fix+perf: prefer exact title over Dhun/album tracks; faster render" || exit 0
           git push origin HEAD:main
