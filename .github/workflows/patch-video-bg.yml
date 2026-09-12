@@ -10,37 +10,163 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Soften album-art background toward near-black
+      - name: Restore phase3 if broken
+        run: |
+          set -euo pipefail
+          if grep -q PLACEHOLDER scripts/phase3-build.js 2>/dev/null || ! grep -q scoreSongForQuery scripts/phase3-build.js; then
+            echo Restoring phase3
+            for sha in 3c78e595f8cc0b97d2d13e2d3f97f2b926d38a20 1fc37a64a976a7faab324e3328f6ff9bcf92c0a6; do
+              if git show "$sha:scripts/phase3-build.js" > scripts/phase3-build.js 2>/dev/null; then
+                if grep -q scoreSongForQuery scripts/phase3-build.js; then
+                  echo Restored from $sha
+                  break
+                fi
+              fi
+            done
+          fi
+          grep -q scoreSongForQuery scripts/phase3-build.js
+
+      - name: Strict title scoring
+        run: |
+          set -euo pipefail
+          python3 -c "
+          from pathlib import Path
+          import re
+          path = Path('scripts/phase3-build.js')
+          t = path.read_text()
+          pattern = r'const scoreSongForQuery = \\(song, query\\) => \\{[\\s\\S]*?\\n\\};\\n\\nconst parseJsonFromText'
+          replacement = '''const scoreSongForQuery = (song, query) => {
+  const normalizedQuery = normalizeSearchText(query);
+  if (!normalizedQuery) {
+    return 0;
+  }
+  const songName = normalizeSearchText(song?.name || '');
+  const artistName = normalizeSearchText(song?.artist || '');
+  const albumName = normalizeSearchText(song?.album || '');
+  const haystack = \`\${songName} \${artistName}\`.trim();
+  const queryTokens = normalizedQuery.split(/\\s+/).filter(Boolean);
+  const titleTokens = songName.split(/\\s+/).filter(Boolean);
+  const primaryToken = queryTokens[0] || '';
+  let score = 0;
+  if (songName === normalizedQuery) score += 500;
+  elif False:
+    pass
+'''
+          "
+          # Use a file-based python script to avoid shell escaping hell
+          cat > /tmp/patch_score.py << 'ENDPY'
+          from pathlib import Path
+          import re
+          path = Path('scripts/phase3-build.js')
+          t = path.read_text()
+          pattern = r"const scoreSongForQuery = \(song, query\) => \{[\s\S]*?\n\};\n\nconst parseJsonFromText"
+          replacement = """const scoreSongForQuery = (song, query) => {
+  const normalizedQuery = normalizeSearchText(query);
+  if (!normalizedQuery) {
+    return 0;
+  }
+
+  const songName = normalizeSearchText(song?.name || '');
+  const artistName = normalizeSearchText(song?.artist || '');
+  const albumName = normalizeSearchText(song?.album || '');
+  const haystack = `${songName} ${artistName}`.trim();
+  const queryTokens = normalizedQuery.split(/\s+/).filter(Boolean);
+  const titleTokens = songName.split(/\s+/).filter(Boolean);
+  const primaryToken = queryTokens[0] || '';
+
+  let score = 0;
+
+  if (songName === normalizedQuery) {
+    score += 500;
+  } else if (titleTokens.join(' ') === queryTokens.slice(0, titleTokens.length).join(' ')) {
+    score += 420;
+  } else if (primaryToken && songName === primaryToken) {
+    score += 400;
+  } else if (primaryToken && titleTokens[0] === primaryToken && titleTokens.length <= queryTokens.length + 1) {
+    score += 320;
+  }
+
+  if (haystack === normalizedQuery) {
+    score += 80;
+  }
+
+  if (songName.startsWith(normalizedQuery) || (primaryToken && songName.startsWith(primaryToken))) {
+    score += 50;
+  }
+
+  if (songName.includes(normalizedQuery)) {
+    score += 36;
+  }
+
+  for (const token of queryTokens) {
+    if (titleTokens.includes(token)) {
+      score += 22;
+    } else if (songName.includes(token)) {
+      score += 10;
+    }
+    if (artistName.includes(token)) {
+      score += 4;
+    }
+  }
+
+  if (primaryToken && primaryToken.length >= 4 && !songName.includes(primaryToken) && !titleTokens.includes(primaryToken)) {
+    if (albumName.includes(primaryToken)) {
+      score -= 200;
+    } else {
+      score -= 120;
+    }
+  }
+
+  const versionHints = ['dhun', 'theme', 'instrumental', 'karaoke', 'bgm', 'score', 'ost', 'reprise'];
+  if (versionHints.some((h) => titleTokens.includes(h)) && primaryToken && !versionHints.includes(primaryToken)) {
+    score -= 150;
+  }
+
+  if (queryTokens.length === 1 && queryTokens[0].length <= 4 && titleTokens.includes(queryTokens[0])) {
+    score += 35;
+  }
+
+  if (queryTokens.length <= 2 && titleTokens.length > queryTokens.length + 2) {
+    score -= 25;
+  }
+
+  return score;
+};
+
+const parseJsonFromText"""
+          new_t, n = re.subn(pattern, replacement, t, count=1)
+          if n != 1:
+              raise SystemExit(f'replace failed n={n}')
+          new_t = new_t.replace('best.score < 35', 'best.score < 80')
+          new_t = new_t.replace('topScore < 15', 'topScore < 50')
+          path.write_text(new_t)
+          print('phase3 scoring patched', path.stat().st_size)
+          ENDPY
+          # Fix leading spaces from heredoc indent
+          sed -i 's/^          //' /tmp/patch_score.py
+          python3 /tmp/patch_score.py
+
+      - name: Faster render env + audio samples
         run: |
           set -euo pipefail
           python3 << 'PY'
           from pathlib import Path
-          path = Path('remotion/LyricsTemplateVideo.jsx')
-          text = path.read_text()
-
-          # Simple targeted replacements
-          replacements = [
-            ("opacity: 0.6,", "opacity: 0.22,"),
-            ("mixBlendMode: 'screen',", "mixBlendMode: 'lighten',"),
-            ("filter: `blur(${bgBlur}px) saturate(200%) brightness(0.7)`", "filter: `blur(${bgBlur + 20}px) saturate(120%) brightness(0.35)`"),
-            ("radial-gradient(circle at center, rgba(0,0,0,0) 0%, rgba(0,0,0,0.8) 100%)", "radial-gradient(circle at center, rgba(6,8,12,0.15) 0%, rgba(0,0,0,0.92) 70%, rgba(0,0,0,0.98) 100%)"),
-          ]
-
-          for old, new in replacements:
-              if old not in text:
-                  print('WARNING missing:', old[:60])
-              else:
-                  text = text.replace(old, new, 1)
-                  print('OK:', old[:40])
-
-          # Wave opacity (first occurrence in svg style)
-          if 'opacity: 0.7,' in text:
-              text = text.replace('opacity: 0.7,', 'opacity: 0.45,', 1)
-              print('OK: wave opacity')
-
-          path.write_text(text)
-          print('Done, bytes:', len(text))
+          wf = Path('.github/workflows/phase7-youtube-upload.yml')
+          w = wf.read_text()
+          w = w.replace('PHASE5_RENDER_CONCURRENCY: 2', 'PHASE5_RENDER_CONCURRENCY: 4')
+          w = w.replace('PHASE5_RENDER_CRF: 20', 'PHASE5_RENDER_CRF: 23')
+          if 'PHASE5_X264_PRESET' not in w:
+              w = w.replace('PHASE5_RENDER_CRF: 23', 'PHASE5_RENDER_CRF: 23\n          PHASE5_X264_PRESET: veryfast')
+          wf.write_text(w)
+          rem = Path('remotion/LyricsTemplateVideo.jsx')
+          r = rem.read_text()
+          r = r.replace('numberOfSamples: 128', 'numberOfSamples: 64')
+          r = r.replace('return new Array(128).fill(0);', 'return new Array(64).fill(0);')
+          rem.write_text(r)
+          print('render env ok')
           PY
 
       - name: Commit
@@ -48,10 +174,10 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add remotion/LyricsTemplateVideo.jsx
+          git add scripts/phase3-build.js remotion/LyricsTemplateVideo.jsx .github/workflows/phase7-youtube-upload.yml
           if git diff --cached --quiet; then
-            echo "No changes"
+            echo No changes
             exit 0
           fi
-          git commit -m "feat(dtunes): near-black video background (subtle album art atmosphere)"
+          git commit -m "fix(phase3): exact title match; perf: concurrency 4 CRF 23 lighter audio"
           git push origin HEAD:main
