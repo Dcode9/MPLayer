@@ -408,10 +408,10 @@ export const LyricsTemplateVideo = ({songData, showAnimatedLogo = false, logoSrc
               width: '100%',
               height: '100%',
               objectFit: 'cover',
-              opacity: 0.6,
-              mixBlendMode: 'screen',
+              opacity: 0.22,
+              mixBlendMode: 'lighten',
               transform: `scale(${bgScale})`,
-              filter: `blur(${bgBlur}px) saturate(200%) brightness(0.7)`,
+              filter: `blur(${bgBlur + 20}px) saturate(120%) brightness(0.35)`,
             }}
           />
         </div>
@@ -421,7 +421,7 @@ export const LyricsTemplateVideo = ({songData, showAnimatedLogo = false, logoSrc
             position: 'absolute',
             inset: 0,
             background:
-              'radial-gradient(circle at center, rgba(0,0,0,0) 0%, rgba(0,0,0,0.8) 100%)',
+              'radial-gradient(circle at center, rgba(6,8,12,0.15) 0%, rgba(0,0,0,0.92) 70%, rgba(0,0,0,0.98) 100%)',
           }}
         />
 
@@ -437,7 +437,7 @@ export const LyricsTemplateVideo = ({songData, showAnimatedLogo = false, logoSrc
             height: '100%',
             pointerEvents: 'none',
             zIndex: 10,
-            opacity: 0.7,
+            opacity: 0.45,
           }}
         >
           <defs>
