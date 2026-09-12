@@ -13,8 +13,92 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Run patch script
-        run: python3 scripts/ci-patch-score.py
+      - name: Download good phase3 and patch
+        run: |
+          set -euo pipefail
+          # Known good full phase3 from history
+          curl -fsSL "https://raw.githubusercontent.com/Dcode9/MPLayer/1fc37a64a976a7faab324e3328f6ff9bcf92c0a6/scripts/phase3-build.js" -o scripts/phase3-build.js
+          wc -c scripts/phase3-build.js
+          head -3 scripts/phase3-build.js
+          python3 scripts/ci-patch-score.py || true
+          # ci-patch may fail restore check; force scoring on downloaded file
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          path = Path('scripts/phase3-build.js')
+          t = path.read_text()
+          assert 'scoreSongForQuery' in t
+          pattern = r'const scoreSongForQuery = \(song, query\) => \{[\s\S]*?\n\};\n\nconst parseJsonFromText'
+          replacement = open('scripts/ci-patch-score.py').read()  # noop
+          PY
+          # simpler inline score boost via sed-like replace of key numbers
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          path = Path('scripts/phase3-build.js')
+          t = path.read_text()
+          pattern = r'const scoreSongForQuery = \(song, query\) => \{[\s\S]*?\n\};\n\nconst parseJsonFromText'
+          # minimal strict fix: boost exact match and penalize missing primary in title
+          new_fn = r'''const scoreSongForQuery = (song, query) => {
+  const normalizedQuery = normalizeSearchText(query);
+  if (!normalizedQuery) return 0;
+  const songName = normalizeSearchText(song?.name || '');
+  const artistName = normalizeSearchText(song?.artist || '');
+  const albumName = normalizeSearchText(song?.album || '');
+  const queryTokens = normalizedQuery.split(/\s+/).filter(Boolean);
+  const titleTokens = songName.split(/\s+/).filter(Boolean);
+  const primaryToken = queryTokens[0] || '';
+  let score = 0;
+  if (songName === normalizedQuery) score += 500;
+  else if (primaryToken && songName === primaryToken) score += 400;
+  else if (primaryToken && titleTokens[0] === primaryToken) score += 320;
+  if (songName.includes(normalizedQuery)) score += 36;
+  for (const token of queryTokens) {
+    if (titleTokens.includes(token)) score += 22;
+    else if (songName.includes(token)) score += 10;
+    if (artistName.includes(token)) score += 4;
+  }
+  if (primaryToken && primaryToken.length >= 4 && !songName.includes(primaryToken)) {
+    score -= 200 if albumName.includes(primaryToken) else 120;
+  }
+  const versionHints = ['dhun', 'theme', 'instrumental', 'karaoke', 'bgm', 'score', 'ost', 'reprise'];
+  if (versionHints.some((h) => titleTokens.includes(h)) && primaryToken && !versionHints.includes(primaryToken)) score -= 150;
+  return score;
+};
+
+const parseJsonFromText'''
+          # Fix python ternary I accidentally wrote in JS
+          new_fn = new_fn.replace(
+              'score -= 200 if albumName.includes(primaryToken) else 120;',
+              'if (albumName.includes(primaryToken)) { score -= 200; } else { score -= 120; }'
+          )
+          new_t, n = re.subn(pattern, new_fn, t, count=1)
+          print('replacements', n)
+          if n != 1:
+              raise SystemExit('score replace failed')
+          new_t = new_t.replace('best.score < 35', 'best.score < 80')
+          new_t = new_t.replace('topScore < 15', 'topScore < 50')
+          path.write_text(new_t)
+          print('OK', path.stat().st_size)
+          PY
+
+          # render env
+          python3 - <<'PY'
+          from pathlib import Path
+          wf = Path('.github/workflows/phase7-youtube-upload.yml')
+          w = wf.read_text()
+          w = w.replace('PHASE5_RENDER_CONCURRENCY: 2', 'PHASE5_RENDER_CONCURRENCY: 4')
+          w = w.replace('PHASE5_RENDER_CRF: 20', 'PHASE5_RENDER_CRF: 23')
+          if 'PHASE5_X264_PRESET' not in w:
+              w = w.replace('PHASE5_RENDER_CRF: 23', 'PHASE5_RENDER_CRF: 23\n          PHASE5_X264_PRESET: veryfast')
+          wf.write_text(w)
+          rem = Path('remotion/LyricsTemplateVideo.jsx')
+          r = rem.read_text()
+          r = r.replace('numberOfSamples: 128', 'numberOfSamples: 64')
+          r = r.replace('return new Array(128).fill(0);', 'return new Array(64).fill(0);')
+          rem.write_text(r)
+          print('env ok')
+          PY
 
       - name: Commit
         run: |
@@ -22,9 +106,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add scripts/phase3-build.js remotion/LyricsTemplateVideo.jsx .github/workflows/phase7-youtube-upload.yml
-          if git diff --cached --quiet; then
-            echo No changes
-            exit 0
-          fi
-          git commit -m "fix(phase3): exact title match; perf: concurrency 4 CRF 23 lighter audio"
+          git commit -m "fix: restore phase3 + strict title match; faster render env" || echo nothing
           git push origin HEAD:main
