@@ -20,8 +20,9 @@ const parseArgs = (argv) => {
     lyrics: path.join(PROJECT_ROOT, 'data', 'phase3-lyrics.json'),
     out: path.join(PROJECT_ROOT, 'output', 'phase5-video-hq-logo.mp4'),
     maxSeconds: parsePositiveNumber(process.env.PHASE5_MAX_SECONDS || '0'),
-    concurrency: Number(process.env.PHASE5_RENDER_CONCURRENCY || 2),
-    crf: Number(process.env.PHASE5_RENDER_CRF || 20),
+    concurrency: Number(process.env.PHASE5_RENDER_CONCURRENCY || 0) || undefined,
+    crf: Number(process.env.PHASE5_RENDER_CRF || 23),
+    x264Preset: String(process.env.PHASE5_X264_PRESET || 'veryfast').trim() || 'veryfast',
   };
 
   for (const arg of argv) {
