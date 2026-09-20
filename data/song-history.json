@@ -1,8 +1,9 @@
 {
-  "updatedAt": "2026-05-13T03:00:53.980Z",
+  "updatedAt": "2026-09-20T07:10:00.000Z",
   "seenSongIds": [
-    "l0kp5ysT",
+    "Q6l0a09y",
     "Vq112z6X",
+    "l0kp5ysT",
     "LdMwym23",
     "gQ2VJt2n",
     "aRZbUYD7",
@@ -25,314 +26,26 @@
   ],
   "recentSongs": [
     {
-      "id": "gQ2VJt2n",
-      "name": "Tum Hi Ho",
-      "artist": "Arijit Singh",
-      "selectedAt": "2026-05-13T03:00:53.980Z",
-      "mode": "auto-trending",
-      "query": null
+      "id": "Q6l0a09y",
+      "name": "Aaj Ki Raat",
+      "artist": "Amitabh Bhattacharya, Sachin-Jigar, Madhubanti Bagchi, Divya Kumar",
+      "selectedAt": "2026-09-20T03:39:07.000Z",
+      "mode": "automation",
+      "query": "Aaj Ki Raat"
     },
     {
       "id": "Vq112z6X",
       "name": "Aaj Ki Raat (From \"Stree 2\")",
       "artist": "Amitabh Bhattacharya, Sachin-Jigar, Madhubanti Bagchi, Divya Kumar",
-      "selectedAt": "2026-05-12T14:18:34.265Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "gN81QnmL",
-      "name": "Tum Hi Ho",
-      "artist": "Arijit Singh",
-      "selectedAt": "2026-05-12T02:44:30.263Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "Vq112z6X",
-      "name": "Aaj Ki Raat (From \"Stree 2\")",
-      "artist": "Amitabh Bhattacharya, Sachin-Jigar, Madhubanti Bagchi, Divya Kumar",
-      "selectedAt": "2026-05-11T14:44:45.782Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "LdMwym23",
-      "name": "Tum Hi Ho",
-      "artist": "Arijit Singh",
-      "selectedAt": "2026-05-11T02:52:26.963Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "Vq112z6X",
-      "name": "Aaj Ki Raat (From \"Stree 2\")",
-      "artist": "Amitabh Bhattacharya, Sachin-Jigar, Madhubanti Bagchi, Divya Kumar",
-      "selectedAt": "2026-05-10T13:13:23.838Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "gN81QnmL",
-      "name": "Tum Hi Ho",
-      "artist": "Arijit Singh",
-      "selectedAt": "2026-05-10T02:42:58.986Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "Vq112z6X",
-      "name": "Aaj Ki Raat (From \"Stree 2\")",
-      "artist": "Amitabh Bhattacharya, Sachin-Jigar, Madhubanti Bagchi, Divya Kumar",
-      "selectedAt": "2026-05-09T13:12:26.674Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "LdMwym23",
-      "name": "Tum Hi Ho",
-      "artist": "Arijit Singh",
-      "selectedAt": "2026-05-09T02:37:50.008Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "Vq112z6X",
-      "name": "Aaj Ki Raat (From \"Stree 2\")",
-      "artist": "Amitabh Bhattacharya, Sachin-Jigar, Madhubanti Bagchi, Divya Kumar",
-      "selectedAt": "2026-05-08T13:28:53.370Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "LdMwym23",
-      "name": "Tum Hi Ho",
-      "artist": "Arijit Singh",
-      "selectedAt": "2026-05-08T02:44:02.907Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "Vq112z6X",
-      "name": "Aaj Ki Raat (From \"Stree 2\")",
-      "artist": "Amitabh Bhattacharya, Sachin-Jigar, Madhubanti Bagchi, Divya Kumar",
-      "selectedAt": "2026-05-07T14:10:51.515Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "LdMwym23",
-      "name": "Tum Hi Ho",
-      "artist": "Arijit Singh",
-      "selectedAt": "2026-05-07T02:38:45.513Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "Vq112z6X",
-      "name": "Aaj Ki Raat (From \"Stree 2\")",
-      "artist": "Amitabh Bhattacharya, Sachin-Jigar, Madhubanti Bagchi, Divya Kumar",
-      "selectedAt": "2026-05-06T14:03:28.855Z",
-      "mode": "auto-trending",
-      "query": null
+      "selectedAt": "2026-09-19T15:36:29.000Z",
+      "mode": "automation",
+      "query": "Aaj Ki Raat"
     },
     {
       "id": "gQ2VJt2n",
       "name": "Tum Hi Ho",
       "artist": "Arijit Singh",
-      "selectedAt": "2026-05-06T02:36:27.331Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "Vq112z6X",
-      "name": "Aaj Ki Raat (From \"Stree 2\")",
-      "artist": "Amitabh Bhattacharya, Sachin-Jigar, Madhubanti Bagchi, Divya Kumar",
-      "selectedAt": "2026-05-05T02:31:58.291Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "DM6rqG52",
-      "name": "AP Dhillon Brown Munde",
-      "artist": "Marshlemon",
-      "selectedAt": "2026-05-04T13:53:41.743Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "gN81QnmL",
-      "name": "Tum Hi Ho",
-      "artist": "Arijit Singh",
-      "selectedAt": "2026-05-04T02:38:02.646Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "Vq112z6X",
-      "name": "Aaj Ki Raat (From \"Stree 2\")",
-      "artist": "Amitabh Bhattacharya, Sachin-Jigar, Madhubanti Bagchi, Divya Kumar",
-      "selectedAt": "2026-05-03T13:04:33.151Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "cC-Y-oZD",
-      "name": "AP Dhillon x Gminxr x Brown Munde Type Beat",
-      "artist": "AMRITBEATX",
-      "selectedAt": "2026-05-03T02:40:12.635Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "IrEzzCfb",
-      "name": "Maan Meri Jaan",
-      "artist": "King",
-      "selectedAt": "2026-05-02T13:05:29.511Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "fy1SYD17",
-      "name": "Calm Down",
-      "artist": "Rema, Selena Gomez",
-      "selectedAt": "2026-05-02T02:30:41.951Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "lAvhMilw",
-      "name": "Calm Down",
-      "artist": "Rema, Selena Gomez",
-      "selectedAt": "2026-05-01T13:15:05.302Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "U8S63knt",
-      "name": "Pasoori (Originally Performed by Shae Gill & Ali Sethi)",
-      "artist": "Backing Business",
-      "selectedAt": "2026-05-01T02:48:31.655Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "3HLgAVmB",
-      "name": "Tum Hi Ho",
-      "artist": "Arijit Singh",
-      "selectedAt": "2026-04-30T13:49:41.046Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "pW-kkdqr",
-      "name": "Blinding Lights",
-      "artist": "The Weeknd",
-      "selectedAt": "2026-04-30T02:42:04.881Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "qPBSIDVf",
-      "name": "Let Her Go",
-      "artist": "Passenger",
-      "selectedAt": "2026-04-29T13:50:36.646Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "foOKLpHB",
-      "name": "See You Again (Wiz Khalifa Covers)",
-      "artist": "Once Jamison",
-      "selectedAt": "2026-04-29T02:41:15.220Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "icJam_5l",
-      "name": "Shape of You",
-      "artist": "Ed Sheeran",
-      "selectedAt": "2026-04-28T14:00:38.231Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "gN81QnmL",
-      "name": "Tum Hi Ho",
-      "artist": "Arijit Singh",
-      "selectedAt": "2026-04-28T02:41:24.678Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "pizXlfUB",
-      "name": "Blinding Lights",
-      "artist": "The Weeknd",
-      "selectedAt": "2026-04-27T13:47:56.239Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "fW-Mxsnu",
-      "name": "Blinding Lights",
-      "artist": "The Weeknd",
-      "selectedAt": "2026-04-27T02:33:35.170Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "wwSCc15h",
-      "name": "Shape of You",
-      "artist": "Ed Sheeran",
-      "selectedAt": "2026-04-26T13:02:02.042Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "6o8JoQ8b",
-      "name": "Perfect",
-      "artist": "Ed Sheeran",
-      "selectedAt": "2026-04-26T02:31:13.285Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "aRZbUYD7",
-      "name": "Tum Hi Ho",
-      "artist": "Mithoon, Arijit Singh",
-      "selectedAt": "2026-04-25T12:59:42.883Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "gQ2VJt2n",
-      "name": "Tum Hi Ho",
-      "artist": "Arijit Singh",
-      "selectedAt": "2026-04-25T02:08:47.042Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "LdMwym23",
-      "name": "Tum Hi Ho",
-      "artist": "Arijit Singh",
-      "selectedAt": "2026-04-24T13:19:02.657Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "Vq112z6X",
-      "name": "Aaj Ki Raat (From \"Stree 2\")",
-      "artist": "Amitabh Bhattacharya, Sachin-Jigar, Madhubanti Bagchi, Divya Kumar",
-      "selectedAt": "2026-04-24T02:27:10.477Z",
-      "mode": "auto-trending",
-      "query": null
-    },
-    {
-      "id": "l0kp5ysT",
-      "name": "Global Viral Beat 2K26",
-      "artist": "M TRENDING SOUNDS",
-      "selectedAt": "2026-04-23T06:07:54.496Z",
+      "selectedAt": "2026-05-13T03:00:53.980Z",
       "mode": "auto-trending",
       "query": null
     }
