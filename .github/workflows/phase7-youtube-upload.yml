@@ -8,7 +8,7 @@ on:
       song_query:
         description: Song query (used only when song_id is empty)
         required: false
-        default: Aaj Ki Raat
+        default: ''
         type: string
       song_id:
         description: Optional direct JioSaavn song ID
@@ -41,7 +41,7 @@ on:
       privacy_status:
         description: YouTube privacy status
         required: false
-        default: unlisted
+        default: public
         type: choice
         options:
           - private
@@ -53,7 +53,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     permissions:
-      contents: read
+      contents: write
 
     steps:
       - name: Checkout repository
@@ -85,8 +85,28 @@ jobs:
           echo "[phase-7] Starting Phase 3"
           if [ -n "$SONG_ID" ]; then
             npm run phase3:build -- --song-id="$SONG_ID" --out=data/phase3-lyrics.json
-          else
+          elif [ -n "$SONG_QUERY" ]; then
             npm run phase3:build -- --query="$SONG_QUERY" --out=data/phase3-lyrics.json
+          else
+            npm run phase3:build -- --auto-trending --out=data/phase3-lyrics.json
+          fi
+
+      - name: Commit song memory (song-history.json)
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ -f data/song-history.json ]; then
+            git add data/song-history.json
+            if git diff --cached --quiet; then
+              echo "[phase-7] song-history.json unchanged"
+            else
+              git commit -m "chore(history): record uploaded song [skip ci]"
+              git push origin HEAD:main
+              echo "[phase-7] song-history.json committed"
+            fi
+          else
+            echo "[phase-7] no song-history.json to commit"
           fi
 
       - name: Phase 5 - Render video
