@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-09-21T03:34:50.029Z",
+  "updatedAt": "2026-09-21T16:13:30.137Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -23,9 +23,18 @@
     "IrEzzCfb",
     "cC-Y-oZD",
     "DM6rqG52",
-    "cli-P2pu"
+    "cli-P2pu",
+    "iMzGQX6_"
   ],
   "recentSongs": [
+    {
+      "id": "iMzGQX6_",
+      "name": "Softly",
+      "artist": "Karan Aujla, IKKY",
+      "selectedAt": "2026-09-21T16:13:30.137Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "cli-P2pu",
       "name": "Arz Kiya Hai | Coke Studio Bharat",
