@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-09-20T07:10:00.000Z",
+  "updatedAt": "2026-09-21T03:34:50.029Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -22,9 +22,18 @@
     "fy1SYD17",
     "IrEzzCfb",
     "cC-Y-oZD",
-    "DM6rqG52"
+    "DM6rqG52",
+    "cli-P2pu"
   ],
   "recentSongs": [
+    {
+      "id": "cli-P2pu",
+      "name": "Arz Kiya Hai | Coke Studio Bharat",
+      "artist": "Anuv Jain",
+      "selectedAt": "2026-09-21T03:34:50.029Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "Q6l0a09y",
       "name": "Aaj Ki Raat",
