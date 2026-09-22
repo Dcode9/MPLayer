@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-09-21T16:13:30.137Z",
+  "updatedAt": "2026-09-22T03:35:56.462Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -24,9 +24,18 @@
     "cC-Y-oZD",
     "DM6rqG52",
     "cli-P2pu",
-    "iMzGQX6_"
+    "iMzGQX6_",
+    "1gHtmQ3x"
   ],
   "recentSongs": [
+    {
+      "id": "1gHtmQ3x",
+      "name": "Gehra Hua",
+      "artist": "Irshad Kamil, Arijit Singh, Shashwat Sachdev, Armaan Khan",
+      "selectedAt": "2026-09-22T03:35:56.462Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "iMzGQX6_",
       "name": "Softly",
