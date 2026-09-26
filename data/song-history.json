@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-09-25T15:31:48.353Z",
+  "updatedAt": "2026-09-26T03:31:10.070Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -30,9 +30,18 @@
     "FB8WBiWv",
     "K7pHpFNL",
     "NIidiD9g",
-    "rjkrTnma"
+    "rjkrTnma",
+    "uiEWT3kP"
   ],
   "recentSongs": [
+    {
+      "id": "uiEWT3kP",
+      "name": "Channa Mereya",
+      "artist": "Pritam, Arijit Singh",
+      "selectedAt": "2026-09-26T03:31:10.070Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "rjkrTnma",
       "name": "Kesariya",
