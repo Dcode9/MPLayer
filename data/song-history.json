@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-09-26T15:31:07.160Z",
+  "updatedAt": "2026-09-27T03:33:14.893Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -32,9 +32,18 @@
     "NIidiD9g",
     "rjkrTnma",
     "uiEWT3kP",
-    "CVeqCCYc"
+    "CVeqCCYc",
+    "VaNhRJHr"
   ],
   "recentSongs": [
+    {
+      "id": "VaNhRJHr",
+      "name": "Die With A Smile",
+      "artist": "Lady Gaga, Bruno Mars",
+      "selectedAt": "2026-09-27T03:33:14.893Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "CVeqCCYc",
       "name": "Tauba Tauba",
