@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-09-27T03:33:14.893Z",
+  "updatedAt": "2026-09-27T15:35:25.229Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -33,9 +33,18 @@
     "rjkrTnma",
     "uiEWT3kP",
     "CVeqCCYc",
-    "VaNhRJHr"
+    "VaNhRJHr",
+    "Ke9TPSUf"
   ],
   "recentSongs": [
+    {
+      "id": "Ke9TPSUf",
+      "name": "Tujhe Kitna Chahne Lage",
+      "artist": "Arijit Singh",
+      "selectedAt": "2026-09-27T15:35:25.229Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "VaNhRJHr",
       "name": "Die With A Smile",
