@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-02T03:42:07.851Z",
+  "updatedAt": "2026-10-02T15:35:07.543Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -42,9 +42,18 @@
     "4mHUvJ4u",
     "TCu0tFIp",
     "Ni6noMmw",
-    "csaEsVWV"
+    "csaEsVWV",
+    "4NRpZd1v"
   ],
   "recentSongs": [
+    {
+      "id": "4NRpZd1v",
+      "name": "Hawayein",
+      "artist": "Pritam, Arijit Singh",
+      "selectedAt": "2026-10-02T15:35:07.543Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "csaEsVWV",
       "name": "Kun Faaya Kun",
