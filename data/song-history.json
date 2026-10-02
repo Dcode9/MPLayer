@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-01T15:34:57.619Z",
+  "updatedAt": "2026-10-02T03:42:07.851Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -41,9 +41,18 @@
     "qZtKBMZ_",
     "4mHUvJ4u",
     "TCu0tFIp",
-    "Ni6noMmw"
+    "Ni6noMmw",
+    "csaEsVWV"
   ],
   "recentSongs": [
+    {
+      "id": "csaEsVWV",
+      "name": "Kun Faaya Kun",
+      "artist": "A.R. Rahman, Javed Ali, Mohit Chauhan",
+      "selectedAt": "2026-10-02T03:42:07.851Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "Ni6noMmw",
       "name": "Agar Tum Saath Ho",
