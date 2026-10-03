@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-03T03:42:42.845Z",
+  "updatedAt": "2026-10-03T15:35:03.662Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -44,9 +44,18 @@
     "Ni6noMmw",
     "csaEsVWV",
     "4NRpZd1v",
-    "Cyu6QA-C"
+    "Cyu6QA-C",
+    "uS_kZlfn"
   ],
   "recentSongs": [
+    {
+      "id": "uS_kZlfn",
+      "name": "Qaafirana",
+      "artist": "Arijit Singh, Nikhita Gandhi",
+      "selectedAt": "2026-10-03T15:35:03.662Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "Cyu6QA-C",
       "name": "Kabira",
