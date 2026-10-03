@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-02T15:35:07.543Z",
+  "updatedAt": "2026-10-03T03:42:42.845Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -43,9 +43,18 @@
     "TCu0tFIp",
     "Ni6noMmw",
     "csaEsVWV",
-    "4NRpZd1v"
+    "4NRpZd1v",
+    "Cyu6QA-C"
   ],
   "recentSongs": [
+    {
+      "id": "Cyu6QA-C",
+      "name": "Kabira",
+      "artist": "Pritam, Tochi Raina, Rekha Bhardwaj",
+      "selectedAt": "2026-10-03T03:42:42.845Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "4NRpZd1v",
       "name": "Hawayein",
