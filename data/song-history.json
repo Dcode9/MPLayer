@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-04T03:42:11.427Z",
+  "updatedAt": "2026-10-05T03:42:30.369Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -46,9 +46,18 @@
     "4NRpZd1v",
     "Cyu6QA-C",
     "uS_kZlfn",
-    "zIPKC8PK"
+    "zIPKC8PK",
+    "wcsDiSsA"
   ],
   "recentSongs": [
+    {
+      "id": "wcsDiSsA",
+      "name": "O Maahi",
+      "artist": "Pritam, Arijit Singh, Irshad Kamil",
+      "selectedAt": "2026-10-05T03:42:30.369Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "zIPKC8PK",
       "name": "Tum Se Hi",
