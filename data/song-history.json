@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-05T15:34:52.002Z",
+  "updatedAt": "2026-10-06T03:43:12.979Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -48,9 +48,18 @@
     "uS_kZlfn",
     "zIPKC8PK",
     "wcsDiSsA",
-    "Wn_eONzu"
+    "Wn_eONzu",
+    "kcljIwOJ"
   ],
   "recentSongs": [
+    {
+      "id": "kcljIwOJ",
+      "name": "Bekhayali (Arijit Singh Version)",
+      "artist": "Arijit Singh",
+      "selectedAt": "2026-10-06T03:43:12.979Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "Wn_eONzu",
       "name": "Raabta",
