@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-07T03:42:04.819Z",
+  "updatedAt": "2026-10-07T15:35:16.469Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -49,9 +49,18 @@
     "zIPKC8PK",
     "wcsDiSsA",
     "Wn_eONzu",
-    "kcljIwOJ"
+    "kcljIwOJ",
+    "X0zxHHfs"
   ],
   "recentSongs": [
+    {
+      "id": "X0zxHHfs",
+      "name": "Husn",
+      "artist": "Anuv Jain",
+      "selectedAt": "2026-10-07T15:35:16.469Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "kcljIwOJ",
       "name": "Bekhayali (Arijit Singh Version)",
