@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-06T03:43:12.979Z",
+  "updatedAt": "2026-10-07T03:42:04.819Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -52,6 +52,14 @@
     "kcljIwOJ"
   ],
   "recentSongs": [
+    {
+      "id": "kcljIwOJ",
+      "name": "Bekhayali (Arijit Singh Version)",
+      "artist": "Arijit Singh",
+      "selectedAt": "2026-10-07T03:42:04.819Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "kcljIwOJ",
       "name": "Bekhayali (Arijit Singh Version)",
