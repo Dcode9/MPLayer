@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-10T03:42:09.197Z",
+  "updatedAt": "2026-10-10T15:35:01.120Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -54,9 +54,18 @@
     "4CI_0bzt",
     "TfJX33Qk",
     "_rJmbKSP",
-    "uf2JX_12"
+    "uf2JX_12",
+    "J_iY7ElH"
   ],
   "recentSongs": [
+    {
+      "id": "J_iY7ElH",
+      "name": "Cruel Summer",
+      "artist": "Taylor Swift",
+      "selectedAt": "2026-10-10T15:35:01.120Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "uf2JX_12",
       "name": "Tera Ban Jaunga",
