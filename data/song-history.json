@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-12T03:42:09.866Z",
+  "updatedAt": "2026-10-12T15:35:04.181Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -56,9 +56,18 @@
     "_rJmbKSP",
     "uf2JX_12",
     "J_iY7ElH",
-    "47_T2N3p"
+    "47_T2N3p",
+    "AhkSYQEF"
   ],
   "recentSongs": [
+    {
+      "id": "AhkSYQEF",
+      "name": "Ashke",
+      "artist": "Karan Aujla, MXRCI",
+      "selectedAt": "2026-10-12T15:35:04.181Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "47_T2N3p",
       "name": "Casa Tupka Anthemo",
