@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-11T03:42:10.255Z",
+  "updatedAt": "2026-10-12T03:42:09.866Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -55,9 +55,18 @@
     "TfJX33Qk",
     "_rJmbKSP",
     "uf2JX_12",
-    "J_iY7ElH"
+    "J_iY7ElH",
+    "47_T2N3p"
   ],
   "recentSongs": [
+    {
+      "id": "47_T2N3p",
+      "name": "Casa Tupka Anthemo",
+      "artist": "Yo Yo Honey Singh",
+      "selectedAt": "2026-10-12T03:42:09.866Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "uf2JX_12",
       "name": "Tera Ban Jaunga",
