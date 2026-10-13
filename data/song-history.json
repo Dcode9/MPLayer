@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-12T15:35:04.181Z",
+  "updatedAt": "2026-10-13T03:42:16.575Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -57,9 +57,18 @@
     "uf2JX_12",
     "J_iY7ElH",
     "47_T2N3p",
-    "AhkSYQEF"
+    "AhkSYQEF",
+    "BhKP6P-H"
   ],
   "recentSongs": [
+    {
+      "id": "BhKP6P-H",
+      "name": "Espresso",
+      "artist": "Sabrina Carpenter",
+      "selectedAt": "2026-10-13T03:42:16.575Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "AhkSYQEF",
       "name": "Ashke",
