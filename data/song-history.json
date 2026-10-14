@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-13T03:42:16.575Z",
+  "updatedAt": "2026-10-14T03:41:59.516Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -58,9 +58,18 @@
     "J_iY7ElH",
     "47_T2N3p",
     "AhkSYQEF",
-    "BhKP6P-H"
+    "BhKP6P-H",
+    "TK0gKgde"
   ],
   "recentSongs": [
+    {
+      "id": "TK0gKgde",
+      "name": "Real Bad Man",
+      "artist": "Karan Aujla",
+      "selectedAt": "2026-10-14T03:41:59.516Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "BhKP6P-H",
       "name": "Espresso",
