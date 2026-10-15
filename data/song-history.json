@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-15T03:42:15.431Z",
+  "updatedAt": "2026-10-15T15:35:30.408Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -60,9 +60,18 @@
     "AhkSYQEF",
     "BhKP6P-H",
     "TK0gKgde",
-    "OPuNmCJG"
+    "OPuNmCJG",
+    "mrA6S75F"
   ],
   "recentSongs": [
+    {
+      "id": "mrA6S75F",
+      "name": "Bairan",
+      "artist": "Banjaare",
+      "selectedAt": "2026-10-15T15:35:30.408Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "OPuNmCJG",
       "name": "Shararat (From \"Dhurandhar\")",
