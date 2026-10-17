@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-16T15:35:01.192Z",
+  "updatedAt": "2026-10-17T03:42:12.440Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -63,9 +63,18 @@
     "OPuNmCJG",
     "mrA6S75F",
     "qM1qDx-m",
-    "gWAQTi9-"
+    "gWAQTi9-",
+    "b--Duq8D"
   ],
   "recentSongs": [
+    {
+      "id": "b--Duq8D",
+      "name": "Barsaat",
+      "artist": "Banjaare, Roni",
+      "selectedAt": "2026-10-17T03:42:12.440Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "gWAQTi9-",
       "name": "Raanjhan",
