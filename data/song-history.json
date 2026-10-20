@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-20T03:41:55.524Z",
+  "updatedAt": "2026-10-20T15:35:11.806Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -67,9 +67,18 @@
     "b--Duq8D",
     "3IoDK8qI",
     "WlTeqcgx",
-    "4nwfeFNM"
+    "4nwfeFNM",
+    "eFzjBITI"
   ],
   "recentSongs": [
+    {
+      "id": "eFzjBITI",
+      "name": "Someone You Loved",
+      "artist": "Lewis Capaldi",
+      "selectedAt": "2026-10-20T15:35:11.806Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "4nwfeFNM",
       "name": "Jhumka Patola (From \"Yeh Prem Mol Liya\")",
