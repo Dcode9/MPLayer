@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-21T03:41:59.147Z",
+  "updatedAt": "2026-10-21T15:35:00.766Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -69,9 +69,18 @@
     "WlTeqcgx",
     "4nwfeFNM",
     "eFzjBITI",
-    "dt9E21DY"
+    "dt9E21DY",
+    "QwkYUnDf"
   ],
   "recentSongs": [
+    {
+      "id": "QwkYUnDf",
+      "name": "Laal Pari",
+      "artist": "Yo Yo Honey Singh, Simar Kaur, Alfaaz",
+      "selectedAt": "2026-10-21T15:35:00.766Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "dt9E21DY",
       "name": "Do Din Ki Zindagi (From \"Gunmaaster G9\")",
