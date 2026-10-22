@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-22T03:42:12.387Z",
+  "updatedAt": "2026-10-22T15:35:14.104Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -71,9 +71,18 @@
     "eFzjBITI",
     "dt9E21DY",
     "QwkYUnDf",
-    "It96yG1r"
+    "It96yG1r",
+    "st2Dycrf"
   ],
   "recentSongs": [
+    {
+      "id": "st2Dycrf",
+      "name": "Gerua",
+      "artist": "Pritam, Arijit Singh, Antara Mitra",
+      "selectedAt": "2026-10-22T15:35:14.104Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "It96yG1r",
       "name": "As It Was",
