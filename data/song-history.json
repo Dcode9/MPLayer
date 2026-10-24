@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-24T03:42:11.960Z",
+  "updatedAt": "2026-10-24T15:35:33.658Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -74,9 +74,18 @@
     "It96yG1r",
     "st2Dycrf",
     "RMjwNvy2",
-    "WDBRQntv"
+    "WDBRQntv",
+    "vfmUBh3t"
   ],
   "recentSongs": [
+    {
+      "id": "vfmUBh3t",
+      "name": "Anti-Hero",
+      "artist": "Taylor Swift",
+      "selectedAt": "2026-10-24T15:35:33.658Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "WDBRQntv",
       "name": "Tum Kya Mile (From \"Rocky Aur Rani Kii Prem Kahaani\")",
