@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-25T03:41:57.151Z",
+  "updatedAt": "2026-10-25T15:35:23.717Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -76,9 +76,18 @@
     "RMjwNvy2",
     "WDBRQntv",
     "vfmUBh3t",
-    "o7GME8wl"
+    "o7GME8wl",
+    "GjidOM3A"
   ],
   "recentSongs": [
+    {
+      "id": "GjidOM3A",
+      "name": "Chaiyya Chaiyya",
+      "artist": "Sukhwinder Singh, Sapna Awasthi",
+      "selectedAt": "2026-10-25T15:35:23.717Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "o7GME8wl",
       "name": "So Swaezy",
