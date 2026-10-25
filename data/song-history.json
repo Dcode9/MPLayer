@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-24T15:35:33.658Z",
+  "updatedAt": "2026-10-25T03:41:57.151Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -75,9 +75,18 @@
     "st2Dycrf",
     "RMjwNvy2",
     "WDBRQntv",
-    "vfmUBh3t"
+    "vfmUBh3t",
+    "o7GME8wl"
   ],
   "recentSongs": [
+    {
+      "id": "o7GME8wl",
+      "name": "So Swaezy",
+      "artist": "Yo Yo Honey Singh, Hommie Dilliwala",
+      "selectedAt": "2026-10-25T03:41:57.151Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "vfmUBh3t",
       "name": "Anti-Hero",
