@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-25T15:35:23.717Z",
+  "updatedAt": "2026-10-26T03:43:30.666Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -77,9 +77,18 @@
     "WDBRQntv",
     "vfmUBh3t",
     "o7GME8wl",
-    "GjidOM3A"
+    "GjidOM3A",
+    "wLxoOff5"
   ],
   "recentSongs": [
+    {
+      "id": "wLxoOff5",
+      "name": "Uptown Funk",
+      "artist": "Mark Ronson",
+      "selectedAt": "2026-10-26T03:43:30.666Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "GjidOM3A",
       "name": "Chaiyya Chaiyya",
