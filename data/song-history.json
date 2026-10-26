@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-26T03:43:30.666Z",
+  "updatedAt": "2026-10-26T15:36:10.174Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -78,9 +78,18 @@
     "vfmUBh3t",
     "o7GME8wl",
     "GjidOM3A",
-    "wLxoOff5"
+    "wLxoOff5",
+    "szuGlu5K"
   ],
   "recentSongs": [
+    {
+      "id": "szuGlu5K",
+      "name": "Thinking out Loud",
+      "artist": "Ed Sheeran",
+      "selectedAt": "2026-10-26T15:36:10.174Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "wLxoOff5",
       "name": "Uptown Funk",
