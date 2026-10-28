@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-28T03:42:03.115Z",
+  "updatedAt": "2026-10-28T15:35:08.803Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -82,9 +82,18 @@
     "szuGlu5K",
     "aTwAMFOa",
     "CBGvoIP8",
-    "mPTrDSun"
+    "mPTrDSun",
+    "fy8dN2I_"
   ],
   "recentSongs": [
+    {
+      "id": "fy8dN2I_",
+      "name": "Heat Waves",
+      "artist": "Glass Animals",
+      "selectedAt": "2026-10-28T15:35:08.803Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "mPTrDSun",
       "name": "Raataan Lambiyan",
