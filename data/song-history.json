@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-28T15:35:08.803Z",
+  "updatedAt": "2026-10-29T03:42:01.441Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -83,9 +83,18 @@
     "aTwAMFOa",
     "CBGvoIP8",
     "mPTrDSun",
-    "fy8dN2I_"
+    "fy8dN2I_",
+    "3MWAalqL"
   ],
   "recentSongs": [
+    {
+      "id": "3MWAalqL",
+      "name": "Señorita",
+      "artist": "Shawn Mendes, Camila Cabello",
+      "selectedAt": "2026-10-29T03:42:01.441Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "fy8dN2I_",
       "name": "Heat Waves",
