@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-30T15:35:52.090Z",
+  "updatedAt": "2026-10-31T03:42:05.315Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -87,9 +87,18 @@
     "3MWAalqL",
     "MfteuUKJ",
     "IF2UR2N2",
-    "-JkPBIE7"
+    "-JkPBIE7",
+    "BeXBcbVK"
   ],
   "recentSongs": [
+    {
+      "id": "BeXBcbVK",
+      "name": "Believer",
+      "artist": "Imagine Dragons",
+      "selectedAt": "2026-10-31T03:42:05.315Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "-JkPBIE7",
       "name": "Naatu Naatu",
