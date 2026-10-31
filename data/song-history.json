@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-31T03:42:05.315Z",
+  "updatedAt": "2026-10-31T15:35:13.595Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -88,9 +88,18 @@
     "MfteuUKJ",
     "IF2UR2N2",
     "-JkPBIE7",
-    "BeXBcbVK"
+    "BeXBcbVK",
+    "QUNHFVVV"
   ],
   "recentSongs": [
+    {
+      "id": "QUNHFVVV",
+      "name": "Closer",
+      "artist": "The Chainsmokers",
+      "selectedAt": "2026-10-31T15:35:13.595Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "BeXBcbVK",
       "name": "Believer",
