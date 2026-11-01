@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-01T03:42:10.409Z",
+  "updatedAt": "2026-11-01T15:35:10.227Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -90,9 +90,18 @@
     "-JkPBIE7",
     "BeXBcbVK",
     "QUNHFVVV",
-    "LxoF7_Q8"
+    "LxoF7_Q8",
+    "zZJpWbCG"
   ],
   "recentSongs": [
+    {
+      "id": "zZJpWbCG",
+      "name": "Don't Start Now",
+      "artist": "Dua Lipa",
+      "selectedAt": "2026-11-01T15:35:10.227Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "LxoF7_Q8",
       "name": "bad guy",
