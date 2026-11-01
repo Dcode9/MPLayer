@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-31T15:35:13.595Z",
+  "updatedAt": "2026-11-01T03:42:10.409Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -89,9 +89,18 @@
     "IF2UR2N2",
     "-JkPBIE7",
     "BeXBcbVK",
-    "QUNHFVVV"
+    "QUNHFVVV",
+    "LxoF7_Q8"
   ],
   "recentSongs": [
+    {
+      "id": "LxoF7_Q8",
+      "name": "bad guy",
+      "artist": "Billie Eilish",
+      "selectedAt": "2026-11-01T03:42:10.409Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "QUNHFVVV",
       "name": "Closer",
