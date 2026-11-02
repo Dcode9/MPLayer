@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-01T15:35:10.227Z",
+  "updatedAt": "2026-11-02T03:42:26.296Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -91,9 +91,18 @@
     "BeXBcbVK",
     "QUNHFVVV",
     "LxoF7_Q8",
-    "zZJpWbCG"
+    "zZJpWbCG",
+    "kd8JSDbB"
   ],
   "recentSongs": [
+    {
+      "id": "kd8JSDbB",
+      "name": "STAY",
+      "artist": "The Kid Laroi, Justin Bieber",
+      "selectedAt": "2026-11-02T03:42:26.296Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "zZJpWbCG",
       "name": "Don't Start Now",
