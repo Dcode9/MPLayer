@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-03T03:44:25.183Z",
+  "updatedAt": "2026-11-03T15:35:33.156Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -94,9 +94,18 @@
     "zZJpWbCG",
     "kd8JSDbB",
     "N34NxTO9",
-    "ddiNyJMU"
+    "ddiNyJMU",
+    "tvxo4Jm0"
   ],
   "recentSongs": [
+    {
+      "id": "tvxo4Jm0",
+      "name": "Save Your Tears",
+      "artist": "The Weeknd",
+      "selectedAt": "2026-11-03T15:35:33.156Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "ddiNyJMU",
       "name": "Counting Stars",
