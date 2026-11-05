@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-04T03:42:02.987Z",
+  "updatedAt": "2026-11-05T03:42:20.557Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -96,9 +96,18 @@
     "N34NxTO9",
     "ddiNyJMU",
     "tvxo4Jm0",
-    "QcfFd62t"
+    "QcfFd62t",
+    "qJiYK1Wk"
   ],
   "recentSongs": [
+    {
+      "id": "qJiYK1Wk",
+      "name": "Shivers",
+      "artist": "Ed Sheeran",
+      "selectedAt": "2026-11-05T03:42:20.557Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "QcfFd62t",
       "name": "Tu Mil Jaaye (From \"KING\")",
