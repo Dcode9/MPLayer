@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-05T03:42:20.557Z",
+  "updatedAt": "2026-11-05T15:35:55.844Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -97,9 +97,18 @@
     "ddiNyJMU",
     "tvxo4Jm0",
     "QcfFd62t",
-    "qJiYK1Wk"
+    "qJiYK1Wk",
+    "zUZJaAsp"
   ],
   "recentSongs": [
+    {
+      "id": "zUZJaAsp",
+      "name": "Havana",
+      "artist": "Camila Cabello",
+      "selectedAt": "2026-11-05T15:35:55.844Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "qJiYK1Wk",
       "name": "Shivers",
