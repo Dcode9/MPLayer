@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-06T03:42:03.119Z",
+  "updatedAt": "2026-11-06T15:35:03.615Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -99,9 +99,18 @@
     "QcfFd62t",
     "qJiYK1Wk",
     "zUZJaAsp",
-    "Eea4UQ3g"
+    "Eea4UQ3g",
+    "rMKwZimO"
   ],
   "recentSongs": [
+    {
+      "id": "rMKwZimO",
+      "name": "Happy (From \"Despicable Me 2\")",
+      "artist": "Pharrell Williams",
+      "selectedAt": "2026-11-06T15:35:03.615Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "Eea4UQ3g",
       "name": "Mahiya",
