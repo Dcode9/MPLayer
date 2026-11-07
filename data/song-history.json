@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-07T03:42:19.907Z",
+  "updatedAt": "2026-11-07T15:35:05.976Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -101,9 +101,18 @@
     "zUZJaAsp",
     "Eea4UQ3g",
     "rMKwZimO",
-    "uNWdki50"
+    "uNWdki50",
+    "pQ3EdPBZ"
   ],
   "recentSongs": [
+    {
+      "id": "pQ3EdPBZ",
+      "name": "Rolling In The Deep",
+      "artist": "Adele",
+      "selectedAt": "2026-11-07T15:35:05.976Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "uNWdki50",
       "name": "APT.",
