@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-06T15:35:03.615Z",
+  "updatedAt": "2026-11-07T03:42:19.907Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -100,9 +100,18 @@
     "qJiYK1Wk",
     "zUZJaAsp",
     "Eea4UQ3g",
-    "rMKwZimO"
+    "rMKwZimO",
+    "uNWdki50"
   ],
   "recentSongs": [
+    {
+      "id": "uNWdki50",
+      "name": "APT.",
+      "artist": "Rose, Bruno Mars",
+      "selectedAt": "2026-11-07T03:42:19.907Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "rMKwZimO",
       "name": "Happy (From \"Despicable Me 2\")",
