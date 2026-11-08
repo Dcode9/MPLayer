@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-07T15:35:05.976Z",
+  "updatedAt": "2026-11-08T03:42:24.414Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -102,9 +102,18 @@
     "Eea4UQ3g",
     "rMKwZimO",
     "uNWdki50",
-    "pQ3EdPBZ"
+    "pQ3EdPBZ",
+    "BKR_Vk9u"
   ],
   "recentSongs": [
+    {
+      "id": "BKR_Vk9u",
+      "name": "Circles",
+      "artist": "Post Malone",
+      "selectedAt": "2026-11-08T03:42:24.414Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "pQ3EdPBZ",
       "name": "Rolling In The Deep",
