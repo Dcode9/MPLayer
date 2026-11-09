@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-08T03:42:24.414Z",
+  "updatedAt": "2026-11-09T15:47:11.170Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -103,9 +103,18 @@
     "rMKwZimO",
     "uNWdki50",
     "pQ3EdPBZ",
-    "BKR_Vk9u"
+    "BKR_Vk9u",
+    "wm8-QDV7"
   ],
   "recentSongs": [
+    {
+      "id": "wm8-QDV7",
+      "name": "Beautiful Things",
+      "artist": "Benson Boone",
+      "selectedAt": "2026-11-09T15:47:11.170Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "BKR_Vk9u",
       "name": "Circles",
