@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-09T15:47:11.170Z",
+  "updatedAt": "2026-11-10T03:45:39.632Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -104,9 +104,18 @@
     "uNWdki50",
     "pQ3EdPBZ",
     "BKR_Vk9u",
-    "wm8-QDV7"
+    "wm8-QDV7",
+    "_U20tHtS"
   ],
   "recentSongs": [
+    {
+      "id": "_U20tHtS",
+      "name": "drivers license",
+      "artist": "Olivia Rodrigo",
+      "selectedAt": "2026-11-10T03:45:39.632Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "wm8-QDV7",
       "name": "Beautiful Things",
