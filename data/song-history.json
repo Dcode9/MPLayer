@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-12T03:42:27.395Z",
+  "updatedAt": "2026-11-12T15:35:54.839Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -108,9 +108,18 @@
     "_U20tHtS",
     "FGiAj-A9",
     "hv1H8MG_",
-    "ibJxq97h"
+    "ibJxq97h",
+    "JR8ew5Yw"
   ],
   "recentSongs": [
+    {
+      "id": "JR8ew5Yw",
+      "name": "BIRDS OF A FEATHER",
+      "artist": "Billie Eilish",
+      "selectedAt": "2026-11-12T15:35:54.839Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "ibJxq97h",
       "name": "Lose Control",
