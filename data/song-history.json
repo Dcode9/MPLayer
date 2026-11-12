@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-11T03:42:15.245Z",
+  "updatedAt": "2026-11-12T03:42:27.395Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -107,9 +107,18 @@
     "wm8-QDV7",
     "_U20tHtS",
     "FGiAj-A9",
-    "hv1H8MG_"
+    "hv1H8MG_",
+    "ibJxq97h"
   ],
   "recentSongs": [
+    {
+      "id": "ibJxq97h",
+      "name": "Lose Control",
+      "artist": "Teddy Swims",
+      "selectedAt": "2026-11-12T03:42:27.395Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "hv1H8MG_",
       "name": "Pavazha Malli (From \"Think Indie\")",
