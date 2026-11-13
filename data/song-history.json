@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-13T03:42:21.588Z",
+  "updatedAt": "2026-11-13T15:37:37.945Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -110,9 +110,18 @@
     "hv1H8MG_",
     "ibJxq97h",
     "JR8ew5Yw",
-    "s9h0k1QP"
+    "s9h0k1QP",
+    "zOsZEApS"
   ],
   "recentSongs": [
+    {
+      "id": "zOsZEApS",
+      "name": "Shallow",
+      "artist": "Lady Gaga, Bradley Cooper",
+      "selectedAt": "2026-11-13T15:37:37.945Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "s9h0k1QP",
       "name": "Too Sweet",
