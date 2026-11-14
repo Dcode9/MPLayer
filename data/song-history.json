@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-14T03:42:23.474Z",
+  "updatedAt": "2026-11-14T15:37:06.054Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -112,9 +112,18 @@
     "JR8ew5Yw",
     "s9h0k1QP",
     "zOsZEApS",
-    "8mFi1G0f"
+    "8mFi1G0f",
+    "g6nQ4zq4"
   ],
   "recentSongs": [
+    {
+      "id": "g6nQ4zq4",
+      "name": "Good Luck, Babe!",
+      "artist": "Chappell Roan",
+      "selectedAt": "2026-11-14T15:37:06.054Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "8mFi1G0f",
       "name": "good 4 u",
