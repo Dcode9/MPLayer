@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-14T15:37:06.054Z",
+  "updatedAt": "2026-11-15T03:43:18.594Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -113,9 +113,18 @@
     "s9h0k1QP",
     "zOsZEApS",
     "8mFi1G0f",
-    "g6nQ4zq4"
+    "g6nQ4zq4",
+    "rBltEr7X"
   ],
   "recentSongs": [
+    {
+      "id": "rBltEr7X",
+      "name": "Tere Vaaste (From \"Zara Hatke Zara Bachke\")",
+      "artist": "Amitabh Bhattacharya, Sachin-Jigar, Varun Jain, Shadab Faridi, Altamash Faridi",
+      "selectedAt": "2026-11-15T03:43:18.594Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "g6nQ4zq4",
       "name": "Good Luck, Babe!",
