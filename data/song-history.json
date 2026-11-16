@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-15T15:35:25.099Z",
+  "updatedAt": "2026-11-16T15:42:43.635Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -115,9 +115,18 @@
     "8mFi1G0f",
     "g6nQ4zq4",
     "rBltEr7X",
-    "_K85pNOJ"
+    "_K85pNOJ",
+    "HOkCeG4u"
   ],
   "recentSongs": [
+    {
+      "id": "HOkCeG4u",
+      "name": "Please Please Please",
+      "artist": "Sabrina Carpenter",
+      "selectedAt": "2026-11-16T15:42:43.635Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "_K85pNOJ",
       "name": "What Was I Made For? [From The Motion Picture \"Barbie\"]",
