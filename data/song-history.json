@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-16T15:42:43.635Z",
+  "updatedAt": "2026-11-17T03:42:45.653Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -116,9 +116,18 @@
     "g6nQ4zq4",
     "rBltEr7X",
     "_K85pNOJ",
-    "HOkCeG4u"
+    "HOkCeG4u",
+    "_ahsglLz"
   ],
   "recentSongs": [
+    {
+      "id": "_ahsglLz",
+      "name": "Guzarish",
+      "artist": "Satinder Sartaaj",
+      "selectedAt": "2026-11-17T03:42:45.653Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "HOkCeG4u",
       "name": "Please Please Please",
