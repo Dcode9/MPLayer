@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-20T16:14:35.028Z",
+  "updatedAt": "2026-11-21T03:42:36.005Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -124,9 +124,18 @@
     "ISio-iOf",
     "ugbJof_Q",
     "gyXPFHqb",
-    "RMnHyp2C"
+    "RMnHyp2C",
+    "bjnU258K"
   ],
   "recentSongs": [
+    {
+      "id": "bjnU258K",
+      "name": "Ghafoor",
+      "artist": "Shashwat Sachdev, Shilpa Rao, Ujwal Gupta",
+      "selectedAt": "2026-11-21T03:42:36.005Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "RMnHyp2C",
       "name": "Tum Ho Toh",
