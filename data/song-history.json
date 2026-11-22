@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-21T15:36:20.253Z",
+  "updatedAt": "2026-11-22T03:42:53.829Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -126,9 +126,18 @@
     "gyXPFHqb",
     "RMnHyp2C",
     "bjnU258K",
-    "jlBMldVu"
+    "jlBMldVu",
+    "tkMG4oab"
   ],
   "recentSongs": [
+    {
+      "id": "tkMG4oab",
+      "name": "Taste",
+      "artist": "Sabrina Carpenter",
+      "selectedAt": "2026-11-22T03:42:53.829Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "jlBMldVu",
       "name": "Veezha Veera (From \"O.M: Operation Mole\")",
