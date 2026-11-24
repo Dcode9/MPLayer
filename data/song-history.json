@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-24T03:42:49.057Z",
+  "updatedAt": "2026-11-24T15:42:24.468Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -131,9 +131,18 @@
     "5omW19YD",
     "Paem2Kf1",
     "T0nmzX0m",
-    "MmiZl77L"
+    "MmiZl77L",
+    "zekEI3N6"
   ],
   "recentSongs": [
+    {
+      "id": "zekEI3N6",
+      "name": "Ae Dil Hai Mushkil Title Track",
+      "artist": "Pritam, Arijit Singh",
+      "selectedAt": "2026-11-24T15:42:24.468Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "MmiZl77L",
       "name": "Insomaniac Insomaniac",
