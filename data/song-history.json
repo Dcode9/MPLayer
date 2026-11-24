@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-23T15:55:53.379Z",
+  "updatedAt": "2026-11-24T03:42:49.057Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -130,9 +130,18 @@
     "tkMG4oab",
     "5omW19YD",
     "Paem2Kf1",
-    "T0nmzX0m"
+    "T0nmzX0m",
+    "MmiZl77L"
   ],
   "recentSongs": [
+    {
+      "id": "MmiZl77L",
+      "name": "Insomaniac Insomaniac",
+      "artist": "Yo Yo Honey Singh, Priyanshi Srivastava",
+      "selectedAt": "2026-11-24T03:42:49.057Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "T0nmzX0m",
       "name": "Ordinary",
