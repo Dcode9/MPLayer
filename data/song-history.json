@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-24T15:42:24.468Z",
+  "updatedAt": "2026-11-25T03:43:01.341Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -132,9 +132,18 @@
     "Paem2Kf1",
     "T0nmzX0m",
     "MmiZl77L",
-    "zekEI3N6"
+    "zekEI3N6",
+    "pMhK8ruP"
   ],
   "recentSongs": [
+    {
+      "id": "pMhK8ruP",
+      "name": "INDUSTRY BABY",
+      "artist": "Lil Nas X, Jack Harlow",
+      "selectedAt": "2026-11-25T03:43:01.341Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "zekEI3N6",
       "name": "Ae Dil Hai Mushkil Title Track",
