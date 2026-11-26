@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-25T15:38:48.616Z",
+  "updatedAt": "2026-11-26T03:42:21.538Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -134,9 +134,18 @@
     "MmiZl77L",
     "zekEI3N6",
     "pMhK8ruP",
-    "BSaNI3Yr"
+    "BSaNI3Yr",
+    "Q72cSWjq"
   ],
   "recentSongs": [
+    {
+      "id": "Q72cSWjq",
+      "name": "Barbaad",
+      "artist": "The Rish, Jubin Nautiyal",
+      "selectedAt": "2026-11-26T03:42:21.538Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "BSaNI3Yr",
       "name": "FA9LA",
