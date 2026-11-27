@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-27T03:42:18.287Z",
+  "updatedAt": "2026-11-27T15:43:07.796Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -137,9 +137,18 @@
     "BSaNI3Yr",
     "Q72cSWjq",
     "YANQf3ww",
-    "-7ArPopr"
+    "-7ArPopr",
+    "6g1LJIJC"
   ],
   "recentSongs": [
+    {
+      "id": "6g1LJIJC",
+      "name": "Housewife",
+      "artist": "Tate McRae",
+      "selectedAt": "2026-11-27T15:43:07.796Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "-7ArPopr",
       "name": "Diviki Diviki (From \"January 12 Vidudala\")",
