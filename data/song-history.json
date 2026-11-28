@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-27T15:43:07.796Z",
+  "updatedAt": "2026-11-28T03:42:11.883Z",
   "seenSongIds": [
     "Q6l0a09y",
     "Vq112z6X",
@@ -138,9 +138,18 @@
     "Q72cSWjq",
     "YANQf3ww",
     "-7ArPopr",
-    "6g1LJIJC"
+    "6g1LJIJC",
+    "dINhql-A"
   ],
   "recentSongs": [
+    {
+      "id": "dINhql-A",
+      "name": "Daddy Cool - KING Version (From \"KING\")",
+      "artist": "Sachin-Jigar, Boney M., Arijit Singh, Shilpa Rao",
+      "selectedAt": "2026-11-28T03:42:11.883Z",
+      "mode": "query",
+      "query": null
+    },
     {
       "id": "6g1LJIJC",
       "name": "Housewife",
